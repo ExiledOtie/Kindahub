@@ -45,54 +45,41 @@ const Login = () => {
   return (
     <div className="w-full h-screen bg-[#f4f8f4] overflow-hidden">
 
-      <div className="w-full h-full grid grid-cols-1 md:grid-cols-2">
+      {/* MAIN GRID */}
+      <div className="w-full h-full grid grid-cols-1 lg:grid-cols-[65%_35%]">
 
-        {/* LEFT SIDE */}
-        <div className="hidden md:flex relative h-full overflow-hidden">
+        {/* LEFT SIDE IMAGE */}
+        <div className="hidden lg:block relative h-full overflow-hidden">
 
           <img
             src={landingImage}
             alt="Sacco"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover scale-105"
           />
 
-          {/* OVERLAY */}
-          <div className="absolute inset-0 bg-black/20"></div>
+          {/* DARK OVERLAY */}
+          <div className="absolute inset-0 bg-black/25"></div>
 
-          {/* CONTENT */}
-          <div className="absolute inset-0 flex flex-col justify-end p-14 z-10 text-white">
-
-            <h1 className="text-6xl font-bold leading-tight drop-shadow-lg">
-              Loan & Savings
-              <br />
-              made simple
-            </h1>
-
-            <p className="mt-5 text-xl text-gray-100 max-w-lg leading-relaxed">
-              Save regularly. Borrow wisely.
-              Build a better tomorrow with your trusted SACCO platform.
-            </p>
-
-          </div>
         </div>
 
-        {/* RIGHT SIDE */}
-        <div className="flex items-center justify-center bg-white h-full overflow-y-auto px-6 md:px-16">
+        {/* RIGHT SIDE FORM */}
+        <div className="flex items-center justify-center bg-white h-full overflow-y-auto px-6 lg:px-10">
 
-          <div className="w-full max-w-md">
+          {/* REDUCED FORM WIDTH */}
+          <div className="w-full max-w-sm">
 
             {/* HEADER */}
             <div className="text-center mb-10">
 
-              <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-5 shadow-sm">
-                <span className="text-5xl">💰</span>
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-5 shadow-sm">
+                <span className="text-4xl">💰</span>
               </div>
 
-              <h2 className="text-5xl font-bold text-green-700">
+              <h2 className="text-4xl font-bold text-green-700">
                 Welcome Back
               </h2>
 
-              <p className="text-gray-500 mt-3 text-lg">
+              <p className="text-gray-500 mt-3 text-base">
                 Login to your SACCO account
               </p>
 
@@ -101,7 +88,7 @@ const Login = () => {
             {/* FORM */}
             <form
               onSubmit={handleSubmit}
-              className="space-y-6"
+              className="space-y-5"
             >
 
               {/* EMAIL */}
@@ -111,9 +98,9 @@ const Login = () => {
                   Email
                 </label>
 
-                <div className="flex items-center border border-gray-300 rounded-2xl px-4 py-4 transition-all duration-300 focus-within:ring-2 focus-within:ring-green-600">
+                <div className="flex items-center border border-gray-300 rounded-2xl px-4 py-3 transition-all duration-300 focus-within:ring-2 focus-within:ring-green-600">
 
-                  <FaUser className="text-gray-400 mr-3 text-lg" />
+                  <FaUser className="text-gray-400 mr-3 text-base" />
 
                   <input
                     type="email"
@@ -122,7 +109,7 @@ const Login = () => {
                     value={formData.email}
                     onChange={handleChange}
                     required
-                    className="w-full bg-transparent text-gray-700"
+                    className="w-full bg-transparent text-gray-700 outline-none"
                   />
 
                 </div>
@@ -136,9 +123,9 @@ const Login = () => {
                   Password
                 </label>
 
-                <div className="flex items-center border border-gray-300 rounded-2xl px-4 py-4 transition-all duration-300 focus-within:ring-2 focus-within:ring-green-600">
+                <div className="flex items-center border border-gray-300 rounded-2xl px-4 py-3 transition-all duration-300 focus-within:ring-2 focus-within:ring-green-600">
 
-                  <FaLock className="text-gray-400 mr-3 text-lg" />
+                  <FaLock className="text-gray-400 mr-3 text-base" />
 
                   <input
                     type="password"
@@ -147,7 +134,7 @@ const Login = () => {
                     value={formData.password}
                     onChange={handleChange}
                     required
-                    className="w-full bg-transparent text-gray-700"
+                    className="w-full bg-transparent text-gray-700 outline-none"
                   />
 
                 </div>
@@ -171,11 +158,11 @@ const Login = () => {
 
               </div>
 
-              {/* LOGIN BUTTON */}
+              {/* BUTTON */}
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-green-700 hover:bg-green-800 transition-all duration-300 text-white py-4 rounded-2xl font-semibold shadow-lg text-lg"
+                className="w-full bg-green-700 hover:bg-green-800 transition-all duration-300 text-white py-3 rounded-2xl font-semibold shadow-lg text-base"
               >
                 {loading ? "Signing In..." : "Sign In"}
               </button>
