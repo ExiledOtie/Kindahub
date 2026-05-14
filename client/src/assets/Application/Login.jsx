@@ -3,7 +3,7 @@
 import React, { useState, useContext } from "react";
 import { FaUser, FaLock } from "react-icons/fa";
 import { AuthContext } from "../Context/AuthContext";
-import landingImage from "../assets/Images/landing.png";
+import landingImage from "../Images/landing.png";
 
 const Login = () => {
   const { login } = useContext(AuthContext);

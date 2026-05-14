@@ -7,11 +7,11 @@ import {
   Route,
 } from "react-router-dom";
 
-import Login from "./Pages/Login";
-import Dashboard from "./Pages/Dashboard";
+import Login from "./assets/Application/Login";
+import Dashboard from "./assets/Application/Dashboard";
 
-import ProtectedRoute from "./Routes/ProtectedRoute";
-import { AuthProvider } from "./Context/AuthContext";
+import ProtectedRoute from "./assets/Routes/ProtectedRoutes";
+import { AuthProvider } from "./assets/Context/AuthContext";
 
 const App = () => {
   return (
