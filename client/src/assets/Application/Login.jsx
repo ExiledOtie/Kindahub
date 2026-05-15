@@ -8,10 +8,10 @@ import landingImage from "../Images/landing.png";
 const Login = () => {
   const { login } = useContext(AuthContext);
 
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
+const [formData, setFormData] = useState({
+  username: "",
+  password: "",
+});
 
   const [loading, setLoading] = useState(false);
 
