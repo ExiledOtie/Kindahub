@@ -1,18 +1,28 @@
 const express = require("express");
 const cors = require("cors");
+
 require("dotenv").config();
 
-// DATABASE CONNECTION
 require("./config/db");
 
-// SEED SUPER ADMIN
 const seedSuperAdmin = require("./seeders/superAdminSeeder");
-seedSuperAdmin();
+
+const authRoutes = require("./routes/authRoutes");
+const userRoutes = require("./routes/userRoutes");
+const groupRoutes = require("./routes/groupRoutes");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// SEEDER
+seedSuperAdmin();
+
+// ROUTES
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/groups", groupRoutes);
 
 app.get("/", (req, res) => {
   res.send("Kindahub API Running");
