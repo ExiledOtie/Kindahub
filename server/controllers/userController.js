@@ -1,5 +1,23 @@
+// controllers/userController.js
+
 const bcrypt = require("bcryptjs");
-const pool = require("../config/db");
+
+const generateUsername = require("../utils/generateUsername");
+
+const {
+  createUserModel,
+  getAllUsersModel,
+  getSingleUserModel,
+  findUserByEmailModel,
+  updateUserModel,
+  deleteUserModel,
+} = require("../models/userModel");
+
+/*
+|--------------------------------------------------------------------------
+| CREATE USER
+|--------------------------------------------------------------------------
+*/
 
 const createUser = async (req, res) => {
   try {
@@ -10,63 +28,182 @@ const createUser = async (req, res) => {
       phone,
       password,
       role,
+      group_name,
     } = req.body;
 
     // CHECK EMAIL
-    const existingUser = await pool.query(
-      `
-      SELECT * FROM users
-      WHERE email = $1
-      `,
-      [email]
-    );
+    const existingUser =
+      await findUserByEmailModel(email);
 
-    if (existingUser.rows.length > 0) {
+    if (existingUser) {
       return res.status(400).json({
         message: "Email already exists",
       });
     }
 
-    const hashedPassword = await bcrypt.hash(
-      password,
-      10
+    // GENERATE USERNAME
+    const username =
+      await generateUsername(group_name);
+
+    // HASH PASSWORD
+    const hashedPassword =
+      await bcrypt.hash(password, 10);
+
+    // CREATE USER
+    const user = await createUserModel(
+      fullname,
+      email,
+      phone,
+      hashedPassword,
+      role,
+      username
     );
 
-    const result = await pool.query(
-      `
-      INSERT INTO users
-      (
-        fullname,
-        email,
-        phone,
-        password,
-        role
-      )
-
-      VALUES ($1, $2, $3, $4, $5)
-
-      RETURNING *
-      `,
-      [
-        fullname,
-        email,
-        phone,
-        hashedPassword,
-        role,
-      ]
-    );
-
-    res.status(201).json(result.rows[0]);
+    res.status(201).json({
+      message: "User created successfully",
+      user,
+    });
 
   } catch (error) {
+
     console.log(error);
 
     res.status(500).json({
       message: "Server error",
     });
+
+  }
+};
+
+/*
+|--------------------------------------------------------------------------
+| GET ALL USERS
+|--------------------------------------------------------------------------
+*/
+
+const getAllUsers = async (req, res) => {
+  try {
+
+    const users =
+      await getAllUsersModel();
+
+    res.status(200).json(users);
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      message: "Server error",
+    });
+
+  }
+};
+
+/*
+|--------------------------------------------------------------------------
+| GET SINGLE USER
+|--------------------------------------------------------------------------
+*/
+
+const getSingleUser = async (req, res) => {
+  try {
+
+    const user =
+      await getSingleUserModel(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json(user);
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      message: "Server error",
+    });
+
+  }
+};
+
+/*
+|--------------------------------------------------------------------------
+| UPDATE USER
+|--------------------------------------------------------------------------
+*/
+
+const updateUser = async (req, res) => {
+  try {
+
+    const {
+      fullname,
+      email,
+      phone,
+      role,
+      status,
+    } = req.body;
+
+    const updatedUser =
+      await updateUserModel(
+        req.params.id,
+        fullname,
+        email,
+        phone,
+        role,
+        status
+      );
+
+    res.status(200).json({
+      message: "User updated successfully",
+      user: updatedUser,
+    });
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      message: "Server error",
+    });
+
+  }
+};
+
+/*
+|--------------------------------------------------------------------------
+| DELETE USER
+|--------------------------------------------------------------------------
+*/
+
+const deleteUser = async (req, res) => {
+  try {
+
+    await deleteUserModel(req.params.id);
+
+    res.status(200).json({
+      message: "User deleted successfully",
+    });
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      message: "Server error",
+    });
+
   }
 };
 
 module.exports = {
   createUser,
+  getAllUsers,
+  getSingleUser,
+  updateUser,
+  deleteUser,
 };
