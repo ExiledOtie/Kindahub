@@ -5,6 +5,10 @@ require("dotenv").config();
 // DATABASE CONNECTION
 require("./config/db");
 
+// SEED SUPER ADMIN
+const seedSuperAdmin = require("./seeders/superAdminSeeder");
+seedSuperAdmin();
+
 const app = express();
 
 app.use(cors());
