@@ -17,7 +17,7 @@ const seedSuperAdmin = async () => {
     }
 
     const hashedPassword = await bcrypt.hash(
-      "Admin@123",
+      "admin@123",
       10
     );
 
@@ -35,7 +35,7 @@ const seedSuperAdmin = async () => {
       `,
       [
         "Super Admin",
-        "admin@kindahub.com",
+        "meshack@kindafamilygroup.com",
         hashedPassword,
         "super_admin",
         true,
