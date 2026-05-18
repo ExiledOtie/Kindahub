@@ -13,129 +13,53 @@ import {
   FaCreditCard,
   FaFileAlt,
   FaUniversity,
+  FaBars,
+  FaTimes,
 } from "react-icons/fa";
-import { IoClose, IoReorderThree } from "react-icons/io5";
 
 const Sidebar = ({ role = "admin" }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const adminLinks = [
-    {
-      name: "Dashboard",
-      icon: <FaTachometerAlt />,
-      path: "/dashboard",
-      active: true,
-    },
-    {
-      name: "Members",
-      icon: <FaUsers />,
-      path: "/members/members",
-    },
-    {
-      name: "Contributions",
-      icon: <FaCreditCard />,
-      path: "/dashboard",
-    },
-    {
-      name: "Loans",
-      icon: <FaUniversity />,
-      path: "/dashboard",
-    },
-    {
-      name: "Loan Payments",
-      icon: <FaMoneyBillWave />,
-      path: "/dashboard",
-    },
-    {
-      name: "Reports",
-      icon: <FaFileAlt />,
-      path: "/dashboard",
-    },
-    {
-      name: "Announcements",
-      icon: <FaBell />,
-      badge: 6,
-      path: "/dashboard",
-    },
-    {
-      name: "Notifications",
-      icon: <FaBell />,
-      badge: 8,
-      path: "/dashboard",
-    },
-    {
-      name: "Settings",
-      icon: <FaCog />,
-      path: "/dashboard",
-    },
+    { name: "Dashboard", icon: <FaTachometerAlt />, path: "/dashboard" },
+    { name: "Members", icon: <FaUsers />, path: "/members" },
+    { name: "Contributions", icon: <FaCreditCard />, path: "/contributions" },
+    { name: "Loans", icon: <FaUniversity />, path: "/loans" },
+    { name: "Loan Payments", icon: <FaMoneyBillWave />, path: "/loan-payments" },
+    { name: "Reports", icon: <FaFileAlt />, path: "/reports" },
+    { name: "Announcements", icon: <FaBell />, path: "/announcements", badge: 6 },
+    { name: "Notifications", icon: <FaBell />, path: "/notifications", badge: 8 },
+    { name: "Settings", icon: <FaCog />, path: "/settings" },
   ];
 
   const userLinks = [
-    {
-      name: "Dashboard",
-      icon: <FaTachometerAlt />,
-      path: "/user-dashboard",
-      active: true,
-    },
-    {
-      name: "Contributions",
-      icon: <FaCreditCard />,
-      path: "/user-dashboard",
-    },
-    {
-      name: "Loans",
-      icon: <FaUniversity />,
-      path: "/user-dashboard",
-    },
-    {
-      name: "Payments",
-      icon: <FaMoneyBillWave />,
-      path: "/user-dashboard",
-    },
-    {
-      name: "Statements",
-      icon: <FaFileAlt />,
-      path: "/user-dashboard",
-    },
-    {
-      name: "Notifications",
-      icon: <FaBell />,
-      badge: 8,
-      path: "/user-dashboard",
-    },
-    {
-      name: "Profile",
-      icon: <FaUserCircle />,
-      path: "/user-dashboard",
-    },
-    {
-      name: "Settings",
-      icon: <FaCog />,
-      path: "/user-dashboard",
-    },
+    { name: "Dashboard", icon: <FaTachometerAlt />, path: "/user-dashboard" },
+    { name: "Contributions", icon: <FaCreditCard />, path: "/user-contributions" },
+    { name: "Loans", icon: <FaUniversity />, path: "/user-loans" },
+    { name: "Payments", icon: <FaMoneyBillWave />, path: "/user-payments" },
+    { name: "Statements", icon: <FaFileAlt />, path: "/user-statements" },
+    { name: "Notifications", icon: <FaBell />, path: "/user-notifications", badge: 8 },
+    { name: "Profile", icon: <FaUserCircle />, path: "/profile" },
+    { name: "Settings", icon: <FaCog />, path: "/settings" },
   ];
 
   const links = role === "admin" ? adminLinks : userLinks;
 
   return (
     <>
-      {/* Mobile open button */}
-      {!isOpen && (
-        <button
-          onClick={() => setIsOpen(true)}
-          className="fixed top-4 left-4 z-50 lg:hidden p-2 rounded-md bg-slate-900 text-white shadow-lg"
-          type="button"
-          aria-label="Open sidebar"
-        >
-          <IoReorderThree size={22} />
-        </button>
-      )}
+      {/* Mobile Button */}
+      <button
+        onClick={() => setIsOpen(true)}
+        className="lg:hidden fixed top-4 left-4 z-50 bg-[#032c38] text-white p-2 rounded-md"
+      >
+        <FaBars size={14} />
+      </button>
 
       {/* Overlay */}
       {isOpen && (
         <div
-          onClick={() => setIsOpen(false)}
           className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+          onClick={() => setIsOpen(false)}
         />
       )}
 
@@ -143,75 +67,95 @@ const Sidebar = ({ role = "admin" }) => {
       <div
         className={`
           fixed lg:static top-0 left-0 z-50
-          w-[240px] min-h-screen
+          h-screen w-[220px]
           bg-gradient-to-b from-[#032c38] to-[#021d27]
-          text-white flex flex-col justify-between
-          px-3 py-4 border-r border-white/10
+          text-white
+          flex flex-col justify-between
           transition-transform duration-300
+          border-r border-white/10
+          p-3
 
-          ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+          ${
+            isOpen
+              ? "translate-x-0"
+              : "-translate-x-full lg:translate-x-0"
+          }
         `}
       >
         <div>
-          {/* Logo + Close Button */}
-          <div className="flex items-center justify-between mb-7">
-            <h1 className="text-lg font-bold tracking-wide">ChamaPro</h1>
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-lg font-bold">
+              ChamaPro
+            </h1>
 
-            {/* Mobile Close */}
             <button
               onClick={() => setIsOpen(false)}
-              className="lg:hidden text-white text-sm"
-              type="button"
-              aria-label="Close sidebar"
+              className="lg:hidden"
             >
-              <IoClose size={20} />
+              <FaTimes />
             </button>
           </div>
 
           {/* Links */}
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
             {links.map((item, index) => (
-              <div
+              <NavLink
                 key={index}
-                className={`
+                to={item.path}
+                onClick={() => setIsOpen(false)}
+                className={({ isActive }) =>
+                  `
                   flex items-center justify-between
-                  px-3 py-2 rounded-lg cursor-pointer
-                  transition-all duration-300 text-[11px]
+                  px-3 py-2 rounded-lg
+                  text-[11px]
+                  transition-all duration-200
 
-                  ${item.active ? "bg-emerald-700" : "hover:bg-white/10"}
-                `}
+                  ${
+                    isActive
+                      ? "bg-emerald-700"
+                      : "hover:bg-white/10"
+                  }
+                `
+                }
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-[11px]">{item.icon}</span>
+                  <span className="text-[11px]">
+                    {item.icon}
+                  </span>
 
-                  <span className="font-medium">{item.name}</span>
+                  <span>{item.name}</span>
                 </div>
 
                 {item.badge && (
-                  <span className="w-[18px] h-[18px] rounded-full bg-orange-500 flex items-center justify-center text-[9px] font-semibold">
+                  <span className="w-[18px] h-[18px] rounded-full bg-orange-500 flex items-center justify-center text-[9px]">
                     {item.badge}
                   </span>
                 )}
-              </div>
+              </NavLink>
             ))}
           </div>
         </div>
 
-        {/* Profile */}
+        {/* Bottom Profile */}
         <div className="border-t border-white/10 pt-4 flex items-center gap-3">
           <img
             src="https://i.pravatar.cc/100"
             alt="profile"
-            className="w-10 h-10 rounded-full object-cover"
+            className="w-9 h-9 rounded-full"
           />
 
           <div>
-            <h3 className="text-[11px] font-semibold leading-none">
-              {role === "admin" ? "Super Admin" : "John Kamau"}
+            <h3 className="text-[11px] font-semibold">
+              {role === "admin"
+                ? "Super Admin"
+                : "John Kamau"}
             </h3>
 
-            <p className="text-[10px] text-gray-300 mt-1">
-              {role === "admin" ? "Online" : "Member"}
+            <p className="text-[10px] text-gray-300">
+              {role === "admin"
+                ? "Online"
+                : "Member"}
             </p>
           </div>
         </div>

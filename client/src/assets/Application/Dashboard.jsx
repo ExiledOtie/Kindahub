@@ -1,7 +1,6 @@
 // Pages/Dashboard.jsx
 
 import React from "react";
-import Sidebar from "../Components/Sidebar";
 
 import {
   FaUsers,
@@ -94,9 +93,7 @@ const loanStatusData = [
 
 const Dashboard = () => {
   return (
-    <div className="flex bg-[#f5f7fb] min-h-screen">
-      {/* Sidebar */}
-      <Sidebar role="admin" />
+    <div className="bg-[#f5f7fb] min-h-screen">
 
       {/* Main Content */}
       <div className="flex-1 p-4 overflow-y-auto">

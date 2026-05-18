@@ -1,7 +1,7 @@
 // Pages/UserDashboard.jsx
 
 import React from "react";
-import Sidebar from "../Components/Sidebar";
+//import Sidebar from "../Components/Sidebar";
 
 import {
   FaPiggyBank,
@@ -76,9 +76,7 @@ const loanData = [
 
 const UserDashboard = () => {
   return (
-    <div className="flex bg-[#f5f7fb] min-h-screen">
-      {/* Sidebar */}
-      <Sidebar role="user" />
+    <div className="bg-[#f5f7fb] min-h-screen">
 
       {/* Main Content */}
       <div className="flex-1 p-4 overflow-y-auto">
