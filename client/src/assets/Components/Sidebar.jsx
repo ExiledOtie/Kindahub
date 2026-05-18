@@ -1,6 +1,7 @@
 // Components/Sidebar.jsx
 
 import React, { useState } from "react";
+import { NavLink } from "react-router-dom";
 
 import {
   FaTachometerAlt,
@@ -22,41 +23,50 @@ const Sidebar = ({ role = "admin" }) => {
     {
       name: "Dashboard",
       icon: <FaTachometerAlt />,
+      path: "/dashboard",
       active: true,
     },
     {
       name: "Members",
       icon: <FaUsers />,
+      path: "/members/members",
     },
     {
       name: "Contributions",
       icon: <FaCreditCard />,
+      path: "/dashboard",
     },
     {
       name: "Loans",
       icon: <FaUniversity />,
+      path: "/dashboard",
     },
     {
       name: "Loan Payments",
       icon: <FaMoneyBillWave />,
+      path: "/dashboard",
     },
     {
       name: "Reports",
       icon: <FaFileAlt />,
+      path: "/dashboard",
     },
     {
       name: "Announcements",
       icon: <FaBell />,
       badge: 6,
+      path: "/dashboard",
     },
     {
       name: "Notifications",
       icon: <FaBell />,
       badge: 8,
+      path: "/dashboard",
     },
     {
       name: "Settings",
       icon: <FaCog />,
+      path: "/dashboard",
     },
   ];
 
@@ -64,36 +74,44 @@ const Sidebar = ({ role = "admin" }) => {
     {
       name: "Dashboard",
       icon: <FaTachometerAlt />,
+      path: "/user-dashboard",
       active: true,
     },
     {
       name: "Contributions",
       icon: <FaCreditCard />,
+      path: "/user-dashboard",
     },
     {
       name: "Loans",
       icon: <FaUniversity />,
+      path: "/user-dashboard",
     },
     {
       name: "Payments",
       icon: <FaMoneyBillWave />,
+      path: "/user-dashboard",
     },
     {
       name: "Statements",
       icon: <FaFileAlt />,
+      path: "/user-dashboard",
     },
     {
       name: "Notifications",
       icon: <FaBell />,
       badge: 8,
+      path: "/user-dashboard",
     },
     {
       name: "Profile",
       icon: <FaUserCircle />,
+      path: "/user-dashboard",
     },
     {
       name: "Settings",
       icon: <FaCog />,
+      path: "/user-dashboard",
     },
   ];
 

@@ -1,11 +1,7 @@
 // src/App.jsx
 
 import React from "react";
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-} from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Login from "./assets/Application/Login";
 
@@ -14,6 +10,9 @@ import Dashboard from "./assets/Application/Dashboard";
 
 // User Dashboard
 import UserDashboard from "./assets/Application/UserDashboard";
+
+// App Pages
+import Members from "./assets/Pages/Members";
 
 import ProtectedRoute from "./assets/Routes/ProtectedRoutes";
 
@@ -24,12 +23,8 @@ const App = () => {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-
           {/* Login */}
-          <Route
-            path="/"
-            element={<Login />}
-          />
+          <Route path="/" element={<Login />} />
 
           {/* Admin Dashboard */}
           <Route
@@ -51,6 +46,15 @@ const App = () => {
             }
           />
 
+          {/* Members Page */}
+          <Route
+            path="/members"
+            element={
+              <ProtectedRoute>
+                <Members />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </AuthProvider>
     </BrowserRouter>
