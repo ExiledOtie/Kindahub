@@ -1,6 +1,6 @@
 // Components/Sidebar.jsx
 
-import React from "react";
+import React, { useState } from "react";
 
 import {
   FaTachometerAlt,
@@ -12,14 +12,11 @@ import {
   FaCreditCard,
   FaFileAlt,
   FaUniversity,
-  FaTimes,
 } from "react-icons/fa";
+import { IoClose, IoReorderThree } from "react-icons/io5";
 
-const Sidebar = ({
-  role = "admin",
-  isOpen,
-  setIsOpen,
-}) => {
+const Sidebar = ({ role = "admin" }) => {
+  const [isOpen, setIsOpen] = useState(false);
 
   const adminLinks = [
     {
@@ -100,13 +97,22 @@ const Sidebar = ({
     },
   ];
 
-  const links =
-    role === "admin"
-      ? adminLinks
-      : userLinks;
+  const links = role === "admin" ? adminLinks : userLinks;
 
   return (
     <>
+      {/* Mobile open button */}
+      {!isOpen && (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="fixed top-4 left-4 z-50 lg:hidden p-2 rounded-md bg-slate-900 text-white shadow-lg"
+          type="button"
+          aria-label="Open sidebar"
+        >
+          <IoReorderThree size={22} />
+        </button>
+      )}
+
       {/* Overlay */}
       {isOpen && (
         <div
@@ -125,27 +131,22 @@ const Sidebar = ({
           px-3 py-4 border-r border-white/10
           transition-transform duration-300
 
-          ${
-            isOpen
-              ? "translate-x-0"
-              : "-translate-x-full lg:translate-x-0"
-          }
+          ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         `}
       >
         <div>
-
           {/* Logo + Close Button */}
           <div className="flex items-center justify-between mb-7">
-            <h1 className="text-lg font-bold tracking-wide">
-              ChamaPro
-            </h1>
+            <h1 className="text-lg font-bold tracking-wide">ChamaPro</h1>
 
             {/* Mobile Close */}
             <button
               onClick={() => setIsOpen(false)}
               className="lg:hidden text-white text-sm"
+              type="button"
+              aria-label="Close sidebar"
             >
-              <FaTimes />
+              <IoClose size={20} />
             </button>
           </div>
 
@@ -159,21 +160,13 @@ const Sidebar = ({
                   px-3 py-2 rounded-lg cursor-pointer
                   transition-all duration-300 text-[11px]
 
-                  ${
-                    item.active
-                      ? "bg-emerald-700"
-                      : "hover:bg-white/10"
-                  }
+                  ${item.active ? "bg-emerald-700" : "hover:bg-white/10"}
                 `}
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-[11px]">
-                    {item.icon}
-                  </span>
+                  <span className="text-[11px]">{item.icon}</span>
 
-                  <span className="font-medium">
-                    {item.name}
-                  </span>
+                  <span className="font-medium">{item.name}</span>
                 </div>
 
                 {item.badge && (
@@ -196,15 +189,11 @@ const Sidebar = ({
 
           <div>
             <h3 className="text-[11px] font-semibold leading-none">
-              {role === "admin"
-                ? "Super Admin"
-                : "John Kamau"}
+              {role === "admin" ? "Super Admin" : "John Kamau"}
             </h3>
 
             <p className="text-[10px] text-gray-300 mt-1">
-              {role === "admin"
-                ? "Online"
-                : "Member"}
+              {role === "admin" ? "Online" : "Member"}
             </p>
           </div>
         </div>
