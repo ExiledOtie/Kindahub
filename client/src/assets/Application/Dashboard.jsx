@@ -11,6 +11,13 @@ import {
   FaWallet,
 } from "react-icons/fa";
 
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+} from "recharts";
+
 const stats = [
   {
     title: "Total Members",
@@ -78,6 +85,13 @@ const stats = [
   },
 ];
 
+const loanStatusData = [
+  { name: "Approved", value: 45, color: "#4f46e5" },
+  { name: "Pending", value: 25, color: "#f59e0b" },
+  { name: "Rejected", value: 15, color: "#ef4444" },
+  { name: "Repaid", value: 15, color: "#10b981" },
+];
+
 const Dashboard = () => {
   return (
     <div className="flex bg-[#f5f7fb] min-h-screen">
@@ -127,8 +141,8 @@ const Dashboard = () => {
           ))}
         </div>
 
-        {/* Charts & Loan Requests */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mt-4">
+        {/* Charts + Pie Chart + Loan Requests */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 mt-4">
           {/* Contributions Overview */}
           <div className="lg:col-span-2 bg-white rounded-lg p-3 border border-gray-100 shadow-sm">
             <div className="flex items-center justify-between mb-4">
@@ -141,13 +155,13 @@ const Dashboard = () => {
               </select>
             </div>
 
-            {/* Fake Chart */}
-            <div className="h-[220px] flex items-end gap-2">
+            {/* Bar Chart */}
+            <div className="h-[180px] flex items-end gap-2">
               {[40, 60, 55, 75, 90, 80, 110, 120, 95, 130, 125, 140].map(
                 (height, index) => (
                   <div
                     key={index}
-                    className="flex-1 bg-indigo-400 rounded-t-sm"
+                    className="flex-1 bg-indigo-400 rounded-t-sm hover:bg-indigo-500 transition-all"
                     style={{ height: `${height}px` }}
                   ></div>
                 )
@@ -171,6 +185,65 @@ const Dashboard = () => {
                 "Dec",
               ].map((month) => (
                 <span key={month}>{month}</span>
+              ))}
+            </div>
+          </div>
+
+          {/* Pie Chart */}
+          <div className="bg-white rounded-lg p-3 border border-gray-100 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-[11px] font-semibold text-gray-700">
+                Loan Status Distribution
+              </h2>
+            </div>
+
+            <div className="h-[180px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={loanStatusData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={38}
+                    outerRadius={58}
+                    paddingAngle={2}
+                    dataKey="value"
+                  >
+                    {loanStatusData.map((entry, index) => (
+                      <Cell
+                        key={index}
+                        fill={entry.color}
+                      />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Legend */}
+            <div className="space-y-2 mt-2">
+              {loanStatusData.map((item, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between text-[9px]"
+                >
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="w-2 h-2 rounded-full"
+                      style={{
+                        backgroundColor: item.color,
+                      }}
+                    ></span>
+
+                    <span className="text-gray-600">
+                      {item.name}
+                    </span>
+                  </div>
+
+                  <span className="text-gray-500">
+                    {item.value}%
+                  </span>
+                </div>
               ))}
             </div>
           </div>
@@ -245,7 +318,10 @@ const Dashboard = () => {
 
               <tbody>
                 {[1, 2, 3, 4].map((item) => (
-                  <tr key={item} className="border-b last:border-none">
+                  <tr
+                    key={item}
+                    className="border-b last:border-none"
+                  >
                     <td className="py-2">John Kamau</td>
                     <td>Monthly</td>
                     <td>KES 12,000</td>
@@ -283,7 +359,10 @@ const Dashboard = () => {
 
               <tbody>
                 {[1, 2, 3, 4].map((item) => (
-                  <tr key={item} className="border-b last:border-none">
+                  <tr
+                    key={item}
+                    className="border-b last:border-none"
+                  >
                     <td className="py-2">Grace Atieno</td>
                     <td>KES 75,000</td>
                     <td>10 May 2024</td>
