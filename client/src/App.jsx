@@ -15,6 +15,8 @@ import DashboardLayout from "./assets/Layout/DashboardLayout";
 import Dashboard from "./assets/Application/Dashboard";
 import UserDashboard from "./assets/Application/UserDashboard";
 import Members from "./assets/Pages/Members";
+import Contributions from "./assets/Pages/Contributions";
+import Loans from "./assets/Pages/Loans";
 
 const App = () => {
   return (
@@ -35,6 +37,8 @@ const App = () => {
           >
             <Route index element={<Dashboard />} />
             <Route path="members" element={<Members />} />
+            <Route path="contributions" element={<Contributions />} />
+            <Route path="loans" element={<Loans />} />
           </Route>
 
           {/* USER ROUTES */}

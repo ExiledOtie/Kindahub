@@ -22,25 +22,25 @@ const Sidebar = ({ role = "admin" }) => {
 
   const adminLinks = [
     { name: "Dashboard", icon: <FaTachometerAlt />, path: "/dashboard" },
-    { name: "Members", icon: <FaUsers />, path: "/members" },
-    { name: "Contributions", icon: <FaCreditCard />, path: "/contributions" },
-    { name: "Loans", icon: <FaUniversity />, path: "/loans" },
-    { name: "Loan Payments", icon: <FaMoneyBillWave />, path: "/loan-payments" },
-    { name: "Reports", icon: <FaFileAlt />, path: "/reports" },
-    { name: "Announcements", icon: <FaBell />, path: "/announcements", badge: 6 },
-    { name: "Notifications", icon: <FaBell />, path: "/notifications", badge: 8 },
-    { name: "Settings", icon: <FaCog />, path: "/settings" },
+    { name: "Members", icon: <FaUsers />, path: "/dashboard/members" },
+    { name: "Contributions", icon: <FaCreditCard />, path: "/dashboard/contributions" },
+    { name: "Loans", icon: <FaUniversity />, path: "/dashboard/loans" },
+    { name: "Loan Payments", icon: <FaMoneyBillWave />, path: "/dashboard/loan-payments" },
+    { name: "Reports", icon: <FaFileAlt />, path: "/dashboard/reports" },
+    { name: "Announcements", icon: <FaBell />, path: "/dashboard/announcements", badge: 6 },
+    { name: "Notifications", icon: <FaBell />, path: "/dashboard/notifications", badge: 8 },
+    { name: "Settings", icon: <FaCog />, path: "/dashboard/settings" },
   ];
 
   const userLinks = [
     { name: "Dashboard", icon: <FaTachometerAlt />, path: "/user-dashboard" },
-    { name: "Contributions", icon: <FaCreditCard />, path: "/user-contributions" },
-    { name: "Loans", icon: <FaUniversity />, path: "/user-loans" },
-    { name: "Payments", icon: <FaMoneyBillWave />, path: "/user-payments" },
-    { name: "Statements", icon: <FaFileAlt />, path: "/user-statements" },
-    { name: "Notifications", icon: <FaBell />, path: "/user-notifications", badge: 8 },
-    { name: "Profile", icon: <FaUserCircle />, path: "/profile" },
-    { name: "Settings", icon: <FaCog />, path: "/settings" },
+    { name: "Contributions", icon: <FaCreditCard />, path: "/dashboard/user-contributions" },
+    { name: "Loans", icon: <FaUniversity />, path: "/dashboard/user-loans" },
+    { name: "Payments", icon: <FaMoneyBillWave />, path: "/dashboard/user-payments" },
+    { name: "Statements", icon: <FaFileAlt />, path: "/dashboard/user-statements" },
+    { name: "Notifications", icon: <FaBell />, path: "/dashboard/user-notifications", badge: 8 },
+    { name: "Profile", icon: <FaUserCircle />, path: "/dashboard/profile" },
+    { name: "Settings", icon: <FaCog />, path: "/dashboard/settings" },
   ];
 
   const links = role === "admin" ? adminLinks : userLinks;
