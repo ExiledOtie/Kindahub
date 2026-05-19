@@ -2,11 +2,21 @@ import React, { useState, useEffect } from "react";
 import { Search, Plus } from "lucide-react";
 import { ClipLoader } from "react-spinners";
 
+import MemberTabs from "./MemberTabs/MemberTabs";
+
 const Members = () => {
   const [loading, setLoading] = useState(true);
+
   const [search, setSearch] = useState("");
-  const [groupFilter, setGroupFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
+
+  const [groupFilter, setGroupFilter] =
+    useState("all");
+
+  const [statusFilter, setStatusFilter] =
+    useState("all");
+
+  const [selectedMember, setSelectedMember] =
+    useState(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -26,6 +36,7 @@ const Members = () => {
       status: "Active",
       joined: "12 Jan 2025",
     },
+
     {
       id: 2,
       memberNo: "MBR002",
@@ -35,6 +46,7 @@ const Members = () => {
       status: "Active",
       joined: "18 Jan 2025",
     },
+
     {
       id: 3,
       memberNo: "MBR003",
@@ -44,6 +56,7 @@ const Members = () => {
       status: "Inactive",
       joined: "25 Jan 2025",
     },
+
     {
       id: 4,
       memberNo: "MBR004",
@@ -55,19 +68,29 @@ const Members = () => {
     },
   ];
 
-  const filteredMembers = members.filter((member) => {
-    const matchesSearch =
-      member.name.toLowerCase().includes(search.toLowerCase()) ||
-      member.phone.includes(search);
+  const filteredMembers = members.filter(
+    (member) => {
+      const matchesSearch =
+        member.name
+          .toLowerCase()
+          .includes(search.toLowerCase()) ||
+        member.phone.includes(search);
 
-    const matchesGroup =
-      groupFilter === "all" || member.group === groupFilter;
+      const matchesGroup =
+        groupFilter === "all" ||
+        member.group === groupFilter;
 
-    const matchesStatus =
-      statusFilter === "all" || member.status === statusFilter;
+      const matchesStatus =
+        statusFilter === "all" ||
+        member.status === statusFilter;
 
-    return matchesSearch && matchesGroup && matchesStatus;
-  });
+      return (
+        matchesSearch &&
+        matchesGroup &&
+        matchesStatus
+      );
+    }
+  );
 
   const getGroupBadge = (group) => {
     switch (group) {
@@ -103,19 +126,19 @@ const Members = () => {
     <div className="p-4 space-y-4">
       {/* Header */}
 
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-xl font-semibold text-gray-800">
+          <h1 className="text-lg font-semibold text-gray-800">
             Members
           </h1>
 
           <p className="text-xs text-gray-500 mt-1">
-            Manage SACCO members and group assignments
+            Manage SACCO members
           </p>
         </div>
 
-        <button className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
-          <Plus size={16} />
+        <button className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-xs font-medium transition">
+          <Plus size={14} />
           Add Member
         </button>
       </div>
@@ -126,7 +149,7 @@ const Members = () => {
         <div className="flex flex-col lg:flex-row gap-3">
           <div className="relative flex-1">
             <Search
-              size={16}
+              size={15}
               className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
             />
 
@@ -134,32 +157,55 @@ const Members = () => {
               type="text"
               placeholder="Search member..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full border rounded-lg pl-10 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              onChange={(e) =>
+                setSearch(e.target.value)
+              }
+              className="w-full border rounded-lg pl-9 pr-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-green-500"
             />
           </div>
 
           <select
             value={groupFilter}
-            onChange={(e) => setGroupFilter(e.target.value)}
-            className="border rounded-lg px-3 py-2 text-sm"
+            onChange={(e) =>
+              setGroupFilter(e.target.value)
+            }
+            className="border rounded-lg px-3 py-2 text-xs"
           >
-            <option value="all">All Groups</option>
-            <option value="Savings">Savings</option>
+            <option value="all">
+              All Groups
+            </option>
+
+            <option value="Savings">
+              Savings
+            </option>
+
             <option value="Merry-Go-Round">
               Merry-Go-Round
             </option>
-            <option value="Investment">Investment</option>
+
+            <option value="Investment">
+              Investment
+            </option>
           </select>
 
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="border rounded-lg px-3 py-2 text-sm"
+            onChange={(e) =>
+              setStatusFilter(e.target.value)
+            }
+            className="border rounded-lg px-3 py-2 text-xs"
           >
-            <option value="all">All Status</option>
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
+            <option value="all">
+              All Status
+            </option>
+
+            <option value="Active">
+              Active
+            </option>
+
+            <option value="Inactive">
+              Inactive
+            </option>
           </select>
         </div>
       </div>
@@ -168,7 +214,7 @@ const Members = () => {
 
       <div className="bg-white border rounded-xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[800px] text-sm">
+          <table className="w-full min-w-[800px] text-xs">
             <thead className="bg-gray-50 border-b">
               <tr>
                 <th className="text-left px-4 py-3 font-semibold text-gray-600">
@@ -205,7 +251,12 @@ const Members = () => {
                     className="border-b hover:bg-gray-50"
                   >
                     <td className="px-4 py-3">
-                      <button className="text-green-600 hover:text-green-700 font-medium text-sm">
+                      <button
+                        onClick={() =>
+                          setSelectedMember(member)
+                        }
+                        className="text-green-600 hover:text-green-700 font-medium text-xs"
+                      >
                         {member.name}
                       </button>
                     </td>
@@ -220,7 +271,7 @@ const Members = () => {
 
                     <td className="px-4 py-3">
                       <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${getGroupBadge(
+                        className={`px-2 py-1 rounded-full text-[10px] font-medium ${getGroupBadge(
                           member.group
                         )}`}
                       >
@@ -230,7 +281,7 @@ const Members = () => {
 
                     <td className="px-4 py-3">
                       <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(
+                        className={`px-2 py-1 rounded-full text-[10px] font-medium ${getStatusBadge(
                           member.status
                         )}`}
                       >
@@ -247,7 +298,7 @@ const Members = () => {
                 <tr>
                   <td
                     colSpan="6"
-                    className="text-center py-8 text-gray-500"
+                    className="text-center py-8 text-gray-500 text-xs"
                   >
                     No members found
                   </td>
@@ -261,6 +312,17 @@ const Members = () => {
           Showing {filteredMembers.length} member(s)
         </div>
       </div>
+
+      {/* Tabs Section */}
+
+      {selectedMember && (
+        <MemberTabs
+          member={selectedMember}
+          onClose={() =>
+            setSelectedMember(null)
+          }
+        />
+      )}
     </div>
   );
 };
