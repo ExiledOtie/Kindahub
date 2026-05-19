@@ -8,11 +8,9 @@ const Members = () => {
 
   const [search, setSearch] = useState("");
 
-  const [groupFilter, setGroupFilter] =
-    useState("all");
+  const [groupFilter, setGroupFilter] = useState("all");
 
-  const [statusFilter, setStatusFilter] =
-    useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -64,29 +62,18 @@ const Members = () => {
     },
   ];
 
-  const filteredMembers = members.filter(
-    (member) => {
-      const matchesSearch =
-        member.name
-          .toLowerCase()
-          .includes(search.toLowerCase()) ||
-        member.phone.includes(search);
+  const filteredMembers = members.filter((member) => {
+    const matchesSearch =
+      member.name.toLowerCase().includes(search.toLowerCase()) ||
+      member.phone.includes(search);
 
-      const matchesGroup =
-        groupFilter === "all" ||
-        member.group === groupFilter;
+    const matchesGroup = groupFilter === "all" || member.group === groupFilter;
 
-      const matchesStatus =
-        statusFilter === "all" ||
-        member.status === statusFilter;
+    const matchesStatus =
+      statusFilter === "all" || member.status === statusFilter;
 
-      return (
-        matchesSearch &&
-        matchesGroup &&
-        matchesStatus
-      );
-    }
-  );
+    return matchesSearch && matchesGroup && matchesStatus;
+  });
 
   const getGroupBadge = (group) => {
     switch (group) {
@@ -124,13 +111,9 @@ const Members = () => {
 
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-lg font-semibold text-gray-800">
-            Members
-          </h1>
+          <h1 className="text-lg font-semibold text-gray-800">Members</h1>
 
-          <p className="text-xs text-gray-500 mt-1">
-            Manage SACCO members
-          </p>
+          <p className="text-xs text-gray-500 mt-1">Manage SACCO members</p>
         </div>
 
         <button className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-xs font-medium transition">
@@ -153,55 +136,35 @@ const Members = () => {
               type="text"
               placeholder="Search member..."
               value={search}
-              onChange={(e) =>
-                setSearch(e.target.value)
-              }
+              onChange={(e) => setSearch(e.target.value)}
               className="w-full border rounded-lg pl-9 pr-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-green-500"
             />
           </div>
 
           <select
             value={groupFilter}
-            onChange={(e) =>
-              setGroupFilter(e.target.value)
-            }
+            onChange={(e) => setGroupFilter(e.target.value)}
             className="border rounded-lg px-3 py-2 text-xs"
           >
-            <option value="all">
-              All Groups
-            </option>
+            <option value="all">All Groups</option>
 
-            <option value="Savings">
-              Savings
-            </option>
+            <option value="Savings">Savings</option>
 
-            <option value="Merry-Go-Round">
-              Merry-Go-Round
-            </option>
+            <option value="Merry-Go-Round">Merry-Go-Round</option>
 
-            <option value="Investment">
-              Investment
-            </option>
+            <option value="Investment">Investment</option>
           </select>
 
           <select
             value={statusFilter}
-            onChange={(e) =>
-              setStatusFilter(e.target.value)
-            }
+            onChange={(e) => setStatusFilter(e.target.value)}
             className="border rounded-lg px-3 py-2 text-xs"
           >
-            <option value="all">
-              All Status
-            </option>
+            <option value="all">All Status</option>
 
-            <option value="Active">
-              Active
-            </option>
+            <option value="Active">Active</option>
 
-            <option value="Inactive">
-              Inactive
-            </option>
+            <option value="Inactive">Inactive</option>
           </select>
         </div>
       </div>
@@ -242,13 +205,10 @@ const Members = () => {
             <tbody>
               {filteredMembers.length > 0 ? (
                 filteredMembers.map((member) => (
-                  <tr
-                    key={member.id}
-                    className="border-b hover:bg-gray-50"
-                  >
+                  <tr key={member.id} className="border-b hover:bg-gray-50">
                     <td className="px-4 py-3">
                       <Link
-                        to={`/members/${member.id}`}
+                        to={`/dashboard/members/${member.id}`}
                         className="text-green-600 hover:text-green-700 font-medium text-xs"
                       >
                         {member.name}
@@ -259,14 +219,12 @@ const Members = () => {
                       {member.memberNo}
                     </td>
 
-                    <td className="px-4 py-3 text-gray-600">
-                      {member.phone}
-                    </td>
+                    <td className="px-4 py-3 text-gray-600">{member.phone}</td>
 
                     <td className="px-4 py-3">
                       <span
                         className={`px-2 py-1 rounded-full text-[10px] font-medium ${getGroupBadge(
-                          member.group
+                          member.group,
                         )}`}
                       >
                         {member.group}
@@ -276,16 +234,14 @@ const Members = () => {
                     <td className="px-4 py-3">
                       <span
                         className={`px-2 py-1 rounded-full text-[10px] font-medium ${getStatusBadge(
-                          member.status
+                          member.status,
                         )}`}
                       >
                         {member.status}
                       </span>
                     </td>
 
-                    <td className="px-4 py-3 text-gray-600">
-                      {member.joined}
-                    </td>
+                    <td className="px-4 py-3 text-gray-600">{member.joined}</td>
                   </tr>
                 ))
               ) : (
