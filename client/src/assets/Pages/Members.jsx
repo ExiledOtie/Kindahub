@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Search, Plus } from "lucide-react";
 import { ClipLoader } from "react-spinners";
-
-import MemberTabs from "./MemberTabs/MemberTabs";
+import { Link } from "react-router-dom";
 
 const Members = () => {
   const [loading, setLoading] = useState(true);
@@ -14,9 +13,6 @@ const Members = () => {
 
   const [statusFilter, setStatusFilter] =
     useState("all");
-
-  const [selectedMember, setSelectedMember] =
-    useState(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -251,14 +247,12 @@ const Members = () => {
                     className="border-b hover:bg-gray-50"
                   >
                     <td className="px-4 py-3">
-                      <button
-                        onClick={() =>
-                          setSelectedMember(member)
-                        }
+                      <Link
+                        to={`/members/${member.id}`}
                         className="text-green-600 hover:text-green-700 font-medium text-xs"
                       >
                         {member.name}
-                      </button>
+                      </Link>
                     </td>
 
                     <td className="px-4 py-3 text-gray-600">
@@ -312,17 +306,6 @@ const Members = () => {
           Showing {filteredMembers.length} member(s)
         </div>
       </div>
-
-      {/* Tabs Section */}
-
-      {selectedMember && (
-        <MemberTabs
-          member={selectedMember}
-          onClose={() =>
-            setSelectedMember(null)
-          }
-        />
-      )}
     </div>
   );
 };

@@ -1,10 +1,13 @@
-
-
 const SummaryTab = () => {
   return (
-    <div className="summary-tab">
-      <h2>Summary</h2>
-      <p>This is the Summary tab content.</p>
+    <div className="space-y-2 text-xs text-gray-600">
+      <h2 className="text-sm font-semibold text-gray-800">
+        Summary
+      </h2>
+
+      <p>
+        This is the summary tab content.
+      </p>
     </div>
   );
 };
