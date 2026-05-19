@@ -1,20 +1,15 @@
 // src/Context/AuthContext.jsx
 
-import {
-  createContext,
-  useEffect,
-  useState,
-} from "react";
+import { createContext, useEffect, useState } from "react";
 
 import { useNavigate } from "react-router-dom";
 
 // ✅ CORRECT IMPORT
-import api from "../Utils/Axios";
+import api from "../Utils/axios";
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-
   const navigate = useNavigate();
 
   const [user, setUser] = useState(null);
@@ -28,21 +23,11 @@ export const AuthProvider = ({ children }) => {
   */
 
   const login = async (formData) => {
+    const res = await api.post("/auth/login", formData);
 
-    const res = await api.post(
-      "/auth/login",
-      formData
-    );
+    localStorage.setItem("token", res.data.token);
 
-    localStorage.setItem(
-      "token",
-      res.data.token
-    );
-
-    localStorage.setItem(
-      "user",
-      JSON.stringify(res.data.user)
-    );
+    localStorage.setItem("user", JSON.stringify(res.data.user));
 
     setUser(res.data.user);
 
@@ -56,7 +41,6 @@ export const AuthProvider = ({ children }) => {
   */
 
   const logout = () => {
-
     localStorage.removeItem("token");
 
     localStorage.removeItem("user");
@@ -73,16 +57,13 @@ export const AuthProvider = ({ children }) => {
   */
 
   useEffect(() => {
-
-    const storedUser =
-      localStorage.getItem("user");
+    const storedUser = localStorage.getItem("user");
 
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
 
     setLoading(false);
-
   }, []);
 
   return (

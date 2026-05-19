@@ -1,4 +1,6 @@
 import React from "react";
+import { ClipLoader } from "react-spinners";
+
 import {
   FaUserCircle,
   FaMoneyBillWave,
@@ -12,7 +14,20 @@ import {
   MdOutlineCalendarMonth,
 } from "react-icons/md";
 
-const SummaryTab = () => {
+const SummaryTab = ({ loading = false }) => {
+  const member = {
+    initials: "JD",
+    name: "John Doe",
+    status: "Active",
+    memberNo: "MBR001",
+    joinedDate: "12 Jan 2025",
+    memberSince: "Jan 2025",
+    memberSinceText: "4 months ago",
+    lastLogin: "16 May 2026 10:23 AM",
+    groupType: "ROSCA",
+    role: "Member",
+  };
+
   const stats = [
     {
       title: "Total Contributions",
@@ -40,8 +55,8 @@ const SummaryTab = () => {
     },
     {
       title: "Member Since",
-      value: "Jan 2025",
-      subtitle: "4 months ago",
+      value: member.memberSince,
+      subtitle: member.memberSinceText,
       icon: <MdOutlineCalendarMonth />,
       bg: "bg-purple-100",
       color: "text-purple-600",
@@ -79,51 +94,59 @@ const SummaryTab = () => {
     },
   ];
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[70vh]">
+        <ClipLoader size={35} color="#16a34a" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      {/* TOP PROFILE CARD */}
+      {/* PROFILE CARD */}
       <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
           {/* LEFT */}
-          <div className="flex items-start gap-3">
+          <div className="flex items-start gap-4">
             <div className="h-14 w-14 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-bold text-lg">
-              JD
+              {member.initials}
             </div>
 
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="text-sm font-semibold text-gray-800">
-                  John Doe
+                  {member.name}
                 </h2>
 
                 <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-600 text-[10px] font-medium">
-                  Active
+                  {member.status}
                 </span>
               </div>
 
-              <p className="text-[11px] text-gray-500 mt-1">
-                Member No: MBR001
-              </p>
+              <div className="mt-2 space-y-1">
+                <p className="text-[11px] text-gray-500">
+                  Member No: {member.memberNo}
+                </p>
 
-              <p className="text-[11px] text-gray-500">
-                Joined on 12 Jan 2025
-              </p>
+                <p className="text-[11px] text-gray-500">
+                  Joined on {member.joinedDate}
+                </p>
+              </div>
             </div>
           </div>
 
           {/* RIGHT */}
-          <div className="flex flex-col lg:items-end gap-2">
-            <div className="text-right">
-              <p className="text-[10px] text-gray-400">
-                Last Login
-              </p>
+          <div className="flex flex-col lg:items-end gap-3">
+            <div className="text-left lg:text-right">
+              <p className="text-[10px] text-gray-400">Last Login</p>
 
-              <p className="text-[11px] text-gray-700 font-medium">
-                16 May 2026 10:23 AM
+              <p className="text-[11px] text-gray-700 font-medium mt-1">
+                {member.lastLogin}
               </p>
             </div>
 
-            <button className="flex items-center gap-2 border border-blue-200 text-blue-600 px-3 py-1.5 rounded-lg text-[11px] hover:bg-blue-50 transition">
+            <button className="flex items-center justify-center gap-2 border border-blue-200 text-blue-600 px-3 py-2 rounded-lg text-[11px] hover:bg-blue-50 transition-all duration-200">
               <MdLockReset className="text-sm" />
               Reset Password
             </button>
@@ -132,21 +155,21 @@ const SummaryTab = () => {
       </div>
 
       {/* STATS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
         {stats.map((item, index) => (
           <div
             key={index}
-            className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm"
+            className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200"
           >
             <div className="flex items-start gap-3">
               <div
-                className={`h-10 w-10 rounded-full flex items-center justify-center text-lg ${item.bg} ${item.color}`}
+                className={`h-11 w-11 rounded-full flex items-center justify-center text-lg ${item.bg} ${item.color}`}
               >
                 {item.icon}
               </div>
 
-              <div>
-                <p className="text-[10px] text-gray-500">
+              <div className="flex-1">
+                <p className="text-[10px] uppercase tracking-wide text-gray-500">
                   {item.title}
                 </p>
 
@@ -163,12 +186,12 @@ const SummaryTab = () => {
         ))}
       </div>
 
-      {/* BOTTOM CARDS */}
+      {/* INFO SECTION */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         {/* GROUP INFO */}
         <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="h-9 w-9 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="h-10 w-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
               <FaUsers />
             </div>
 
@@ -183,25 +206,28 @@ const SummaryTab = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3 text-[11px]">
+          <div className="grid grid-cols-3 gap-4 text-[11px]">
             <div>
               <p className="text-gray-400">Group Type</p>
+
               <p className="font-medium text-gray-700 mt-1">
-                ROSCA
+                {member.groupType}
               </p>
             </div>
 
             <div>
-              <p className="text-gray-400">Savings Group</p>
+              <p className="text-gray-400">Role</p>
+
               <p className="font-medium text-gray-700 mt-1">
-                Member
+                {member.role}
               </p>
             </div>
 
             <div>
               <p className="text-gray-400">Status</p>
+
               <p className="font-medium text-green-600 mt-1">
-                Active
+                {member.status}
               </p>
             </div>
           </div>
@@ -209,16 +235,16 @@ const SummaryTab = () => {
 
         {/* ACCOUNT STATUS */}
         <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-          <h3 className="text-sm font-semibold text-gray-800 mb-4">
+          <h3 className="text-sm font-semibold text-gray-800 mb-5">
             Account Status
           </h3>
 
-          <div className="space-y-3 text-[11px]">
+          <div className="space-y-4 text-[11px]">
             <div className="flex items-center justify-between">
               <span className="text-gray-400">Status</span>
 
               <span className="text-green-600 font-medium">
-                Active
+                {member.status}
               </span>
             </div>
 
@@ -226,7 +252,7 @@ const SummaryTab = () => {
               <span className="text-gray-400">Last Login</span>
 
               <span className="text-gray-700">
-                16 May 2026 10:23 AM
+                {member.lastLogin}
               </span>
             </div>
 
@@ -234,7 +260,7 @@ const SummaryTab = () => {
               <span className="text-gray-400">Account Created</span>
 
               <span className="text-gray-700">
-                12 Jan 2025
+                {member.joinedDate}
               </span>
             </div>
           </div>
@@ -243,10 +269,16 @@ const SummaryTab = () => {
 
       {/* RECENT ACTIVITY */}
       <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-gray-800">
-            Recent Activity
-          </h3>
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-800">
+              Recent Activity
+            </h3>
+
+            <p className="text-[10px] text-gray-400 mt-1">
+              Latest member account activities
+            </p>
+          </div>
 
           <button className="text-[11px] text-blue-600 hover:underline">
             View all logs
@@ -257,7 +289,7 @@ const SummaryTab = () => {
           {activities.map((item, index) => (
             <div
               key={index}
-              className="flex items-start justify-between gap-3"
+              className="flex items-start justify-between gap-3 border-b border-gray-100 pb-4 last:border-none last:pb-0"
             >
               <div className="flex items-start gap-3">
                 <div

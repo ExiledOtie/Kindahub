@@ -18,6 +18,7 @@ import Members from "./assets/Pages/Members";
 import Contributions from "./assets/Pages/Contributions";
 import Loans from "./assets/Pages/Loans";
 import MemberProfile from "./assets/Pages/MemberProfile";
+import ProfileTab from "./assets/Pages/MemberTabs/ProfileTab";
 
 const App = () => {
   return (
@@ -41,6 +42,7 @@ const App = () => {
             <Route path="contributions" element={<Contributions />} />
             <Route path="loans" element={<Loans />} />
             <Route path="members/:id" element={<MemberProfile />} />
+            <Route path="profile" element={<ProfileTab />} />
           </Route>
 
           {/* USER ROUTES */}
