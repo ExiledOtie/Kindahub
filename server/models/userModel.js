@@ -160,23 +160,30 @@ const getMemberProfileModel = async (userId) => {
 */
 
 const getAllUsersModel = async () => {
-  const result = await pool.query(
-    `
+  const result = await pool.query(`
     SELECT
-      id,
-      fullname,
-      email,
-      phone,
-      role,
-      username,
-      status,
-      created_at
+      u.id,
+      u.fullname,
+      u.email,
+      u.phone,
+      u.role,
+      u.username,
+      u.status,
+      u.created_at,
 
-    FROM users
+      g.id AS group_id,
+      g.name AS group_name
 
-    ORDER BY id DESC
-    `
-  );
+    FROM users u
+
+    LEFT JOIN user_groups ug
+      ON ug.user_id = u.id
+
+    LEFT JOIN groups g
+      ON g.id = ug.group_id
+
+    ORDER BY u.id DESC
+  `);
 
   return result.rows;
 };

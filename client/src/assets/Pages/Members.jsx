@@ -82,12 +82,10 @@ const Members = () => {
       member.username?.toLowerCase().includes(search.toLowerCase());
 
     const matchesGroup =
-      groupFilter === "all" ||
-      member.group_name === groupFilter;
+      groupFilter === "all" || member.group_name === groupFilter;
 
     const matchesStatus =
-      statusFilter === "all" ||
-      member.status === statusFilter;
+      statusFilter === "all" || member.status === statusFilter;
 
     return matchesSearch && matchesGroup && matchesStatus;
   });
@@ -102,7 +100,19 @@ const Members = () => {
       ? "bg-green-100 text-green-700"
       : "bg-red-100 text-red-700";
   };
+  
+  const getGroupBadge = (groupName) => {
+    switch (groupName) {
+      case "Kinda Family":
+        return "bg-blue-100 text-blue-700";
 
+      case "13 Amigos":
+        return "bg-purple-100 text-purple-700";
+
+      default:
+        return "bg-gray-100 text-gray-700";
+    }
+  };
   /*
   |--------------------------------------------------------------------------
   | LOADING STATE
@@ -121,13 +131,9 @@ const Members = () => {
       {/* HEADER */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-lg font-semibold text-gray-800">
-            Members
-          </h1>
+          <h1 className="text-lg font-semibold text-gray-800">Members</h1>
 
-          <p className="text-xs text-gray-500 mt-1">
-            Manage SACCO members
-          </p>
+          <p className="text-xs text-gray-500 mt-1">Manage SACCO members</p>
         </div>
 
         <button
@@ -200,10 +206,7 @@ const Members = () => {
             <tbody>
               {filteredMembers.length > 0 ? (
                 filteredMembers.map((member) => (
-                  <tr
-                    key={member.id}
-                    className="border-b hover:bg-gray-50"
-                  >
+                  <tr key={member.id} className="border-b hover:bg-gray-50">
                     <td className="px-4 py-3">
                       <Link
                         to={`/dashboard/members/${member.id}`}
@@ -217,18 +220,22 @@ const Members = () => {
                       {member.username}
                     </td>
 
-                    <td className="px-4 py-3 text-gray-600">
-                      {member.phone}
-                    </td>
+                    <td className="px-4 py-3 text-gray-600">{member.phone}</td>
 
-                    <td className="px-4 py-3 text-gray-600">
-                      {member.group_name}
+                    <td className="px-4 py-3">
+                      <span
+                        className={`px-2 py-1 rounded-full text-[10px] font-medium ${getGroupBadge(
+                          member.group_name,
+                        )}`}
+                      >
+                        {member.group_name || "No Group"}
+                      </span>
                     </td>
 
                     <td className="px-4 py-3">
                       <span
                         className={`px-2 py-1 rounded-full text-[10px] font-medium ${getStatusBadge(
-                          member.status
+                          member.status,
                         )}`}
                       >
                         {member.status}

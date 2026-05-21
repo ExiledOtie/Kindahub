@@ -4,11 +4,29 @@ const router = express.Router();
 
 const {
   createGroup,
+  getGroups,
 } = require("../controllers/groupController");
 
 const authMiddleware = require("../middleware/authMiddleware");
-
 const authorizeRoles = require("../middleware/roleMiddleware");
+
+/*
+|--------------------------------------------------------------------------
+| GET GROUPS
+|--------------------------------------------------------------------------
+*/
+
+router.get(
+  "/",
+  authMiddleware,
+  getGroups
+);
+
+/*
+|--------------------------------------------------------------------------
+| CREATE GROUP
+|--------------------------------------------------------------------------
+*/
 
 router.post(
   "/create",

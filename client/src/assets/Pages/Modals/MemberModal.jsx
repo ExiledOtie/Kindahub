@@ -3,12 +3,7 @@ import Swal from "sweetalert2";
 import { X } from "lucide-react";
 import axios from "../../Utils/axios";
 
-const MemberModal = ({
-  open,
-  onClose,
-  groups = [],
-  onSuccess,
-}) => {
+const MemberModal = ({ open, onClose, groups = [], onSuccess }) => {
   const [creating, setCreating] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -18,7 +13,7 @@ const MemberModal = ({
     password: "",
     group_id: "",
   });
-
+  console.log("GROUPS:", groups);
   if (!open) return null;
 
   const handleChange = (e) => {
@@ -45,17 +40,17 @@ const MemberModal = ({
       setCreating(true);
 
       const selectedGroup = groups.find(
-        (g) => Number(g.id) === Number(formData.group_id)
+        (g) => Number(g.id) === Number(formData.group_id),
       );
 
-      await axios.post("/users", {
+      await axios.post("/users/create", {
         fullname: formData.fullname,
         email: formData.email,
         phone: formData.phone,
         password: formData.password,
         role: "member",
         group_id: formData.group_id,
-        group_name: selectedGroup?.name || null,
+        group_name: selectedGroup?.name,
       });
 
       Swal.fire({
@@ -76,24 +71,20 @@ const MemberModal = ({
       Swal.fire({
         icon: "error",
         title: "Error",
-        text:
-          error.response?.data?.message ||
-          "Failed to create member",
+        text: error.response?.data?.message || "Failed to create member",
       });
     } finally {
       setCreating(false);
     }
   };
+  
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-lg w-full max-w-lg">
-
         {/* HEADER */}
         <div className="flex justify-between items-center p-4 border-b">
-          <h2 className="text-sm font-semibold">
-            Register New Member
-          </h2>
+          <h2 className="text-sm font-semibold">Register New Member</h2>
 
           <button
             onClick={onClose}
@@ -105,12 +96,9 @@ const MemberModal = ({
 
         {/* FORM */}
         <form onSubmit={handleSubmit} className="p-4 space-y-3">
-
           {/* FULL NAME */}
           <div>
-            <label className="block text-xs mb-1 font-medium">
-              Full Name
-            </label>
+            <label className="block text-xs mb-1 font-medium">Full Name</label>
 
             <input
               type="text"
@@ -124,9 +112,7 @@ const MemberModal = ({
 
           {/* EMAIL */}
           <div>
-            <label className="block text-xs mb-1 font-medium">
-              Email
-            </label>
+            <label className="block text-xs mb-1 font-medium">Email</label>
 
             <input
               type="email"
@@ -156,9 +142,7 @@ const MemberModal = ({
 
           {/* PASSWORD */}
           <div>
-            <label className="block text-xs mb-1 font-medium">
-              Password
-            </label>
+            <label className="block text-xs mb-1 font-medium">Password</label>
 
             <input
               type="password"
@@ -172,9 +156,7 @@ const MemberModal = ({
 
           {/* GROUP */}
           <div>
-            <label className="block text-xs mb-1 font-medium">
-              Group
-            </label>
+            <label className="block text-xs mb-1 font-medium">Group</label>
 
             <select
               name="group_id"
@@ -184,9 +166,7 @@ const MemberModal = ({
               className="w-full border rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-green-500 outline-none"
             >
               <option value="">
-                {groups.length === 0
-                  ? "No groups available"
-                  : "Select Group"}
+                {groups.length === 0 ? "No groups available" : "Select Group"}
               </option>
 
               {groups.map((group) => (
@@ -215,7 +195,6 @@ const MemberModal = ({
               {creating ? "Creating..." : "Create Member"}
             </button>
           </div>
-
         </form>
       </div>
     </div>
