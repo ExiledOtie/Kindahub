@@ -10,6 +10,8 @@ const seedSuperAdmin = require("./seeders/superAdminSeeder");
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const groupRoutes = require("./routes/groupRoutes");
+const seedGroups = require("./seeders/groupSeeder");
+
 
 const app = express();
 
@@ -18,6 +20,7 @@ app.use(express.json());
 
 // SEEDER
 seedSuperAdmin();
+seedGroups();
 
 // ROUTES
 app.use("/api/auth", authRoutes);

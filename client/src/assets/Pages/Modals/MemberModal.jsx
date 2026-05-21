@@ -55,24 +55,21 @@ const MemberModal = ({
         password: formData.password,
         role: "member",
         group_id: formData.group_id,
-        group_name: selectedGroup?.name,
+        group_name: selectedGroup?.name || null,
       });
 
       Swal.fire({
         icon: "success",
         title: "Success",
         text: "Member created successfully",
-        timer: 2000,
+        timer: 1500,
         showConfirmButton: false,
       });
 
       resetForm();
-
       onClose();
 
-      if (onSuccess) {
-        onSuccess();
-      }
+      if (onSuccess) onSuccess();
     } catch (error) {
       console.log(error);
 
@@ -91,8 +88,8 @@ const MemberModal = ({
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-lg w-full max-w-lg">
-        {/* Header */}
 
+        {/* HEADER */}
         <div className="flex justify-between items-center p-4 border-b">
           <h2 className="text-sm font-semibold">
             Register New Member
@@ -106,12 +103,10 @@ const MemberModal = ({
           </button>
         </div>
 
-        {/* Form */}
+        {/* FORM */}
+        <form onSubmit={handleSubmit} className="p-4 space-y-3">
 
-        <form
-          onSubmit={handleSubmit}
-          className="p-4 space-y-3"
-        >
+          {/* FULL NAME */}
           <div>
             <label className="block text-xs mb-1 font-medium">
               Full Name
@@ -127,6 +122,7 @@ const MemberModal = ({
             />
           </div>
 
+          {/* EMAIL */}
           <div>
             <label className="block text-xs mb-1 font-medium">
               Email
@@ -142,6 +138,7 @@ const MemberModal = ({
             />
           </div>
 
+          {/* PHONE */}
           <div>
             <label className="block text-xs mb-1 font-medium">
               Phone Number
@@ -157,6 +154,7 @@ const MemberModal = ({
             />
           </div>
 
+          {/* PASSWORD */}
           <div>
             <label className="block text-xs mb-1 font-medium">
               Password
@@ -172,6 +170,7 @@ const MemberModal = ({
             />
           </div>
 
+          {/* GROUP */}
           <div>
             <label className="block text-xs mb-1 font-medium">
               Group
@@ -185,20 +184,20 @@ const MemberModal = ({
               className="w-full border rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-green-500 outline-none"
             >
               <option value="">
-                Select Group
+                {groups.length === 0
+                  ? "No groups available"
+                  : "Select Group"}
               </option>
 
               {groups.map((group) => (
-                <option
-                  key={group.id}
-                  value={group.id}
-                >
+                <option key={group.id} value={group.id}>
                   {group.name}
                 </option>
               ))}
             </select>
           </div>
 
+          {/* ACTIONS */}
           <div className="flex justify-end gap-2 pt-3">
             <button
               type="button"
@@ -213,11 +212,10 @@ const MemberModal = ({
               disabled={creating}
               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-xs"
             >
-              {creating
-                ? "Creating..."
-                : "Create Member"}
+              {creating ? "Creating..." : "Create Member"}
             </button>
           </div>
+
         </form>
       </div>
     </div>

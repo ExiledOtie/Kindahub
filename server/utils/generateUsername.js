@@ -2,8 +2,7 @@ const pool = require("../config/db");
 
 const prefixes = {
   "Kinda Family": "KD",
-  "32 Amigos": "AM",
-  "Loaning Group": "LN",
+  "13 Amigos": "AM",
 };
 
 const generateUsername = async (groupName) => {
