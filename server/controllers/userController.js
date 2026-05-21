@@ -6,8 +6,10 @@ const generateUsername = require("../utils/generateUsername");
 
 const {
   createUserModel,
+  assignUserToGroupModel,
   getAllUsersModel,
   getSingleUserModel,
+  getMemberProfileModel,
   findUserByEmailModel,
   updateUserModel,
   deleteUserModel,
@@ -21,13 +23,13 @@ const {
 
 const createUser = async (req, res) => {
   try {
-
     const {
       fullname,
       email,
       phone,
       password,
       role,
+      group_id,
       group_name,
     } = req.body;
 
@@ -59,19 +61,25 @@ const createUser = async (req, res) => {
       username
     );
 
+    // ASSIGN USER TO GROUP
+    if (group_id) {
+      await assignUserToGroupModel(
+        user.id,
+        group_id
+      );
+    }
+
     res.status(201).json({
       message: "User created successfully",
       user,
     });
 
   } catch (error) {
-
     console.log(error);
 
     res.status(500).json({
       message: "Server error",
     });
-
   }
 };
 
@@ -83,20 +91,17 @@ const createUser = async (req, res) => {
 
 const getAllUsers = async (req, res) => {
   try {
-
     const users =
       await getAllUsersModel();
 
     res.status(200).json(users);
 
   } catch (error) {
-
     console.log(error);
 
     res.status(500).json({
       message: "Server error",
     });
-
   }
 };
 
@@ -108,7 +113,6 @@ const getAllUsers = async (req, res) => {
 
 const getSingleUser = async (req, res) => {
   try {
-
     const user =
       await getSingleUserModel(req.params.id);
 
@@ -121,13 +125,41 @@ const getSingleUser = async (req, res) => {
     res.status(200).json(user);
 
   } catch (error) {
-
     console.log(error);
 
     res.status(500).json({
       message: "Server error",
     });
+  }
+};
 
+/*
+|--------------------------------------------------------------------------
+| GET MEMBER PROFILE
+|--------------------------------------------------------------------------
+*/
+
+const getMemberProfile = async (req, res) => {
+  try {
+    const profile =
+      await getMemberProfileModel(
+        req.params.id
+      );
+
+    if (!profile || profile.length === 0) {
+      return res.status(404).json({
+        message: "Member not found",
+      });
+    }
+
+    res.status(200).json(profile);
+
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      message: "Server error",
+    });
   }
 };
 
@@ -139,7 +171,6 @@ const getSingleUser = async (req, res) => {
 
 const updateUser = async (req, res) => {
   try {
-
     const {
       fullname,
       email,
@@ -158,19 +189,23 @@ const updateUser = async (req, res) => {
         status
       );
 
+    if (!updatedUser) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
     res.status(200).json({
       message: "User updated successfully",
       user: updatedUser,
     });
 
   } catch (error) {
-
     console.log(error);
 
     res.status(500).json({
       message: "Server error",
     });
-
   }
 };
 
@@ -182,21 +217,20 @@ const updateUser = async (req, res) => {
 
 const deleteUser = async (req, res) => {
   try {
-
-    await deleteUserModel(req.params.id);
+    await deleteUserModel(
+      req.params.id
+    );
 
     res.status(200).json({
       message: "User deleted successfully",
     });
 
   } catch (error) {
-
     console.log(error);
 
     res.status(500).json({
       message: "Server error",
     });
-
   }
 };
 
@@ -204,6 +238,7 @@ module.exports = {
   createUser,
   getAllUsers,
   getSingleUser,
+  getMemberProfile,
   updateUser,
   deleteUser,
 };

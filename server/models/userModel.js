@@ -1,5 +1,3 @@
-// models/userModel.js
-
 const pool = require("../config/db");
 
 /*
@@ -16,7 +14,6 @@ const createUserModel = async (
   role,
   username
 ) => {
-
   const result = await pool.query(
     `
     INSERT INTO users
@@ -32,14 +29,14 @@ const createUserModel = async (
     VALUES ($1, $2, $3, $4, $5, $6)
 
     RETURNING
-    id,
-    fullname,
-    email,
-    phone,
-    role,
-    username,
-    status,
-    created_at
+      id,
+      fullname,
+      email,
+      phone,
+      role,
+      username,
+      status,
+      created_at
     `,
     [
       fullname,
@@ -56,12 +53,113 @@ const createUserModel = async (
 
 /*
 |--------------------------------------------------------------------------
+| ASSIGN USER TO GROUP
+|--------------------------------------------------------------------------
+*/
+
+const assignUserToGroupModel = async (
+  userId,
+  groupId,
+  role = "member"
+) => {
+  const result = await pool.query(
+    `
+    INSERT INTO user_groups
+    (
+      user_id,
+      group_id,
+      role
+    )
+
+    VALUES ($1, $2, $3)
+
+    RETURNING *
+    `,
+    [
+      userId,
+      groupId,
+      role,
+    ]
+  );
+
+  return result.rows[0];
+};
+
+/*
+|--------------------------------------------------------------------------
+| GET USER GROUPS
+|--------------------------------------------------------------------------
+*/
+
+const getUserGroupsModel = async (userId) => {
+  const result = await pool.query(
+    `
+    SELECT
+      g.id,
+      g.name,
+      g.description,
+      ug.role
+
+    FROM user_groups ug
+
+    INNER JOIN groups g
+      ON g.id = ug.group_id
+
+    WHERE ug.user_id = $1
+    `,
+    [userId]
+  );
+
+  return result.rows;
+};
+
+/*
+|--------------------------------------------------------------------------
+| GET MEMBER PROFILE
+|--------------------------------------------------------------------------
+*/
+
+const getMemberProfileModel = async (userId) => {
+  const result = await pool.query(
+    `
+    SELECT
+      u.id,
+      u.fullname,
+      u.email,
+      u.phone,
+      u.username,
+      u.role,
+      u.status,
+      u.created_at,
+
+      g.id AS group_id,
+      g.name AS group_name,
+
+      ug.role AS group_role
+
+    FROM users u
+
+    LEFT JOIN user_groups ug
+      ON ug.user_id = u.id
+
+    LEFT JOIN groups g
+      ON g.id = ug.group_id
+
+    WHERE u.id = $1
+    `,
+    [userId]
+  );
+
+  return result.rows;
+};
+
+/*
+|--------------------------------------------------------------------------
 | GET ALL USERS
 |--------------------------------------------------------------------------
 */
 
 const getAllUsersModel = async () => {
-
   const result = await pool.query(
     `
     SELECT
@@ -90,7 +188,6 @@ const getAllUsersModel = async () => {
 */
 
 const getSingleUserModel = async (id) => {
-
   const result = await pool.query(
     `
     SELECT
@@ -120,7 +217,6 @@ const getSingleUserModel = async (id) => {
 */
 
 const findUserByEmailModel = async (email) => {
-
   const result = await pool.query(
     `
     SELECT *
@@ -140,7 +236,6 @@ const findUserByEmailModel = async (email) => {
 */
 
 const findUserByUsernameModel = async (username) => {
-
   const result = await pool.query(
     `
     SELECT *
@@ -167,7 +262,6 @@ const updateUserModel = async (
   role,
   status
 ) => {
-
   const result = await pool.query(
     `
     UPDATE users
@@ -211,7 +305,6 @@ const updateUserModel = async (
 */
 
 const deleteUserModel = async (id) => {
-
   await pool.query(
     `
     DELETE FROM users
@@ -225,6 +318,9 @@ const deleteUserModel = async (id) => {
 
 module.exports = {
   createUserModel,
+  assignUserToGroupModel,
+  getUserGroupsModel,
+  getMemberProfileModel,
   getAllUsersModel,
   getSingleUserModel,
   findUserByEmailModel,
