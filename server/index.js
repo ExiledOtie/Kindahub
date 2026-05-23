@@ -12,6 +12,7 @@ const userRoutes = require("./routes/userRoutes");
 const groupRoutes = require("./routes/groupRoutes");
 const seedGroups = require("./seeders/groupSeeder");
 const contributionRoutes = require("./routes/contributionRoutes");
+const savingsRoutes = require("./routes/savingsRoutes");
 
 
 const app = express();
@@ -28,6 +29,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/groups", groupRoutes);
 app.use("/api/contributions", contributionRoutes);
+app.use("/api/savings", savingsRoutes);
 
 app.get("/", (req, res) => {
   res.send("Kindahub API Running");
