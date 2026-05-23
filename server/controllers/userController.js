@@ -1,5 +1,3 @@
-// controllers/userController.js
-
 const bcrypt = require("bcryptjs");
 
 const generateUsername = require("../utils/generateUsername");
@@ -33,7 +31,6 @@ const createUser = async (req, res) => {
       group_name,
     } = req.body;
 
-    // CHECK EMAIL
     const existingUser =
       await findUserByEmailModel(email);
 
@@ -43,15 +40,12 @@ const createUser = async (req, res) => {
       });
     }
 
-    // GENERATE USERNAME
     const username =
       await generateUsername(group_name);
 
-    // HASH PASSWORD
     const hashedPassword =
       await bcrypt.hash(password, 10);
 
-    // CREATE USER
     const user = await createUserModel(
       fullname,
       email,
@@ -61,7 +55,6 @@ const createUser = async (req, res) => {
       username
     );
 
-    // ASSIGN USER TO GROUP
     if (group_id) {
       await assignUserToGroupModel(
         user.id,
@@ -107,6 +100,30 @@ const getAllUsers = async (req, res) => {
 
 /*
 |--------------------------------------------------------------------------
+| GET USER STATS
+|--------------------------------------------------------------------------
+*/
+
+const getUserStats = async (req, res) => {
+  try {
+    const users =
+      await getAllUsersModel();
+
+    res.status(200).json({
+      totalUsers: users.length,
+    });
+
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      message: "Server error",
+    });
+  }
+};
+
+/*
+|--------------------------------------------------------------------------
 | GET SINGLE USER
 |--------------------------------------------------------------------------
 */
@@ -115,6 +132,34 @@ const getSingleUser = async (req, res) => {
   try {
     const user =
       await getSingleUserModel(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json(user);
+
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      message: "Server error",
+    });
+  }
+};
+
+/*
+|--------------------------------------------------------------------------
+| GET MY PROFILE
+|--------------------------------------------------------------------------
+*/
+
+const getMyProfile = async (req, res) => {
+  try {
+    const user =
+      await getSingleUserModel(req.user.id);
 
     if (!user) {
       return res.status(404).json({
@@ -211,6 +256,52 @@ const updateUser = async (req, res) => {
 
 /*
 |--------------------------------------------------------------------------
+| UPDATE MY PROFILE
+|--------------------------------------------------------------------------
+*/
+
+const updateMyProfile = async (req, res) => {
+  try {
+    const currentUser =
+      await getSingleUserModel(
+        req.user.id
+      );
+
+    if (!currentUser) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    const {
+      fullname,
+      email,
+      phone,
+    } = req.body;
+
+    const updatedUser =
+      await updateUserModel(
+        req.user.id,
+        fullname,
+        email,
+        phone,
+        currentUser.role,
+        currentUser.status
+      );
+
+    res.status(200).json(updatedUser);
+
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      message: "Server error",
+    });
+  }
+};
+
+/*
+|--------------------------------------------------------------------------
 | DELETE USER
 |--------------------------------------------------------------------------
 */
@@ -237,8 +328,11 @@ const deleteUser = async (req, res) => {
 module.exports = {
   createUser,
   getAllUsers,
+  getUserStats,
   getSingleUser,
+  getMyProfile,
   getMemberProfile,
   updateUser,
+  updateMyProfile,
   deleteUser,
 };

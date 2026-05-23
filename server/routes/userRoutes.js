@@ -1,5 +1,3 @@
-// routes/userRoutes.js
-
 const express = require("express");
 
 const router = express.Router();
@@ -7,8 +5,11 @@ const router = express.Router();
 const {
   createUser,
   getAllUsers,
+  getUserStats,
   getSingleUser,
+  getMyProfile,
   updateUser,
+  updateMyProfile,
   deleteUser,
 } = require("../controllers/userController");
 
@@ -17,6 +18,30 @@ const authMiddleware =
 
 const authorizeRoles =
   require("../middleware/roleMiddleware");
+
+/*
+|--------------------------------------------------------------------------
+| PROFILE ROUTES
+|--------------------------------------------------------------------------
+*/
+
+router.get(
+  "/profile/me",
+  authMiddleware,
+  getMyProfile
+);
+
+router.put(
+  "/profile/me",
+  authMiddleware,
+  updateMyProfile
+);
+
+router.get(
+  "/stats/count",
+  authMiddleware,
+  getUserStats
+);
 
 /*
 |--------------------------------------------------------------------------
