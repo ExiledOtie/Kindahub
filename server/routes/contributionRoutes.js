@@ -1,15 +1,21 @@
-const express = require("express");
+const express =
+  require("express");
 
-const router = express.Router();
-
-const authMiddleware =
-  require("../middleware/authMiddleware");
+const router =
+  express.Router();
 
 const {
   createContribution,
-  getMemberContributions,
+  getUserContributions,
+  getAllContributions,
+  getContributionStats,
   deleteContribution,
-} = require("../controllers/contributionController");
+} = require(
+  "../controllers/contributionController"
+);
+
+const authMiddleware =
+  require("../middleware/authMiddleware");
 
 /*
 |--------------------------------------------------------------------------
@@ -25,14 +31,38 @@ router.post(
 
 /*
 |--------------------------------------------------------------------------
-| GET MEMBER CONTRIBUTIONS
+| USER CONTRIBUTIONS
 |--------------------------------------------------------------------------
 */
 
 router.get(
-  "/member/:memberId",
+  "/user/:userId",
   authMiddleware,
-  getMemberContributions
+  getUserContributions
+);
+
+/*
+|--------------------------------------------------------------------------
+| ALL CONTRIBUTIONS
+|--------------------------------------------------------------------------
+*/
+
+router.get(
+  "/",
+  authMiddleware,
+  getAllContributions
+);
+
+/*
+|--------------------------------------------------------------------------
+| DASHBOARD STATS
+|--------------------------------------------------------------------------
+*/
+
+router.get(
+  "/stats",
+  authMiddleware,
+  getContributionStats
 );
 
 /*

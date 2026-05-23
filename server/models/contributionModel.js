@@ -7,9 +7,10 @@ const pool = require("../config/db");
 */
 
 const createContributionModel = async (
-  memberId,
+  userId,
+  groupId,
   amount,
-  method,
+  paymentMethod,
   mpesaCode,
   createdBy
 ) => {
@@ -17,21 +18,23 @@ const createContributionModel = async (
     `
     INSERT INTO contributions
     (
-      member_id,
+      user_id,
+      group_id,
       amount,
-      method,
+      payment_method,
       mpesa_code,
       created_by
     )
 
-    VALUES ($1,$2,$3,$4,$5)
+    VALUES ($1,$2,$3,$4,$5,$6)
 
     RETURNING *
     `,
     [
-      memberId,
+      userId,
+      groupId,
       amount,
-      method,
+      paymentMethod,
       mpesaCode,
       createdBy,
     ]
@@ -42,36 +45,97 @@ const createContributionModel = async (
 
 /*
 |--------------------------------------------------------------------------
-| GET MEMBER CONTRIBUTIONS
+| GET SINGLE USER CONTRIBUTIONS
 |--------------------------------------------------------------------------
 */
 
-const getMemberContributionsModel =
-  async (memberId) => {
-    const result = await pool.query(
-      `
-      SELECT
-        c.*,
-        u.fullname
+const getUserContributionsModel = async (
+  userId
+) => {
+  const result = await pool.query(
+    `
+    SELECT
+      c.*,
+      u.fullname,
+      g.name as group_name
 
-      FROM contributions c
+    FROM contributions c
 
-      INNER JOIN users u
-        ON u.id = c.member_id
+    INNER JOIN users u
+      ON u.id = c.user_id
 
-      WHERE c.member_id = $1
+    LEFT JOIN groups g
+      ON g.id = c.group_id
 
-      ORDER BY c.created_at DESC
-      `,
-      [memberId]
-    );
+    WHERE c.user_id = $1
 
-    return result.rows;
+    ORDER BY c.created_at DESC
+    `,
+    [userId]
+  );
+
+  return result.rows;
+};
+
+/*
+|--------------------------------------------------------------------------
+| GET ALL CONTRIBUTIONS
+|--------------------------------------------------------------------------
+*/
+
+const getAllContributionsModel = async () => {
+  const result = await pool.query(
+    `
+    SELECT
+      c.*,
+      u.fullname,
+      g.name as group_name
+
+    FROM contributions c
+
+    INNER JOIN users u
+      ON u.id = c.user_id
+
+    LEFT JOIN groups g
+      ON g.id = c.group_id
+
+    ORDER BY c.created_at DESC
+    `
+  );
+
+  return result.rows;
+};
+
+/*
+|--------------------------------------------------------------------------
+| DASHBOARD STATS
+|--------------------------------------------------------------------------
+*/
+
+const getContributionStatsModel =
+  async () => {
+    const result =
+      await pool.query(
+        `
+        SELECT
+
+        COUNT(*) AS total_contributions,
+
+        COALESCE(
+          SUM(amount),
+          0
+        ) AS total_amount
+
+        FROM contributions
+        `
+      );
+
+    return result.rows[0];
   };
 
 /*
 |--------------------------------------------------------------------------
-| DELETE CONTRIBUTION
+| DELETE
 |--------------------------------------------------------------------------
 */
 
@@ -90,6 +154,8 @@ const deleteContributionModel =
 
 module.exports = {
   createContributionModel,
-  getMemberContributionsModel,
+  getUserContributionsModel,
+  getAllContributionsModel,
+  getContributionStatsModel,
   deleteContributionModel,
 };

@@ -1,8 +1,13 @@
 const {
   createContributionModel,
-  getMemberContributionsModel,
+  getUserContributionsModel,
+  getAllContributionsModel,
+  getContributionStatsModel,
   deleteContributionModel,
 } = require("../models/contributionModel");
+
+const pool =
+  require("../config/db");
 
 /*
 |--------------------------------------------------------------------------
@@ -10,58 +15,129 @@ const {
 |--------------------------------------------------------------------------
 */
 
-const createContribution = async (
-  req,
-  res
-) => {
-  try {
-    const {
-      member_id,
-      amount,
-      method,
-      mpesa_code,
-    } = req.body;
-
-    const contribution =
-      await createContributionModel(
-        member_id,
+const createContribution =
+  async (req, res) => {
+    try {
+      const {
+        user_id,
         amount,
-        method,
-        mpesa_code || null,
-        req.user.id
-      );
+        payment_method,
+        mpesa_code,
+      } = req.body;
 
-    res.status(201).json({
-      message:
-        "Contribution added successfully",
-      contribution,
-    });
+      const group =
+        await pool.query(
+          `
+          SELECT group_id
+          FROM user_groups
+          WHERE user_id = $1
+          LIMIT 1
+          `,
+          [user_id]
+        );
 
-  } catch (error) {
-    console.log(error);
+      const groupId =
+        group.rows[0]?.group_id;
 
-    res.status(500).json({
-      message: "Server error",
-    });
-  }
-};
+      if (!groupId) {
+        return res.status(400).json({
+          message:
+            "Member is not assigned to any group",
+        });
+      }
+
+      const contribution =
+        await createContributionModel(
+          user_id,
+          groupId,
+          amount,
+          payment_method,
+          mpesa_code || null,
+          req.user.id
+        );
+
+      res.status(201).json({
+        message:
+          "Contribution added successfully",
+        contribution,
+      });
+
+    } catch (error) {
+      console.log(error);
+
+      res.status(500).json({
+        message:
+          error.message,
+      });
+    }
+  };
 
 /*
 |--------------------------------------------------------------------------
-| GET MEMBER CONTRIBUTIONS
+| USER CONTRIBUTIONS
 |--------------------------------------------------------------------------
 */
 
-const getMemberContributions =
+const getUserContributions =
   async (req, res) => {
     try {
       const contributions =
-        await getMemberContributionsModel(
-          req.params.memberId
+        await getUserContributionsModel(
+          req.params.userId
         );
 
       res.status(200).json(
         contributions
+      );
+
+    } catch (error) {
+      console.log(error);
+
+      res.status(500).json({
+        message: "Server error",
+      });
+    }
+  };
+
+/*
+|--------------------------------------------------------------------------
+| ALL CONTRIBUTIONS
+|--------------------------------------------------------------------------
+*/
+
+const getAllContributions =
+  async (req, res) => {
+    try {
+      const contributions =
+        await getAllContributionsModel();
+
+      res.status(200).json(
+        contributions
+      );
+
+    } catch (error) {
+      console.log(error);
+
+      res.status(500).json({
+        message: "Server error",
+      });
+    }
+  };
+
+/*
+|--------------------------------------------------------------------------
+| DASHBOARD STATS
+|--------------------------------------------------------------------------
+*/
+
+const getContributionStats =
+  async (req, res) => {
+    try {
+      const stats =
+        await getContributionStatsModel();
+
+      res.status(200).json(
+        stats
       );
 
     } catch (error) {
@@ -102,6 +178,8 @@ const deleteContribution =
 
 module.exports = {
   createContribution,
-  getMemberContributions,
+  getUserContributions,
+  getAllContributions,
+  getContributionStats,
   deleteContribution,
 };
