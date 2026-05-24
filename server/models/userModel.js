@@ -323,11 +323,128 @@ const deleteUserModel = async (id) => {
   return true;
 };
 
+
+const getMemberSummaryModel =
+  async (userId) => {
+
+    const userResult =
+      await pool.query(
+        `
+        SELECT
+          u.*,
+          g.name as group_name
+
+        FROM users u
+
+        LEFT JOIN user_groups ug
+          ON ug.user_id = u.id
+
+        LEFT JOIN groups g
+          ON g.id = ug.group_id
+
+        WHERE u.id = $1
+        `,
+        [userId]
+      );
+
+    const contributionResult =
+      await pool.query(
+        `
+        SELECT
+          COALESCE(
+            SUM(amount),
+            0
+          ) as total
+
+        FROM contributions
+
+        WHERE user_id = $1
+        `,
+        [userId]
+      );
+
+    const savingsResult =
+      await pool.query(
+        `
+        SELECT
+          COALESCE(
+            SUM(amount),
+            0
+          ) as total
+
+        FROM savings
+
+        WHERE user_id = $1
+        `,
+        [userId]
+      );
+
+    const recentContributions =
+      await pool.query(
+        `
+        SELECT *
+        FROM contributions
+
+        WHERE user_id = $1
+
+        ORDER BY created_at DESC
+
+        LIMIT 5
+        `,
+        [userId]
+      );
+
+    const recentSavings =
+      await pool.query(
+        `
+        SELECT *
+        FROM savings
+
+        WHERE user_id = $1
+
+        ORDER BY created_at DESC
+
+        LIMIT 5
+        `,
+        [userId]
+      );
+
+    const totalContributions =
+      Number(
+        contributionResult.rows[0].total
+      );
+
+    const totalSavings =
+      Number(
+        savingsResult.rows[0].total
+      );
+
+    return {
+      user:
+        userResult.rows[0],
+
+      totalContributions,
+
+      totalSavings,
+
+      currentBalance:
+        totalContributions +
+        totalSavings,
+
+      recentContributions:
+        recentContributions.rows,
+
+      recentSavings:
+        recentSavings.rows,
+    };
+  };
+
 module.exports = {
   createUserModel,
   assignUserToGroupModel,
   getUserGroupsModel,
   getMemberProfileModel,
+  getMemberSummaryModel,
   getAllUsersModel,
   getSingleUserModel,
   findUserByEmailModel,

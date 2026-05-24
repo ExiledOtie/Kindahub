@@ -7,7 +7,9 @@ const {
   getAllUsers,
   getUserStats,
   getSingleUser,
+  getMemberSummary,
   getMyProfile,
+  getMemberProfile,
   updateUser,
   updateMyProfile,
   deleteUser,
@@ -41,6 +43,24 @@ router.get(
   "/stats/count",
   authMiddleware,
   getUserStats
+);
+
+/*
+|--------------------------------------------------------------------------
+| MEMBER ROUTES
+|--------------------------------------------------------------------------
+*/
+
+router.get(
+  "/member-summary/:id",
+  authMiddleware,
+  getMemberSummary
+);
+
+router.get(
+  "/member-profile/:id",
+  authMiddleware,
+  getMemberProfile
 );
 
 /*
