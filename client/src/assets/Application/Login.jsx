@@ -8,18 +8,18 @@ import landingImage from "../Images/landing.png";
 const Login = () => {
   const { login } = useContext(AuthContext);
 
-const [formData, setFormData] = useState({
-  username: "",
-  password: "",
-});
+  const [formData, setFormData] = useState({
+    identifier: "",
+    password: "",
+  });
 
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [e.target.name]: e.target.value,
-    });
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -29,14 +29,13 @@ const [formData, setFormData] = useState({
       setLoading(true);
 
       await login(formData);
-
     } catch (error) {
-      console.log(error);
+      console.error(error);
 
       alert(
-        error?.response?.data?.message || "Login failed"
+        error?.response?.data?.message ||
+          "Invalid username/email or password"
       );
-
     } finally {
       setLoading(false);
     }
@@ -44,43 +43,37 @@ const [formData, setFormData] = useState({
 
   return (
     <div className="w-full h-screen bg-[#f4f8f4] overflow-hidden">
-
-      {/* MAIN GRID */}
       <div className="w-full h-full grid grid-cols-1 lg:grid-cols-[65%_35%]">
 
-        {/* LEFT SIDE IMAGE */}
+        {/* LEFT IMAGE */}
         <div className="hidden lg:block relative h-full overflow-hidden">
-
           <img
             src={landingImage}
             alt="Sacco"
             className="w-full h-full object-cover scale-105"
           />
 
-          {/* DARK OVERLAY */}
           <div className="absolute inset-0 bg-black/25"></div>
-
         </div>
 
-        {/* RIGHT SIDE FORM */}
+        {/* RIGHT FORM */}
         <div className="flex items-center justify-center bg-white h-full overflow-y-auto px-6 lg:px-10">
 
-          {/* REDUCED FORM WIDTH */}
           <div className="w-full max-w-sm">
 
             {/* HEADER */}
-            <div className="text-center mb-10">
+            <div className="text-center mb-8">
 
               <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-5 shadow-sm">
                 <span className="text-4xl">💰</span>
               </div>
 
-              <h2 className="text-4xl font-bold text-green-700">
+              <h2 className="text-3xl font-bold text-green-700">
                 Welcome Back
               </h2>
 
-              <p className="text-gray-500 mt-3 text-base">
-                Login to your SACCO account
+              <p className="text-gray-500 mt-2 text-sm">
+                Login using your email or username
               </p>
 
             </div>
@@ -91,25 +84,25 @@ const [formData, setFormData] = useState({
               className="space-y-5"
             >
 
-              {/* EMAIL */}
+              {/* EMAIL / USERNAME */}
               <div>
 
                 <label className="text-sm font-medium text-gray-700 block mb-2">
-                  Email
+                  Email or Username
                 </label>
 
-                <div className="flex items-center border border-gray-300 rounded-2xl px-4 py-3 transition-all duration-300 focus-within:ring-2 focus-within:ring-green-600">
+                <div className="flex items-center border border-gray-300 rounded-xl px-4 py-3 focus-within:ring-2 focus-within:ring-green-600">
 
-                  <FaUser className="text-gray-400 mr-3 text-base" />
+                  <FaUser className="text-gray-400 mr-3" />
 
                   <input
-                    type="email"
-                    name="email"
-                    placeholder="Enter your email"
-                    value={formData.email}
+                    type="text"
+                    name="identifier"
+                    placeholder="Enter email or username"
+                    value={formData.identifier}
                     onChange={handleChange}
                     required
-                    className="w-full bg-transparent text-gray-700 outline-none"
+                    className="w-full outline-none bg-transparent text-gray-700"
                   />
 
                 </div>
@@ -123,9 +116,9 @@ const [formData, setFormData] = useState({
                   Password
                 </label>
 
-                <div className="flex items-center border border-gray-300 rounded-2xl px-4 py-3 transition-all duration-300 focus-within:ring-2 focus-within:ring-green-600">
+                <div className="flex items-center border border-gray-300 rounded-xl px-4 py-3 focus-within:ring-2 focus-within:ring-green-600">
 
-                  <FaLock className="text-gray-400 mr-3 text-base" />
+                  <FaLock className="text-gray-400 mr-3" />
 
                   <input
                     type="password"
@@ -134,7 +127,7 @@ const [formData, setFormData] = useState({
                     value={formData.password}
                     onChange={handleChange}
                     required
-                    className="w-full bg-transparent text-gray-700 outline-none"
+                    className="w-full outline-none bg-transparent text-gray-700"
                   />
 
                 </div>
@@ -151,18 +144,18 @@ const [formData, setFormData] = useState({
 
                 <button
                   type="button"
-                  className="text-green-700 hover:underline font-medium"
+                  className="text-green-700 hover:underline"
                 >
                   Forgot Password?
                 </button>
 
               </div>
 
-              {/* BUTTON */}
+              {/* LOGIN BUTTON */}
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-green-700 hover:bg-green-800 transition-all duration-300 text-white py-3 rounded-2xl font-semibold shadow-lg text-base"
+                className="w-full bg-green-700 hover:bg-green-800 text-white py-3 rounded-xl font-semibold transition-all"
               >
                 {loading ? "Signing In..." : "Sign In"}
               </button>
@@ -170,7 +163,7 @@ const [formData, setFormData] = useState({
             </form>
 
             {/* FOOTER */}
-            <div className="mt-10 text-center">
+            <div className="mt-8 text-center">
 
               <p className="text-gray-500 text-sm">
                 SACCO Management System
@@ -183,7 +176,6 @@ const [formData, setFormData] = useState({
         </div>
 
       </div>
-
     </div>
   );
 };
