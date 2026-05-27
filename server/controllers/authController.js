@@ -8,18 +8,24 @@ const {
 
 const login = async (req, res) => {
   try {
+    console.log("BODY:", req.body);
+
     const { identifier, password } = req.body;
 
     let user;
 
     // Login with email
     if (identifier.includes("@")) {
+      console.log("EMAIL LOGIN");
       user = await findUserByEmailModel(identifier);
     }
     // Login with username
     else {
+      console.log("USERNAME LOGIN");
       user = await findUserByUsernameModel(identifier);
     }
+
+    console.log("USER FOUND:", user);
 
     if (!user) {
       return res.status(401).json({
@@ -31,6 +37,8 @@ const login = async (req, res) => {
       password,
       user.password
     );
+
+    console.log("PASSWORD MATCH:", isMatch);
 
     if (!isMatch) {
       return res.status(401).json({
@@ -52,7 +60,7 @@ const login = async (req, res) => {
       },
     });
   } catch (error) {
-    console.log(error);
+    console.log("LOGIN ERROR:", error);
 
     res.status(500).json({
       message: "Server error",
