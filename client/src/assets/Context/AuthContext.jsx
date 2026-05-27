@@ -22,17 +22,38 @@ export const AuthProvider = ({ children }) => {
   |--------------------------------------------------------------------------
   */
 
-  const login = async (formData) => {
-    const res = await api.post("/auth/login", formData);
+const login = async (formData) => {
+  const res = await api.post(
+    "/auth/login",
+    formData
+  );
 
-    localStorage.setItem("token", res.data.token);
+  const user = res.data.user;
 
-    localStorage.setItem("user", JSON.stringify(res.data.user));
+  localStorage.setItem(
+    "token",
+    res.data.token
+  );
 
-    setUser(res.data.user);
+  localStorage.setItem(
+    "user",
+    JSON.stringify(user)
+  );
 
+  setUser(user);
+
+  // Super Admin
+  if (
+    user.role === "super_admin" ||
+    user.is_super_admin
+  ) {
     navigate("/dashboard");
-  };
+  }
+  // Members
+  else {
+    navigate("/user-dashboard");
+  }
+};
 
   /*
   |--------------------------------------------------------------------------

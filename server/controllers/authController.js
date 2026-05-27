@@ -1,30 +1,32 @@
 const bcrypt = require("bcryptjs");
-const pool = require("../config/db");
 const generateToken = require("../utils/generateToken");
+
+const {
+  findUserByEmailModel,
+  findUserByUsernameModel,
+} = require("../models/userModel");
 
 const login = async (req, res) => {
   try {
+    const { identifier, password } = req.body;
 
-    const { email, password } = req.body;
+    let user;
 
-    // CHECK USER
-    const userResult = await pool.query(
-      `
-      SELECT * FROM users
-      WHERE email = $1
-      `,
-      [email]
-    );
+    // Login with email
+    if (identifier.includes("@")) {
+      user = await findUserByEmailModel(identifier);
+    }
+    // Login with username
+    else {
+      user = await findUserByUsernameModel(identifier);
+    }
 
-    if (userResult.rows.length === 0) {
+    if (!user) {
       return res.status(401).json({
         message: "Invalid credentials",
       });
     }
 
-    const user = userResult.rows[0];
-
-    // CHECK PASSWORD
     const isMatch = await bcrypt.compare(
       password,
       user.password
@@ -36,21 +38,19 @@ const login = async (req, res) => {
       });
     }
 
-    // TOKEN
     const token = generateToken(user);
 
     res.status(200).json({
       token,
-
       user: {
         id: user.id,
         fullname: user.fullname,
         email: user.email,
+        username: user.username,
         role: user.role,
         is_super_admin: user.is_super_admin,
       },
     });
-
   } catch (error) {
     console.log(error);
 
