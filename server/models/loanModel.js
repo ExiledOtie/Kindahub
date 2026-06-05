@@ -1,151 +1,271 @@
 const pool = require("../config/db");
 
-class Loan {
-  static async create(data) {
-    const {
+/*
+|--------------------------------------------------------------------------
+| CREATE LOAN
+|--------------------------------------------------------------------------
+*/
+
+const createLoanModel = async (
+  userId,
+  groupId,
+  amount,
+  purpose,
+  interestRate,
+  durationMonths
+) => {
+  const result = await pool.query(
+    `
+    INSERT INTO loans
+    (
       user_id,
       group_id,
       amount,
       purpose,
       interest_rate,
-      duration_months,
-    } = data;
+      duration_months
+    )
 
-    const query = `
-      INSERT INTO loans (
-        user_id,
-        group_id,
-        amount,
-        purpose,
-        interest_rate,
-        duration_months
-      )
-      VALUES ($1,$2,$3,$4,$5,$6)
-      RETURNING *;
-    `;
+    VALUES ($1,$2,$3,$4,$5,$6)
 
-    const values = [
-      user_id,
-      group_id,
+    RETURNING *
+    `,
+    [
+      userId,
+      groupId,
       amount,
       purpose,
-      interest_rate,
-      duration_months,
-    ];
+      interestRate,
+      durationMonths,
+    ]
+  );
 
-    const result = await pool.query(query, values);
-    return result.rows[0];
-  }
+  return result.rows[0];
+};
 
-  static async findAll() {
-    const query = `
-      SELECT
-        l.*,
-        u.first_name,
-        u.last_name,
-        g.name AS group_name
-      FROM loans l
-      JOIN users u ON l.user_id = u.id
-      JOIN groups g ON l.group_id = g.id
-      ORDER BY l.created_at DESC;
-    `;
+/*
+|--------------------------------------------------------------------------
+| GET ALL LOANS
+|--------------------------------------------------------------------------
+*/
 
-    const result = await pool.query(query);
-    return result.rows;
-  }
+const getAllLoansModel = async () => {
+  const result = await pool.query(
+    `
+    SELECT
+      l.*,
+      u.fullname,
+      u.username,
+      g.name AS group_name,
 
-  static async findById(id) {
-    const query = `
-      SELECT
-        l.*,
-        u.first_name,
-        u.last_name,
-        g.name AS group_name
-      FROM loans l
-      JOIN users u ON l.user_id = u.id
-      JOIN groups g ON l.group_id = g.id
-      WHERE l.id = $1;
-    `;
+      approver.fullname AS approved_by_name
 
-    const result = await pool.query(query, [id]);
-    return result.rows[0];
-  }
+    FROM loans l
 
-  static async getMemberLoans(userId) {
-    const query = `
-      SELECT *
-      FROM loans
-      WHERE user_id = $1
-      ORDER BY created_at DESC;
-    `;
+    INNER JOIN users u
+      ON u.id = l.user_id
 
-    const result = await pool.query(query, [userId]);
-    return result.rows;
-  }
+    INNER JOIN groups g
+      ON g.id = l.group_id
 
-  static async approve(id, approvedBy) {
-    const query = `
-      UPDATE loans
-      SET
-        status = 'approved',
-        approved_by = $2,
-        approved_at = CURRENT_TIMESTAMP
-      WHERE id = $1
-      RETURNING *;
-    `;
+    LEFT JOIN users approver
+      ON approver.id = l.approved_by
 
-    const result = await pool.query(query, [id, approvedBy]);
-    return result.rows[0];
-  }
+    ORDER BY l.created_at DESC
+    `
+  );
 
-  static async reject(id) {
-    const query = `
-      UPDATE loans
-      SET status = 'rejected'
-      WHERE id = $1
-      RETURNING *;
-    `;
+  return result.rows;
+};
 
-    const result = await pool.query(query, [id]);
-    return result.rows[0];
-  }
+/*
+|--------------------------------------------------------------------------
+| GET USER LOANS
+|--------------------------------------------------------------------------
+*/
 
-  static async updateStatus(id, status) {
-    const query = `
-      UPDATE loans
-      SET status = $2
-      WHERE id = $1
-      RETURNING *;
-    `;
+const getUserLoansModel = async (
+  userId
+) => {
+  const result = await pool.query(
+    `
+    SELECT
+      l.*,
+      u.fullname,
+      u.username,
+      g.name AS group_name
 
-    const result = await pool.query(query, [id, status]);
-    return result.rows[0];
-  }
+    FROM loans l
 
-  static async delete(id) {
-    const query = `
-      DELETE FROM loans
-      WHERE id = $1
-      RETURNING *;
-    `;
+    INNER JOIN users u
+      ON u.id = l.user_id
 
-    const result = await pool.query(query, [id]);
-    return result.rows[0];
-  }
+    INNER JOIN groups g
+      ON g.id = l.group_id
 
-  static async getStats() {
-    const query = `
-      SELECT
+    WHERE l.user_id = $1
+
+    ORDER BY l.created_at DESC
+    `,
+    [userId]
+  );
+
+  return result.rows;
+};
+
+/*
+|--------------------------------------------------------------------------
+| GET SINGLE LOAN
+|--------------------------------------------------------------------------
+*/
+
+const getSingleLoanModel = async (
+  id
+) => {
+  const result = await pool.query(
+    `
+    SELECT
+      l.*,
+      u.fullname,
+      u.username,
+      g.name AS group_name
+
+    FROM loans l
+
+    INNER JOIN users u
+      ON u.id = l.user_id
+
+    INNER JOIN groups g
+      ON g.id = l.group_id
+
+    WHERE l.id = $1
+    `,
+    [id]
+  );
+
+  return result.rows[0];
+};
+
+/*
+|--------------------------------------------------------------------------
+| APPROVE LOAN
+|--------------------------------------------------------------------------
+*/
+
+const approveLoanModel = async (
+  loanId,
+  approvedBy
+) => {
+  const result = await pool.query(
+    `
+    UPDATE loans
+
+    SET
+      status = 'approved',
+      approved_by = $2,
+      approved_at = CURRENT_TIMESTAMP
+
+    WHERE id = $1
+
+    RETURNING *
+    `,
+    [loanId, approvedBy]
+  );
+
+  return result.rows[0];
+};
+
+/*
+|--------------------------------------------------------------------------
+| REJECT LOAN
+|--------------------------------------------------------------------------
+*/
+
+const rejectLoanModel = async (
+  loanId
+) => {
+  const result = await pool.query(
+    `
+    UPDATE loans
+
+    SET status = 'rejected'
+
+    WHERE id = $1
+
+    RETURNING *
+    `,
+    [loanId]
+  );
+
+  return result.rows[0];
+};
+
+/*
+|--------------------------------------------------------------------------
+| LOAN STATS
+|--------------------------------------------------------------------------
+*/
+
+const getLoanStatsModel =
+  async () => {
+    const result =
+      await pool.query(
+        `
+        SELECT
+
         COUNT(*) AS total_loans,
-        COUNT(*) FILTER (WHERE status='approved') AS approved_loans,
-        COUNT(*) FILTER (WHERE status='pending') AS pending_loans,
-        COALESCE(SUM(amount),0) AS total_amount
-      FROM loans;
-    `;
 
-    const result = await pool.query(query);
+        COUNT(*) FILTER (
+          WHERE status = 'pending'
+        ) AS pending_loans,
+
+        COUNT(*) FILTER (
+          WHERE status = 'approved'
+        ) AS approved_loans,
+
+        COUNT(*) FILTER (
+          WHERE status = 'rejected'
+        ) AS rejected_loans,
+
+        COALESCE(
+          SUM(amount),
+          0
+        ) AS total_amount
+
+        FROM loans
+        `
+      );
+
     return result.rows[0];
-  }
-}
+  };
 
-module.exports = Loan;
+/*
+|--------------------------------------------------------------------------
+| DELETE LOAN
+|--------------------------------------------------------------------------
+*/
+
+const deleteLoanModel = async (
+  id
+) => {
+  await pool.query(
+    `
+    DELETE FROM loans
+    WHERE id = $1
+    `,
+    [id]
+  );
+
+  return true;
+};
+
+module.exports = {
+  createLoanModel,
+  getAllLoansModel,
+  getUserLoansModel,
+  getSingleLoanModel,
+  approveLoanModel,
+  rejectLoanModel,
+  getLoanStatsModel,
+  deleteLoanModel,
+};
