@@ -1,15 +1,102 @@
-import { FaPlus, FaMoneyBillWave } from "react-icons/fa";
+import { useEffect, useState } from "react";
+import { ClipLoader } from "react-spinners";
+import { FaMoneyBillWave, FaPlus } from "react-icons/fa";
+import Swal from "sweetalert2";
 
-const LoanTab = ({
-  onRequestLoan,
-}) => {
+import axios from "../../Utils/axios";
+import LoanModal from "../Modals/LoanModal";
+
+const LoanTab = ({ memberId }) => {
+  const [loading, setLoading] =
+    useState(true);
+
+  const [loans, setLoans] =
+    useState([]);
+
+  const [showModal, setShowModal] =
+    useState(false);
+
+  useEffect(() => {
+    if (memberId) {
+      fetchLoans();
+    }
+  }, [memberId]);
+
+  const fetchLoans =
+    async () => {
+      try {
+        setLoading(true);
+
+        const res =
+          await axios.get(
+            `/loans/user/${memberId}`
+          );
+
+        setLoans(
+          res.data || []
+        );
+
+      } catch (error) {
+
+        console.log(error);
+
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text:
+            "Failed to load loans",
+        });
+
+      } finally {
+
+        setLoading(false);
+
+      }
+    };
+
+  const formatCurrency =
+    (amount) => {
+      return Number(
+        amount || 0
+      ).toLocaleString();
+    };
+
+  const formatDate =
+    (date) => {
+      return new Date(
+        date
+      ).toLocaleDateString(
+        "en-KE",
+        {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        }
+      );
+    };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-[50vh]">
+        <ClipLoader
+          size={35}
+          color="#16a34a"
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
+
       {/* HEADER */}
+
       <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+
         <div className="flex items-center justify-between">
-          {/* LEFT */}
+
           <div className="flex items-center gap-3">
+
             <div className="h-10 w-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
               <FaMoneyBillWave />
             </div>
@@ -23,33 +110,171 @@ const LoanTab = ({
                 View and manage member loan applications
               </p>
             </div>
+
           </div>
 
-          {/* RIGHT */}
           <button
-            onClick={onRequestLoan}
+            onClick={() =>
+              setShowModal(true)
+            }
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white text-[11px] hover:bg-green-700 transition-all duration-200"
           >
             <FaPlus />
             Request Loan
           </button>
+
         </div>
+
       </div>
 
-      {/* CONTENT */}
-      <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-        <div className="text-center py-10">
-          <FaMoneyBillWave className="mx-auto text-4xl text-gray-300 mb-3" />
+      {/* TABLE */}
 
-          <h3 className="text-sm font-semibold text-gray-700">
-            No Loan Records
-          </h3>
+      <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
 
-          <p className="text-[11px] text-gray-400 mt-1">
-            This member has not applied for any loans yet.
-          </p>
+        <div className="overflow-x-auto">
+
+          <table className="w-full text-xs">
+
+            <thead className="bg-gray-50 border-b">
+
+              <tr>
+
+                <th className="px-4 py-3 text-left">
+                  #
+                </th>
+
+                <th className="px-4 py-3 text-left">
+                  Date
+                </th>
+
+                <th className="px-4 py-3 text-left">
+                  Amount
+                </th>
+
+                <th className="px-4 py-3 text-left">
+                  Interest
+                </th>
+
+                <th className="px-4 py-3 text-left">
+                  Duration
+                </th>
+
+                <th className="px-4 py-3 text-left">
+                  Purpose
+                </th>
+
+                <th className="px-4 py-3 text-left">
+                  Status
+                </th>
+
+              </tr>
+
+            </thead>
+
+            <tbody>
+
+              {loans.length > 0 ? (
+
+                loans.map(
+                  (
+                    loan,
+                    index
+                  ) => (
+                    <tr
+                      key={loan.id}
+                      className="border-b hover:bg-gray-50"
+                    >
+                      <td className="px-4 py-3">
+                        {index + 1}
+                      </td>
+
+                      <td className="px-4 py-3">
+                        {formatDate(
+                          loan.created_at
+                        )}
+                      </td>
+
+                      <td className="px-4 py-3 font-medium">
+                        KES{" "}
+                        {formatCurrency(
+                          loan.amount
+                        )}
+                      </td>
+
+                      <td className="px-4 py-3">
+                        {
+                          loan.interest_rate
+                        }%
+                      </td>
+
+                      <td className="px-4 py-3">
+                        {
+                          loan.duration_months
+                        } Months
+                      </td>
+
+                      <td className="px-4 py-3">
+                        {
+                          loan.purpose
+                        }
+                      </td>
+
+                      <td className="px-4 py-3">
+                        <span
+                          className={`px-2 py-1 rounded-full text-[10px] font-medium ${
+                            loan.status ===
+                            "approved"
+                              ? "bg-green-100 text-green-700"
+                              : loan.status ===
+                                "rejected"
+                              ? "bg-red-100 text-red-700"
+                              : "bg-yellow-100 text-yellow-700"
+                          }`}
+                        >
+                          {
+                            loan.status
+                          }
+                        </span>
+                      </td>
+
+                    </tr>
+                  )
+                )
+
+              ) : (
+
+                <tr>
+                  <td
+                    colSpan="7"
+                    className="text-center py-10 text-gray-500"
+                  >
+                    No loan records found
+                  </td>
+                </tr>
+
+              )}
+
+            </tbody>
+
+          </table>
+
         </div>
+
       </div>
+
+      {/* MODAL */}
+
+      <LoanModal
+        open={showModal}
+        memberId={memberId}
+        onClose={() =>
+          setShowModal(false)
+        }
+        onSuccess={
+          fetchLoans
+        }
+      />
+
     </div>
   );
 };
