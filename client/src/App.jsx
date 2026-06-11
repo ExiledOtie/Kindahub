@@ -1,9 +1,5 @@
 import React from "react";
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-} from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import { AuthProvider } from "./assets/Context/AuthContext";
 import ProtectedRoute from "./assets/Routes/ProtectedRoutes";
@@ -14,6 +10,7 @@ import DashboardLayout from "./assets/Layout/DashboardLayout";
 
 import Dashboard from "./assets/Application/Dashboard";
 import UserDashboard from "./assets/Application/UserDashboard";
+
 import Members from "./assets/Pages/Members";
 import Contributions from "./assets/Pages/Contributions";
 import Loans from "./assets/Pages/Loans";
@@ -26,7 +23,8 @@ const App = () => {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          {/* Login */}
+
+          {/* LOGIN */}
           <Route path="/" element={<Login />} />
 
           {/* ADMIN ROUTES */}
@@ -44,7 +42,12 @@ const App = () => {
             <Route path="loans" element={<Loans />} />
             <Route path="members/:id" element={<MemberProfile />} />
             <Route path="profile" element={<ProfileTab />} />
-            <Route path="loan-repayments/:loanId" element={<LoanRepayments />} />
+
+            {/* ✅ FIXED: loanId param route */}
+            <Route
+              path="loan-repayments/:loanId"
+              element={<LoanRepayments />}
+            />
           </Route>
 
           {/* USER ROUTES */}
@@ -58,6 +61,7 @@ const App = () => {
           >
             <Route index element={<UserDashboard />} />
           </Route>
+
         </Routes>
       </AuthProvider>
     </BrowserRouter>

@@ -8,7 +8,14 @@ const {
 
 /*
 |--------------------------------------------------------------------------
-| GET LOAN BALANCE SERVICE
+| CONFIG (can later move to DB settings table)
+|--------------------------------------------------------------------------
+*/
+const PENALTY_RATE = 5; // 5% monthly penalty for overdue
+
+/*
+|--------------------------------------------------------------------------
+| LOAN BALANCE CALCULATOR
 |--------------------------------------------------------------------------
 */
 
@@ -28,11 +35,41 @@ const calculateLoanBalance = async (loanId) => {
 
   const principal = Number(loan.amount);
   const rate = Number(loan.interest_rate);
+  const duration = Number(loan.duration_months);
 
   const totalInterest = (principal * rate) / 100;
-  const totalPayable = principal + totalInterest;
+  let totalPayable = principal + totalInterest;
 
   const totalPaid = Number(totalPaidRes.total_paid);
+
+  /*
+  |--------------------------------------------------------------------------
+  | 🧠 OVERDUE PENALTY ENGINE
+  |--------------------------------------------------------------------------
+  */
+
+  const startDate = new Date(loan.created_at);
+  const now = new Date();
+
+  const monthsPassed =
+    (now.getFullYear() - startDate.getFullYear()) * 12 +
+    (now.getMonth() - startDate.getMonth());
+
+  const expectedMonthlyPayment =
+    totalPayable / duration;
+
+  const expectedPaidTillNow =
+    expectedMonthlyPayment * monthsPassed;
+
+  let overdue = expectedPaidTillNow - totalPaid;
+
+  let penalty = 0;
+
+  if (overdue > 0) {
+    penalty = (overdue * PENALTY_RATE) / 100;
+  }
+
+  totalPayable += penalty;
 
   const balance = totalPayable - totalPaid;
 
@@ -40,6 +77,10 @@ const calculateLoanBalance = async (loanId) => {
     totalPayable,
     totalPaid,
     balance,
+    expectedMonthlyPayment,
+    overdue,
+    penalty,
+    monthsPassed,
   };
 };
 
@@ -60,26 +101,32 @@ const createLoanPayment = async (req, res) => {
 
     const balanceData = await calculateLoanBalance(loan_id);
 
-    let principalPaid = 0;
-    let interestPaid = 0;
-
     let remaining = Number(amount);
 
-    // First clear interest then principal (SACCO standard)
-    if (balanceData.balance < 0) {
-      principalPaid = remaining;
-    } else {
-      const interestPortion = (balanceData.totalPayable - balanceData.totalPaid);
+    let interestPaid = 0;
+    let principalPaid = 0;
 
-      const interestToPay = Math.min(remaining, interestPortion);
+    /*
+    |--------------------------------------------------------------------------
+    | PRIORITY: interest → principal
+    |--------------------------------------------------------------------------
+    */
 
-      interestPaid = interestToPay;
-      remaining -= interestToPay;
+    const interestPortion =
+      balanceData.totalPayable - balanceData.totalPaid;
 
-      principalPaid = remaining;
-    }
+    const interestToPay = Math.min(
+      remaining,
+      interestPortion
+    );
 
-    const newBalance = balanceData.balance - amount;
+    interestPaid = interestToPay;
+    remaining -= interestToPay;
+
+    principalPaid = remaining;
+
+    const newBalance =
+      balanceData.balance - amount;
 
     const payment = await createLoanPaymentModel(
       loan_id,
@@ -99,7 +146,9 @@ const createLoanPayment = async (req, res) => {
 
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({
+      message: "Server error",
+    });
   }
 };
 
@@ -111,30 +160,38 @@ const createLoanPayment = async (req, res) => {
 
 const getLoanPayments = async (req, res) => {
   try {
-    const payments = await getLoanPaymentsModel(req.params.loanId);
+    const payments = await getLoanPaymentsModel(
+      req.params.loanId
+    );
 
     res.status(200).json(payments);
 
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({
+      message: "Server error",
+    });
   }
 };
 
 /*
 |--------------------------------------------------------------------------
-| GET LOAN BALANCE
+| GET LOAN BALANCE + METRICS
 |--------------------------------------------------------------------------
 */
 
 const getLoanBalance = async (req, res) => {
   try {
-    const balance = await calculateLoanBalance(req.params.loanId);
+    const balance = await calculateLoanBalance(
+      req.params.loanId
+    );
+
     res.json(balance);
 
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: error.message || "Server error" });
+    res.status(500).json({
+      message: error.message || "Server error",
+    });
   }
 };
 

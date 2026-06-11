@@ -20,17 +20,18 @@ import {
 const Sidebar = ({ role = "admin" }) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const adminLinks = [
-    { name: "Dashboard", icon: <FaTachometerAlt />, path: "/dashboard" },
-    { name: "Members", icon: <FaUsers />, path: "/dashboard/members" },
-    { name: "Contributions", icon: <FaCreditCard />, path: "/dashboard/contributions" },
-    { name: "Loans", icon: <FaUniversity />, path: "/dashboard/loans" },
-    { name: "Loan Repayments", icon: <FaMoneyBillWave />, path: "/dashboard/loan-repayments" },
-    { name: "Reports", icon: <FaFileAlt />, path: "/dashboard/reports" },
-    { name: "Announcements", icon: <FaBell />, path: "/dashboard/announcements", badge: 6 },
-    { name: "Notifications", icon: <FaBell />, path: "/dashboard/notifications", badge: 8 },
-    { name: "Settings", icon: <FaCog />, path: "/dashboard/settings" },
-  ];
+const adminLinks = [
+  { name: "Dashboard", icon: <FaTachometerAlt />, path: "/dashboard" },
+  { name: "Members", icon: <FaUsers />, path: "/dashboard/members" },
+  { name: "Contributions", icon: <FaCreditCard />, path: "/dashboard/contributions" },
+  { name: "Loans", icon: <FaUniversity />, path: "/dashboard/loans" },
+  { name: "Loan Repayments", icon: <FaMoneyBillWave />, path: "/dashboard/loans" },
+
+  { name: "Reports", icon: <FaFileAlt />, path: "/dashboard/reports" },
+  { name: "Announcements", icon: <FaBell />, path: "/dashboard/announcements", badge: 6 },
+  { name: "Notifications", icon: <FaBell />, path: "/dashboard/notifications", badge: 8 },
+  { name: "Settings", icon: <FaCog />, path: "/dashboard/settings" },
+];
 
   const userLinks = [
     { name: "Dashboard", icon: <FaTachometerAlt />, path: "/user-dashboard" },
