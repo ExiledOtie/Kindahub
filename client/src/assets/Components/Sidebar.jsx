@@ -25,7 +25,7 @@ const Sidebar = ({ role = "admin" }) => {
     { name: "Members", icon: <FaUsers />, path: "/dashboard/members" },
     { name: "Contributions", icon: <FaCreditCard />, path: "/dashboard/contributions" },
     { name: "Loans", icon: <FaUniversity />, path: "/dashboard/loans" },
-    { name: "Loan Payments", icon: <FaMoneyBillWave />, path: "/dashboard/loan-payments" },
+    { name: "Loan Repayments", icon: <FaMoneyBillWave />, path: "/dashboard/loan-repayments" },
     { name: "Reports", icon: <FaFileAlt />, path: "/dashboard/reports" },
     { name: "Announcements", icon: <FaBell />, path: "/dashboard/announcements", badge: 6 },
     { name: "Notifications", icon: <FaBell />, path: "/dashboard/notifications", badge: 8 },

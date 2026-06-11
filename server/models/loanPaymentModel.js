@@ -2,7 +2,7 @@ const pool = require("../config/db");
 
 /*
 |--------------------------------------------------------------------------
-| CREATE LOAN PAYMENT
+| CREATE LOAN PAYMENT MODEL
 |--------------------------------------------------------------------------
 */
 
@@ -46,7 +46,7 @@ const createLoanPaymentModel = async (
 
 /*
 |--------------------------------------------------------------------------
-| GET LOAN PAYMENTS
+| GET LOAN PAYMENTS MODEL
 |--------------------------------------------------------------------------
 */
 
@@ -66,15 +66,14 @@ const getLoanPaymentsModel = async (loanId) => {
 
 /*
 |--------------------------------------------------------------------------
-| GET TOTAL PAID
+| GET TOTAL PAID MODEL
 |--------------------------------------------------------------------------
 */
 
 const getTotalPaidModel = async (loanId) => {
   const result = await pool.query(
     `
-    SELECT
-      COALESCE(SUM(amount), 0) AS total_paid
+    SELECT COALESCE(SUM(amount),0) AS total_paid
     FROM loan_payments
     WHERE loan_id = $1
     `,

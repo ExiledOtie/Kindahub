@@ -19,6 +19,7 @@ import Contributions from "./assets/Pages/Contributions";
 import Loans from "./assets/Pages/Loans";
 import MemberProfile from "./assets/Pages/MemberProfile";
 import ProfileTab from "./assets/Pages/MemberTabs/ProfileTab";
+import LoanRepayments from "./assets/Pages/LoanRepayments";
 
 const App = () => {
   return (
@@ -43,6 +44,7 @@ const App = () => {
             <Route path="loans" element={<Loans />} />
             <Route path="members/:id" element={<MemberProfile />} />
             <Route path="profile" element={<ProfileTab />} />
+            <Route path="loan-repayments/:loanId" element={<LoanRepayments />} />
           </Route>
 
           {/* USER ROUTES */}
