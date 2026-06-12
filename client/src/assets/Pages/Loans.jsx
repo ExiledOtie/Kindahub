@@ -200,7 +200,6 @@ const Loans = () => {
 
   return (
     <div className="space-y-4 text-[11px]">
-
       {/* HEADER */}
       <div className="bg-white p-4 rounded-xl border flex items-center gap-2">
         <FaMoneyBillWave className="text-green-600" />
@@ -243,7 +242,9 @@ const Loans = () => {
         >
           <option value="all">All Groups</option>
           {uniqueGroups.map((g, i) => (
-            <option key={i} value={g}>{g}</option>
+            <option key={i} value={g}>
+              {g}
+            </option>
           ))}
         </select>
       </div>
@@ -269,7 +270,9 @@ const Loans = () => {
                 return (
                   <tr key={loan.id} className="border-b">
                     <td className="p-3">{loan.fullname}</td>
-                    <td className="p-3">KES {Number(loan.amount).toLocaleString()}</td>
+                    <td className="p-3">
+                      KES {Number(loan.amount).toLocaleString()}
+                    </td>
                     <td className="p-3 capitalize">{loan.status}</td>
 
                     <td className="p-3 w-52">
@@ -308,9 +311,14 @@ const Loans = () => {
             Prev
           </button>
 
-          <span>Page {page} of {totalPages || 1}</span>
+          <span>
+            Page {page} of {totalPages || 1}
+          </span>
 
-          <button disabled={page === totalPages} onClick={() => setPage(page + 1)}>
+          <button
+            disabled={page === totalPages}
+            onClick={() => setPage(page + 1)}
+          >
             Next
           </button>
         </div>
@@ -326,59 +334,52 @@ const Loans = () => {
             className="bg-white p-5 rounded-xl w-full max-w-md text-[12px]"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="font-semibold mb-3">Loan Details</h2>
+            <h2 className="font-semibold mb-4">Loan Details</h2>
 
-            <p><b>Member:</b> {selectedLoan.fullname}</p>
-            <p><b>Amount:</b> KES {selectedLoan.amount}</p>
-            <p><b>Status:</b> {selectedLoan.status}</p>
+            <div className="space-y-2">
+              <p>
+                <b>Member:</b> {selectedLoan.fullname}
+              </p>
 
-            {/* PAYMENT SECTION */}
-            <div className="mt-3 space-y-2">
-              <select
-                className="border w-full p-2 rounded"
-                value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-              >
-                <option value="cash">Cash</option>
-                <option value="mpesa">MPesa</option>
-              </select>
+              <p>
+                <b>Amount:</b> KES{" "}
+                {Number(selectedLoan.amount).toLocaleString()}
+              </p>
 
-              {paymentMethod === "mpesa" && (
-                <input
-                  className="border w-full p-2 rounded"
-                  placeholder="MPesa Transaction Code"
-                  value={mpesaCode}
-                  onChange={(e) => setMpesaCode(e.target.value)}
-                />
-              )}
+              <p>
+                <b>Interest:</b> {selectedLoan.interest_rate}%
+              </p>
 
-              <input
-                className="border w-full p-2 rounded"
-                placeholder="Amount"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-              />
+              <p>
+                <b>Duration:</b> {selectedLoan.duration_months} Months
+              </p>
+
+              <p>
+                <b>Group:</b> {selectedLoan.group_name || "-"}
+              </p>
+
+              <p>
+                <b>Status:</b>{" "}
+                <span className="capitalize">{selectedLoan.status}</span>
+              </p>
+
+              <p>
+                <b>Total Payable:</b> KES{" "}
+                {calculateLoan(selectedLoan).totalPayable.toLocaleString()}
+              </p>
+
+              <p>
+                <b>Monthly Installment:</b> KES{" "}
+                {calculateLoan(selectedLoan).monthlyInstallment.toLocaleString(
+                  undefined,
+                  {
+                    maximumFractionDigits: 2,
+                  },
+                )}
+              </p>
             </div>
 
-            <div className="flex flex-wrap justify-end gap-2 mt-5">
-
-              {/* repayment */}
-              <button
-                onClick={recordPayment}
-                className="px-3 py-1 bg-green-600 text-white rounded"
-              >
-                Record Payment
-              </button>
-
-              <button
-                onClick={() =>
-                  navigate(`/dashboard/loan-repayments/${selectedLoan.id}`)
-                }
-                className="px-3 py-1 bg-purple-600 text-white rounded"
-              >
-                Repayments
-              </button>
-
+            <div className="flex flex-wrap justify-end gap-2 mt-6">
               <button
                 onClick={() => setShowModal(false)}
                 className="px-3 py-1 border rounded"
@@ -386,23 +387,42 @@ const Loans = () => {
                 Close
               </button>
 
-              {/* approve/reject */}
+              {selectedLoan.status === "approved" && (
+                <button
+                  onClick={() => {
+                    setShowModal(false);
+
+                    navigate(`/dashboard/loan-repayments/${selectedLoan.id}`);
+                  }}
+                  className="px-3 py-1 bg-purple-600 text-white rounded flex items-center gap-1"
+                >
+                  <FaCreditCard />
+                  Repayments
+                </button>
+              )}
+
               {selectedLoan.status === "pending" && (
                 <>
                   <button
                     disabled={isActionLoading("reject", selectedLoan.id)}
                     onClick={() => rejectLoan(selectedLoan.id)}
-                    className="px-3 py-1 bg-red-500 text-white rounded"
+                    className="px-3 py-1 bg-red-500 text-white rounded flex items-center gap-1"
                   >
-                    Reject
+                    <FaTimes />
+                    {isActionLoading("reject", selectedLoan.id)
+                      ? "Rejecting..."
+                      : "Reject"}
                   </button>
 
                   <button
                     disabled={isActionLoading("approve", selectedLoan.id)}
                     onClick={() => approveLoan(selectedLoan.id)}
-                    className="px-3 py-1 bg-green-600 text-white rounded"
+                    className="px-3 py-1 bg-green-600 text-white rounded flex items-center gap-1"
                   >
-                    Approve
+                    <FaCheck />
+                    {isActionLoading("approve", selectedLoan.id)
+                      ? "Approving..."
+                      : "Approve"}
                   </button>
                 </>
               )}
@@ -410,11 +430,13 @@ const Loans = () => {
               <button
                 disabled={isActionLoading("delete", selectedLoan.id)}
                 onClick={() => deleteLoan(selectedLoan.id)}
-                className="px-3 py-1 bg-gray-600 text-white rounded"
+                className="px-3 py-1 bg-gray-700 text-white rounded flex items-center gap-1"
               >
-                Delete
+                <FaTrash />
+                {isActionLoading("delete", selectedLoan.id)
+                  ? "Deleting..."
+                  : "Delete"}
               </button>
-
             </div>
           </div>
         </div>

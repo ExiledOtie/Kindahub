@@ -18,8 +18,11 @@ const LoanRepaymentDetails = () => {
   const [loading, setLoading] = useState(true);
 
   const [showModal, setShowModal] = useState(false);
+  const [saving, setSaving] = useState(false);
+
   const [amount, setAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("mpesa");
+  const [mpesaCode, setMpesaCode] = useState("");
 
   const [balance, setBalance] = useState({
     totalPayable: 0,
@@ -58,15 +61,17 @@ const LoanRepaymentDetails = () => {
   };
 
   const loadData = async () => {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    await Promise.all([
-      fetchLoan(),
-      fetchPayments(),
-      fetchBalance(),
-    ]);
-
-    setLoading(false);
+      await Promise.all([
+        fetchLoan(),
+        fetchPayments(),
+        fetchBalance(),
+      ]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -77,30 +82,61 @@ const LoanRepaymentDetails = () => {
 
   const makePayment = async () => {
     if (!amount || Number(amount) <= 0) {
-      Swal.fire("Error", "Enter a valid amount", "error");
-      return;
+      return Swal.fire(
+        "Error",
+        "Enter a valid amount",
+        "error"
+      );
+    }
+
+    if (
+      paymentMethod === "mpesa" &&
+      !mpesaCode.trim()
+    ) {
+      return Swal.fire(
+        "Error",
+        "Enter MPesa transaction code",
+        "error"
+      );
     }
 
     try {
+      setSaving(true);
+
       await axios.post("/loan-payments", {
         loan_id: loanId,
         amount,
         payment_method: paymentMethod,
+        mpesa_code:
+          paymentMethod === "mpesa"
+            ? mpesaCode
+            : null,
       });
 
-      Swal.fire("Success", "Payment recorded", "success");
+      Swal.fire(
+        "Success",
+        "Payment recorded",
+        "success"
+      );
 
       setShowModal(false);
+
       setAmount("");
+      setMpesaCode("");
+      setPaymentMethod("mpesa");
 
       loadData();
     } catch (error) {
       console.log(error);
+
       Swal.fire(
         "Error",
-        error.response?.data?.message || "Payment failed",
+        error.response?.data?.message ||
+          "Payment failed",
         "error"
       );
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -109,16 +145,30 @@ const LoanRepaymentDetails = () => {
       maximumFractionDigits: 2,
     });
 
+  const progress =
+    balance.totalPayable > 0
+      ? Math.min(
+          (balance.totalPaid /
+            balance.totalPayable) *
+            100,
+          100
+        )
+      : 0;
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-[60vh]">
-        <ClipLoader size={35} color="#16a34a" />
+        <ClipLoader
+          size={35}
+          color="#16a34a"
+        />
       </div>
     );
   }
 
   return (
     <div className="space-y-4 text-[11px]">
+
       {/* HEADER */}
       <div className="bg-white border rounded-xl p-4 shadow-sm">
         <div className="flex items-center gap-3">
@@ -147,42 +197,64 @@ const LoanRepaymentDetails = () => {
 
           <div className="grid md:grid-cols-2 gap-3">
             <div>
-              <p className="text-gray-500">Member</p>
+              <p className="text-gray-500">
+                Member
+              </p>
               <p>{loan.fullname}</p>
             </div>
 
             <div>
-              <p className="text-gray-500">Loan Amount</p>
-              <p>KES {format(loan.amount)}</p>
+              <p className="text-gray-500">
+                Loan Amount
+              </p>
+              <p>
+                KES {format(loan.amount)}
+              </p>
             </div>
 
             <div>
-              <p className="text-gray-500">Interest Rate</p>
-              <p>{loan.interest_rate}%</p>
+              <p className="text-gray-500">
+                Interest Rate
+              </p>
+              <p>
+                {loan.interest_rate}%
+              </p>
             </div>
 
             <div>
-              <p className="text-gray-500">Duration</p>
-              <p>{loan.duration_months} Months</p>
+              <p className="text-gray-500">
+                Duration
+              </p>
+              <p>
+                {loan.duration_months} Months
+              </p>
             </div>
 
             <div>
-              <p className="text-gray-500">Status</p>
-              <p className="capitalize">{loan.status}</p>
+              <p className="text-gray-500">
+                Status
+              </p>
+              <p className="capitalize">
+                {loan.status}
+              </p>
             </div>
           </div>
         </div>
       )}
 
-      {/* BALANCE CARDS */}
+      {/* BALANCE */}
       <div className="grid md:grid-cols-3 gap-3">
+
         <div className="bg-white border rounded-lg p-3">
           <p className="text-gray-400">
             Total Payable
           </p>
 
           <p className="font-semibold text-green-600">
-            KES {format(balance.totalPayable)}
+            KES{" "}
+            {format(
+              balance.totalPayable
+            )}
           </p>
         </div>
 
@@ -192,7 +264,8 @@ const LoanRepaymentDetails = () => {
           </p>
 
           <p className="font-semibold text-blue-600">
-            KES {format(balance.totalPaid)}
+            KES{" "}
+            {format(balance.totalPaid)}
           </p>
         </div>
 
@@ -202,25 +275,55 @@ const LoanRepaymentDetails = () => {
           </p>
 
           <p className="font-semibold text-red-600">
-            KES {format(balance.balance)}
+            KES{" "}
+            {format(balance.balance)}
           </p>
+        </div>
+
+      </div>
+
+      {/* PROGRESS */}
+      <div className="bg-white border rounded-xl p-4">
+        <div className="flex justify-between mb-2">
+          <span>
+            Repayment Progress
+          </span>
+
+          <span>
+            {progress.toFixed(1)}%
+          </span>
+        </div>
+
+        <div className="h-3 bg-gray-200 rounded-full">
+          <div
+            className="h-3 bg-green-600 rounded-full"
+            style={{
+              width: `${progress}%`,
+            }}
+          />
         </div>
       </div>
 
       {/* PAY BUTTON */}
       <button
-        onClick={() => setShowModal(true)}
-        className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+        disabled={balance.balance <= 0}
+        onClick={() =>
+          setShowModal(true)
+        }
+        className="bg-green-600 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg flex items-center gap-2"
       >
         <FaMobileAlt />
 
         <span>
-          Record Payment
+          {balance.balance <= 0
+            ? "Loan Fully Paid"
+            : "Record Payment"}
         </span>
       </button>
 
       {/* PAYMENT HISTORY */}
       <div className="bg-white border rounded-xl overflow-hidden">
+
         <div className="p-3 border-b flex items-center gap-2">
           <FaHistory />
 
@@ -230,7 +333,9 @@ const LoanRepaymentDetails = () => {
         </div>
 
         <div className="overflow-x-auto">
+
           <table className="w-full text-[11px]">
+
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-3 py-2 text-left">
@@ -257,34 +362,47 @@ const LoanRepaymentDetails = () => {
 
             <tbody>
               {payments.length > 0 ? (
-                payments.map((payment) => (
-                  <tr
-                    key={payment.id}
-                    className="border-b"
-                  >
-                    <td className="px-3 py-2">
-                      KES {format(payment.amount)}
-                    </td>
+                payments.map(
+                  (payment) => (
+                    <tr
+                      key={payment.id}
+                      className="border-b"
+                    >
+                      <td className="px-3 py-2">
+                        KES{" "}
+                        {format(
+                          payment.amount
+                        )}
+                      </td>
 
-                    <td className="px-3 py-2">
-                      KES {format(payment.principal_paid)}
-                    </td>
+                      <td className="px-3 py-2">
+                        KES{" "}
+                        {format(
+                          payment.principal_paid
+                        )}
+                      </td>
 
-                    <td className="px-3 py-2">
-                      KES {format(payment.interest_paid)}
-                    </td>
+                      <td className="px-3 py-2">
+                        KES{" "}
+                        {format(
+                          payment.interest_paid
+                        )}
+                      </td>
 
-                    <td className="px-3 py-2 uppercase">
-                      {payment.payment_method}
-                    </td>
+                      <td className="px-3 py-2 uppercase">
+                        {
+                          payment.payment_method
+                        }
+                      </td>
 
-                    <td className="px-3 py-2">
-                      {new Date(
-                        payment.created_at
-                      ).toLocaleDateString()}
-                    </td>
-                  </tr>
-                ))
+                      <td className="px-3 py-2">
+                        {new Date(
+                          payment.created_at
+                        ).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  )
+                )
               ) : (
                 <tr>
                   <td
@@ -296,59 +414,67 @@ const LoanRepaymentDetails = () => {
                 </tr>
               )}
             </tbody>
+
           </table>
+
         </div>
       </div>
 
       {/* PAYMENT MODAL */}
       {showModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
           <div className="bg-white rounded-xl p-5 w-full max-w-md space-y-4">
+
             <h2 className="font-semibold">
               Record Loan Payment
             </h2>
 
-            <div>
-              <label className="block mb-1">
-                Amount
-              </label>
+            <input
+              type="number"
+              value={amount}
+              onChange={(e) =>
+                setAmount(e.target.value)
+              }
+              className="w-full border rounded-lg px-3 py-2"
+              placeholder="Enter amount"
+            />
 
+            <select
+              value={paymentMethod}
+              onChange={(e) =>
+                setPaymentMethod(
+                  e.target.value
+                )
+              }
+              className="w-full border rounded-lg px-3 py-2"
+            >
+              <option value="mpesa">
+                M-Pesa
+              </option>
+
+              <option value="cash">
+                Cash
+              </option>
+            </select>
+
+            {paymentMethod ===
+              "mpesa" && (
               <input
-                type="number"
-                value={amount}
+                type="text"
+                value={mpesaCode}
                 onChange={(e) =>
-                  setAmount(e.target.value)
-                }
-                className="w-full border rounded-lg px-3 py-2"
-                placeholder="Enter amount"
-              />
-            </div>
-
-            <div>
-              <label className="block mb-1">
-                Payment Method
-              </label>
-
-              <select
-                value={paymentMethod}
-                onChange={(e) =>
-                  setPaymentMethod(
+                  setMpesaCode(
                     e.target.value
                   )
                 }
                 className="w-full border rounded-lg px-3 py-2"
-              >
-                <option value="mpesa">
-                  M-Pesa
-                </option>
-
-                <option value="cash">
-                  Cash
-                </option>
-              </select>
-            </div>
+                placeholder="MPesa Code"
+              />
+            )}
 
             <div className="flex justify-end gap-2">
+
               <button
                 onClick={() =>
                   setShowModal(false)
@@ -359,13 +485,19 @@ const LoanRepaymentDetails = () => {
               </button>
 
               <button
+                disabled={saving}
                 onClick={makePayment}
                 className="px-4 py-2 bg-green-600 text-white rounded-lg"
               >
-                Save Payment
+                {saving
+                  ? "Saving..."
+                  : "Save Payment"}
               </button>
+
             </div>
+
           </div>
+
         </div>
       )}
     </div>
