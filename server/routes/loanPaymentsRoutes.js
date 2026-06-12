@@ -1,33 +1,19 @@
-const express = require("express");
-const router = express.Router();
-
-const authMiddleware = require("../middleware/authMiddleware");
-
 const {
   createLoanPayment,
   getLoanPayments,
   getLoanBalance,
+  getAllLoanPayments,
 } = require("../controllers/loanPaymentController");
+const authMiddleware = require("../middleware/authMiddleware");
 
-/*
-|--------------------------------------------------------------------------
-| CREATE PAYMENT
-|--------------------------------------------------------------------------
-*/
+const router = require("express").Router();
+
 router.post("/", authMiddleware, createLoanPayment);
 
-/*
-|--------------------------------------------------------------------------
-| GET PAYMENTS
-|--------------------------------------------------------------------------
-*/
+router.get("/", authMiddleware, getAllLoanPayments);
+
 router.get("/:loanId", authMiddleware, getLoanPayments);
 
-/*
-|--------------------------------------------------------------------------
-| GET BALANCE
-|--------------------------------------------------------------------------
-*/
 router.get("/:loanId/balance", authMiddleware, getLoanBalance);
 
 module.exports = router;

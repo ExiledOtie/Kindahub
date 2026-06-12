@@ -80,8 +80,42 @@ const getTotalPaidModel = async (loanId) => {
   return result.rows[0];
 };
 
+/*
+|--------------------------------------------------------------------------
+| GET ALL LOAN PAYMENTS
+|--------------------------------------------------------------------------
+*/
+
+const getAllLoanPaymentsModel = async () => {
+  const result = await pool.query(`
+    SELECT
+      lp.id,
+      lp.loan_id,
+      lp.amount,
+      lp.payment_method,
+      lp.principal_paid,
+      lp.interest_paid,
+      lp.balance_after,
+      lp.created_at,
+      l.id AS loan_number,
+      u.fullname,
+      g.name AS group_name
+    FROM loan_payments lp
+    JOIN loans l
+      ON lp.loan_id = l.id
+    JOIN users u
+      ON l.user_id = u.id
+    LEFT JOIN groups g
+      ON l.group_id = g.id
+    ORDER BY lp.created_at DESC
+  `);
+
+  return result.rows;
+};
+
 module.exports = {
   createLoanPaymentModel,
   getLoanPaymentsModel,
   getTotalPaidModel,
+  getAllLoanPaymentsModel,
 };
