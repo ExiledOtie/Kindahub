@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "../Utils/axios";
 import Swal from "sweetalert2";
 import { ClipLoader } from "react-spinners";
@@ -9,21 +10,42 @@ import {
   FaTrash,
   FaMoneyBillWave,
   FaEye,
+  FaCreditCard,
 } from "react-icons/fa";
 
+const ITEMS_PER_PAGE = 8;
+
 const Loans = () => {
+  const navigate = useNavigate();
+
   const [loans, setLoans] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // filters
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [groupFilter, setGroupFilter] = useState("all");
+  const [page, setPage] = useState(1);
+
+  // modal
   const [selectedLoan, setSelectedLoan] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
+  // actions
+  const [actionLoading, setActionLoading] = useState(null);
+
+  // repayment
+  const [amount, setAmount] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [mpesaCode, setMpesaCode] = useState("");
+
+  // ---------------- FETCH ----------------
   const fetchLoans = async () => {
     try {
+      setLoading(true);
       const res = await axios.get("/loans");
       setLoans(res.data);
-    } catch (error) {
-      console.log(error);
+    } catch {
       Swal.fire("Error", "Failed to fetch loans", "error");
     } finally {
       setLoading(false);
@@ -34,75 +56,138 @@ const Loans = () => {
     fetchLoans();
   }, []);
 
+  // ---------------- CALC ----------------
+  const calculateLoan = (loan) => {
+    const principal = Number(loan.amount || 0);
+    const rate = Number(loan.interest_rate || 0);
+    const months = Number(loan.duration_months || 1);
+
+    const totalInterest = (principal * rate) / 100;
+    const totalPayable = principal + totalInterest;
+
+    return {
+      totalPayable,
+      totalInterest,
+      monthlyInstallment: totalPayable / months,
+    };
+  };
+
+  const getProgress = (loan) => {
+    const calc = calculateLoan(loan);
+    const paid = Number(loan.paid_amount || 0);
+    if (!calc.totalPayable) return 0;
+    return Math.min((paid / calc.totalPayable) * 100, 100);
+  };
+
+  // ---------------- FILTERS ----------------
+  const filteredLoans = useMemo(() => {
+    return loans.filter((loan) => {
+      const matchesSearch =
+        loan.fullname?.toLowerCase().includes(search.toLowerCase()) ||
+        loan.id?.toString().includes(search);
+
+      const matchesStatus =
+        statusFilter === "all" || loan.status === statusFilter;
+
+      const matchesGroup =
+        groupFilter === "all" || loan.group_name === groupFilter;
+
+      return matchesSearch && matchesStatus && matchesGroup;
+    });
+  }, [loans, search, statusFilter, groupFilter]);
+
+  const totalPages = Math.ceil(filteredLoans.length / ITEMS_PER_PAGE);
+
+  const paginatedLoans = useMemo(() => {
+    const start = (page - 1) * ITEMS_PER_PAGE;
+    return filteredLoans.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredLoans, page]);
+
+  const uniqueGroups = [
+    ...new Set(loans.map((l) => l.group_name).filter(Boolean)),
+  ];
+
+  const isActionLoading = (type, id) =>
+    actionLoading?.type === type && actionLoading?.id === id;
+
+  // ---------------- ACTIONS ----------------
   const approveLoan = async (id) => {
     try {
+      setActionLoading({ type: "approve", id });
       await axios.patch(`/loans/${id}/approve`);
       Swal.fire("Success", "Loan approved", "success");
       fetchLoans();
       setShowModal(false);
-    } catch (error) {
+    } catch {
       Swal.fire("Error", "Failed to approve loan", "error");
+    } finally {
+      setActionLoading(null);
     }
   };
 
   const rejectLoan = async (id) => {
     try {
+      setActionLoading({ type: "reject", id });
       await axios.patch(`/loans/${id}/reject`);
       Swal.fire("Success", "Loan rejected", "success");
       fetchLoans();
       setShowModal(false);
-    } catch (error) {
+    } catch {
       Swal.fire("Error", "Failed to reject loan", "error");
+    } finally {
+      setActionLoading(null);
     }
   };
 
   const deleteLoan = async (id) => {
-    const result = await Swal.fire({
+    const confirm = await Swal.fire({
       title: "Delete Loan?",
       text: "This action cannot be undone",
       icon: "warning",
       showCancelButton: true,
     });
 
-    if (!result.isConfirmed) return;
+    if (!confirm.isConfirmed) return;
 
     try {
+      setActionLoading({ type: "delete", id });
       await axios.delete(`/loans/${id}`);
       Swal.fire("Deleted", "Loan deleted", "success");
       fetchLoans();
-    } catch (error) {
+      setShowModal(false);
+    } catch {
       Swal.fire("Error", "Failed to delete loan", "error");
+    } finally {
+      setActionLoading(null);
     }
   };
 
-  const getStatusClass = (status) => {
-    switch (status) {
-      case "approved":
-        return "bg-green-100 text-green-600";
-      case "rejected":
-        return "bg-red-100 text-red-600";
-      default:
-        return "bg-yellow-100 text-yellow-600";
+  // ---------------- REPAYMENT ----------------
+  const recordPayment = async () => {
+    try {
+      if (!amount) return Swal.fire("Error", "Enter amount", "error");
+      if (paymentMethod === "mpesa" && !mpesaCode) {
+        return Swal.fire("Error", "Enter MPesa code", "error");
+      }
+
+      await axios.post("/loan-payments", {
+        loan_id: selectedLoan.id,
+        amount,
+        payment_method: paymentMethod,
+        mpesa_code: paymentMethod === "mpesa" ? mpesaCode : null,
+      });
+
+      Swal.fire("Success", "Payment recorded", "success");
+
+      setAmount("");
+      setMpesaCode("");
+      setPaymentMethod("cash");
+
+      fetchLoans();
+      setShowModal(false);
+    } catch {
+      Swal.fire("Error", "Failed to record payment", "error");
     }
-  };
-
-  const calculateLoan = (loan) => {
-    const principal = Number(loan.amount);
-    const rate = Number(loan.interest_rate);
-    const months = Number(loan.duration_months);
-
-    const totalInterest = (principal * rate) / 100;
-    const totalPayable = principal + totalInterest;
-
-    const monthlyInterest = totalInterest / months;
-    const monthlyInstallment = totalPayable / months;
-
-    return {
-      totalInterest,
-      totalPayable,
-      monthlyInterest,
-      monthlyInstallment,
-    };
   };
 
   if (loading) {
@@ -117,159 +202,182 @@ const Loans = () => {
     <div className="space-y-4 text-[11px]">
 
       {/* HEADER */}
-      <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
-            <FaMoneyBillWave />
-          </div>
+      <div className="bg-white p-4 rounded-xl border flex items-center gap-2">
+        <FaMoneyBillWave className="text-green-600" />
+        <h2 className="font-semibold">Loans Management</h2>
+      </div>
 
-          <div>
-            <h2 className="text-sm font-semibold text-gray-800">
-              Loans
-            </h2>
-            <p className="text-[10px] text-gray-400">
-              Manage loan applications
-            </p>
-          </div>
-        </div>
+      {/* FILTERS */}
+      <div className="bg-white p-3 rounded-xl border flex flex-wrap gap-2">
+        <input
+          className="border px-2 py-1 rounded w-60"
+          placeholder="Search member / ID..."
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
+        />
+
+        <select
+          className="border px-2 py-1 rounded"
+          value={statusFilter}
+          onChange={(e) => {
+            setStatusFilter(e.target.value);
+            setPage(1);
+          }}
+        >
+          <option value="all">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+        </select>
+
+        <select
+          className="border px-2 py-1 rounded"
+          value={groupFilter}
+          onChange={(e) => {
+            setGroupFilter(e.target.value);
+            setPage(1);
+          }}
+        >
+          <option value="all">All Groups</option>
+          {uniqueGroups.map((g, i) => (
+            <option key={i} value={g}>{g}</option>
+          ))}
+        </select>
       </div>
 
       {/* TABLE */}
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-white border rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-[11px]">
             <thead>
-              <tr className="bg-gray-50 border-b">
-                <th className="px-4 py-3 text-left">Member</th>
-                <th className="px-4 py-3 text-left">Amount</th>
-                <th className="px-4 py-3 text-left">Interest</th>
-                <th className="px-4 py-3 text-left">Duration</th>
-
-                <th className="px-4 py-3 text-left">Total Payable</th>
-                <th className="px-4 py-3 text-left">Monthly Interest</th>
-                <th className="px-4 py-3 text-left">Monthly Installment</th>
-
-                <th className="px-4 py-3 text-left">Status</th>
-                <th className="px-4 py-3 text-right">Actions</th>
+              <tr className="bg-gray-50">
+                <th className="p-3 text-left">Member</th>
+                <th className="p-3 text-left">Amount</th>
+                <th className="p-3 text-left">Status</th>
+                <th className="p-3 text-left">Progress</th>
+                <th className="p-3 text-right">Actions</th>
               </tr>
             </thead>
 
             <tbody>
-              {loans.length > 0 ? (
-                loans.map((loan) => {
-                  const calc = calculateLoan(loan);
+              {paginatedLoans.map((loan) => {
+                const progress = getProgress(loan);
 
-                  return (
-                    <tr key={loan.id} className="border-b hover:bg-gray-50">
+                return (
+                  <tr key={loan.id} className="border-b">
+                    <td className="p-3">{loan.fullname}</td>
+                    <td className="p-3">KES {Number(loan.amount).toLocaleString()}</td>
+                    <td className="p-3 capitalize">{loan.status}</td>
 
-                      <td className="px-4 py-3">
-                        {loan.fullname}
-                      </td>
+                    <td className="p-3 w-52">
+                      <div className="h-2 bg-gray-200 rounded-full">
+                        <div
+                          className="h-2 bg-green-500 rounded-full"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                      <span className="text-[10px] text-gray-500">
+                        {progress.toFixed(1)}%
+                      </span>
+                    </td>
 
-                      <td className="px-4 py-3">
-                        KES {Number(loan.amount).toLocaleString()}
-                      </td>
-
-                      <td className="px-4 py-3">
-                        {loan.interest_rate}%
-                      </td>
-
-                      <td className="px-4 py-3">
-                        {loan.duration_months} m
-                      </td>
-
-                      <td className="px-4 py-3 text-green-600 font-medium">
-                        KES {calc.totalPayable.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                      </td>
-
-                      <td className="px-4 py-3">
-                        KES {calc.monthlyInterest.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                      </td>
-
-                      <td className="px-4 py-3">
-                        KES {calc.monthlyInstallment.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                      </td>
-
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded-full text-[10px] ${getStatusClass(loan.status)}`}>
-                          {loan.status}
-                        </span>
-                      </td>
-
-                      <td className="px-4 py-3">
-                        <div className="flex justify-end gap-2">
-
-                          {/* VIEW */}
-                          <button
-                            onClick={() => {
-                              setSelectedLoan(loan);
-                              setShowModal(true);
-                            }}
-                            className="h-7 w-7 rounded bg-blue-100 text-blue-600 flex items-center justify-center"
-                          >
-                            <FaEye />
-                          </button>
-
-                          {loan.status === "pending" && (
-                            <>
-                              <button
-                                onClick={() => approveLoan(loan.id)}
-                                className="h-7 w-7 rounded bg-green-100 text-green-600 flex items-center justify-center"
-                              >
-                                <FaCheck />
-                              </button>
-
-                              <button
-                                onClick={() => rejectLoan(loan.id)}
-                                className="h-7 w-7 rounded bg-red-100 text-red-600 flex items-center justify-center"
-                              >
-                                <FaTimes />
-                              </button>
-                            </>
-                          )}
-
-                          <button
-                            onClick={() => deleteLoan(loan.id)}
-                            className="h-7 w-7 rounded bg-gray-100 text-gray-600 flex items-center justify-center"
-                          >
-                            <FaTrash />
-                          </button>
-
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td colSpan="9" className="text-center py-8 text-gray-400">
-                    No loans found
-                  </td>
-                </tr>
-              )}
+                    <td className="p-3 text-right">
+                      <button
+                        onClick={() => {
+                          setSelectedLoan(loan);
+                          setShowModal(true);
+                        }}
+                        className="h-7 w-7 bg-blue-100 text-blue-600 rounded"
+                      >
+                        <FaEye />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
+        </div>
+
+        {/* PAGINATION */}
+        <div className="flex justify-between p-3 border-t">
+          <button disabled={page === 1} onClick={() => setPage(page - 1)}>
+            Prev
+          </button>
+
+          <span>Page {page} of {totalPages || 1}</span>
+
+          <button disabled={page === totalPages} onClick={() => setPage(page + 1)}>
+            Next
+          </button>
         </div>
       </div>
 
       {/* MODAL */}
       {showModal && selectedLoan && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-5 w-full max-w-md text-[12px]">
+        <div
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+          onClick={() => setShowModal(false)}
+        >
+          <div
+            className="bg-white p-5 rounded-xl w-full max-w-md text-[12px]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="font-semibold mb-3">Loan Details</h2>
 
-            <h2 className="font-semibold mb-3">
-              Loan Details
-            </h2>
+            <p><b>Member:</b> {selectedLoan.fullname}</p>
+            <p><b>Amount:</b> KES {selectedLoan.amount}</p>
+            <p><b>Status:</b> {selectedLoan.status}</p>
 
-            <div className="space-y-2">
-              <p><b>Member:</b> {selectedLoan.fullname}</p>
-              <p><b>Amount:</b> KES {selectedLoan.amount}</p>
-              <p><b>Interest:</b> {selectedLoan.interest_rate}%</p>
-              <p><b>Duration:</b> {selectedLoan.duration_months} months</p>
-              <p><b>Status:</b> {selectedLoan.status}</p>
+            {/* PAYMENT SECTION */}
+            <div className="mt-3 space-y-2">
+              <select
+                className="border w-full p-2 rounded"
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+              >
+                <option value="cash">Cash</option>
+                <option value="mpesa">MPesa</option>
+              </select>
+
+              {paymentMethod === "mpesa" && (
+                <input
+                  className="border w-full p-2 rounded"
+                  placeholder="MPesa Transaction Code"
+                  value={mpesaCode}
+                  onChange={(e) => setMpesaCode(e.target.value)}
+                />
+              )}
+
+              <input
+                className="border w-full p-2 rounded"
+                placeholder="Amount"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+              />
             </div>
 
-            <div className="flex justify-end gap-2 mt-5">
+            <div className="flex flex-wrap justify-end gap-2 mt-5">
+
+              {/* repayment */}
+              <button
+                onClick={recordPayment}
+                className="px-3 py-1 bg-green-600 text-white rounded"
+              >
+                Record Payment
+              </button>
+
+              <button
+                onClick={() =>
+                  navigate(`/dashboard/loan-repayments/${selectedLoan.id}`)
+                }
+                className="px-3 py-1 bg-purple-600 text-white rounded"
+              >
+                Repayments
+              </button>
 
               <button
                 onClick={() => setShowModal(false)}
@@ -278,25 +386,39 @@ const Loans = () => {
                 Close
               </button>
 
-              <button
-                onClick={() => rejectLoan(selectedLoan.id)}
-                className="px-3 py-1 bg-red-500 text-white rounded"
-              >
-                Reject
-              </button>
+              {/* approve/reject */}
+              {selectedLoan.status === "pending" && (
+                <>
+                  <button
+                    disabled={isActionLoading("reject", selectedLoan.id)}
+                    onClick={() => rejectLoan(selectedLoan.id)}
+                    className="px-3 py-1 bg-red-500 text-white rounded"
+                  >
+                    Reject
+                  </button>
+
+                  <button
+                    disabled={isActionLoading("approve", selectedLoan.id)}
+                    onClick={() => approveLoan(selectedLoan.id)}
+                    className="px-3 py-1 bg-green-600 text-white rounded"
+                  >
+                    Approve
+                  </button>
+                </>
+              )}
 
               <button
-                onClick={() => approveLoan(selectedLoan.id)}
-                className="px-3 py-1 bg-green-600 text-white rounded"
+                disabled={isActionLoading("delete", selectedLoan.id)}
+                onClick={() => deleteLoan(selectedLoan.id)}
+                className="px-3 py-1 bg-gray-600 text-white rounded"
               >
-                Approve
+                Delete
               </button>
 
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 };

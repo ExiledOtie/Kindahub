@@ -16,7 +16,7 @@ import Contributions from "./assets/Pages/Contributions";
 import Loans from "./assets/Pages/Loans";
 import MemberProfile from "./assets/Pages/MemberProfile";
 import ProfileTab from "./assets/Pages/MemberTabs/ProfileTab";
-import LoanRepayments from "./assets/Pages/LoanRepayments";
+import LoanRepayments from "./assets/Pages/LoanRepaymentDetails";
 
 const App = () => {
   return (

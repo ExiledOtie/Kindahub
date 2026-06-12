@@ -92,62 +92,58 @@ const calculateLoanBalance = async (loanId) => {
 
 const createLoanPayment = async (req, res) => {
   try {
-    const {
-      loan_id,
-      amount,
-      payment_method,
-      mpesa_code,
-    } = req.body;
+    const { loan_id, amount, payment_method, mpesa_code } = req.body;
 
     const balanceData = await calculateLoanBalance(loan_id);
 
-    let remaining = Number(amount);
+    const paymentAmount = Number(amount || 0);
 
-    let interestPaid = 0;
-    let principalPaid = 0;
+    let remaining = paymentAmount;
 
-    /*
-    |--------------------------------------------------------------------------
-    | PRIORITY: interest → principal
-    |--------------------------------------------------------------------------
-    */
+    // 💡 SAFE VALUES
+    const currentBalance = Number(balanceData.balance || 0);
 
-    const interestPortion =
-      balanceData.totalPayable - balanceData.totalPaid;
+    if (paymentAmount <= 0) {
+      return res.status(400).json({
+        message: "Invalid payment amount",
+      });
+    }
 
-    const interestToPay = Math.min(
-      remaining,
-      interestPortion
-    );
+    // -----------------------------
+    // INTEREST FIRST STRATEGY
+    // -----------------------------
+    const interestPortion = Math.max(currentBalance, 0);
 
-    interestPaid = interestToPay;
-    remaining -= interestToPay;
+    const interestPaid = Math.min(remaining, interestPortion);
+    remaining -= interestPaid;
 
-    principalPaid = remaining;
+    const principalPaid = remaining;
 
-    const newBalance =
-      balanceData.balance - amount;
+    // -----------------------------
+    // NEW BALANCE (SAFE)
+    // -----------------------------
+    const newBalance = Math.max(currentBalance - paymentAmount, 0);
 
     const payment = await createLoanPaymentModel(
       loan_id,
-      amount,
+      paymentAmount,
       principalPaid,
       interestPaid,
       newBalance,
       payment_method,
-      mpesa_code
+      mpesa_code || null
     );
 
-    res.status(201).json({
+    return res.status(201).json({
       message: "Payment recorded successfully",
       payment,
       balance: newBalance,
     });
 
   } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      message: "Server error",
+    console.log("LOAN PAYMENT ERROR:", error);
+    return res.status(500).json({
+      message: error.message || "Server error",
     });
   }
 };
