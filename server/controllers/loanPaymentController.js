@@ -5,6 +5,7 @@ const {
   getLoanPaymentsModel,
   getTotalPaidModel,
   getAllLoanPaymentsModel,
+  getPaymentBreakdownModel,
 } = require("../models/loanPaymentModel");
 
 /*
@@ -121,31 +122,63 @@ const createLoanPayment = async (req, res) => {
 
     const paymentAmount = Number(amount || 0);
 
-    let remaining = paymentAmount;
-
-    // 💡 SAFE VALUES
-    const currentBalance = Number(balanceData.balance || 0);
 
     if (paymentAmount <= 0) {
       return res.status(400).json({
         message: "Invalid payment amount",
       });
     }
+    const loanRes = await pool.query(
+  `SELECT * FROM loans WHERE id = $1`,
+  [loan_id]
+);
 
-    // -----------------------------
-    // INTEREST FIRST STRATEGY
-    // -----------------------------
-    const interestPortion = Math.max(currentBalance, 0);
+const loan = loanRes.rows[0];
 
-    const interestPaid = Math.min(remaining, interestPortion);
-    remaining -= interestPaid;
+const principal = Number(loan.amount);
 
-    const principalPaid = remaining;
+const totalInterest =
+  (principal * Number(loan.interest_rate)) / 100;
 
-    // -----------------------------
-    // NEW BALANCE (SAFE)
-    // -----------------------------
-    const newBalance = Math.max(currentBalance - paymentAmount, 0);
+const breakdown =
+  await getPaymentBreakdownModel(loan_id);
+
+const principalAlreadyPaid =
+  Number(breakdown.principal_paid);
+
+const interestAlreadyPaid =
+  Number(breakdown.interest_paid);
+
+const remainingPrincipal =
+  principal - principalAlreadyPaid;
+
+const remainingInterest =
+  totalInterest - interestAlreadyPaid;
+
+let remaining = paymentAmount;
+
+/*
+|--------------------------------------------------------------------------
+| INTEREST FIRST
+|--------------------------------------------------------------------------
+*/
+
+const interestPaid = Math.min(
+  remaining,
+  Math.max(remainingInterest, 0)
+);
+
+remaining -= interestPaid;
+
+const principalPaid = Math.min(
+  remaining,
+  Math.max(remainingPrincipal, 0)
+);
+
+remaining -= principalPaid;
+
+const newBalance =
+  Math.max(balanceData.balance - paymentAmount, 0);
 
     const payment = await createLoanPaymentModel(
       loan_id,

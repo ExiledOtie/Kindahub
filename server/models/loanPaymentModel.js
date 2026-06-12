@@ -113,9 +113,34 @@ const getAllLoanPaymentsModel = async () => {
   return result.rows;
 };
 
+/*
+|--------------------------------------------------------------------------
+| GET PRINCIPAL & INTEREST PAID
+|--------------------------------------------------------------------------
+*/
+
+const getPaymentBreakdownModel = async (loanId) => {
+  const result = await pool.query(
+    `
+    SELECT
+      COALESCE(SUM(principal_paid),0) AS principal_paid,
+
+      COALESCE(SUM(interest_paid),0) AS interest_paid
+
+    FROM loan_payments
+
+    WHERE loan_id = $1
+    `,
+    [loanId]
+  );
+
+  return result.rows[0];
+};
+
 module.exports = {
   createLoanPaymentModel,
   getLoanPaymentsModel,
   getTotalPaidModel,
   getAllLoanPaymentsModel,
+  getPaymentBreakdownModel,
 };

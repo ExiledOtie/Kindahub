@@ -7,7 +7,6 @@ import { ClipLoader } from "react-spinners";
 import {
   FaCheck,
   FaTimes,
-  FaTrash,
   FaMoneyBillWave,
   FaEye,
   FaCreditCard,
@@ -21,25 +20,16 @@ const Loans = () => {
   const [loans, setLoans] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // filters
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [groupFilter, setGroupFilter] = useState("all");
   const [page, setPage] = useState(1);
 
-  // modal
   const [selectedLoan, setSelectedLoan] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
-  // actions
   const [actionLoading, setActionLoading] = useState(null);
 
-  // repayment
-  const [amount, setAmount] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("cash");
-  const [mpesaCode, setMpesaCode] = useState("");
-
-  // ---------------- FETCH ----------------
   const fetchLoans = async () => {
     try {
       setLoading(true);
@@ -56,7 +46,6 @@ const Loans = () => {
     fetchLoans();
   }, []);
 
-  // ---------------- CALC ----------------
   const calculateLoan = (loan) => {
     const principal = Number(loan.amount || 0);
     const rate = Number(loan.interest_rate || 0);
@@ -74,12 +63,13 @@ const Loans = () => {
 
   const getProgress = (loan) => {
     const calc = calculateLoan(loan);
-    const paid = Number(loan.paid_amount || 0);
+    const paid = Number(loan.total_paid || 0);
+
     if (!calc.totalPayable) return 0;
+
     return Math.min((paid / calc.totalPayable) * 100, 100);
   };
 
-  // ---------------- FILTERS ----------------
   const filteredLoans = useMemo(() => {
     return loans.filter((loan) => {
       const matchesSearch =
@@ -110,7 +100,6 @@ const Loans = () => {
   const isActionLoading = (type, id) =>
     actionLoading?.type === type && actionLoading?.id === id;
 
-  // ---------------- ACTIONS ----------------
   const approveLoan = async (id) => {
     try {
       setActionLoading({ type: "approve", id });
@@ -139,57 +128,6 @@ const Loans = () => {
     }
   };
 
-  const deleteLoan = async (id) => {
-    const confirm = await Swal.fire({
-      title: "Delete Loan?",
-      text: "This action cannot be undone",
-      icon: "warning",
-      showCancelButton: true,
-    });
-
-    if (!confirm.isConfirmed) return;
-
-    try {
-      setActionLoading({ type: "delete", id });
-      await axios.delete(`/loans/${id}`);
-      Swal.fire("Deleted", "Loan deleted", "success");
-      fetchLoans();
-      setShowModal(false);
-    } catch {
-      Swal.fire("Error", "Failed to delete loan", "error");
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  // ---------------- REPAYMENT ----------------
-  const recordPayment = async () => {
-    try {
-      if (!amount) return Swal.fire("Error", "Enter amount", "error");
-      if (paymentMethod === "mpesa" && !mpesaCode) {
-        return Swal.fire("Error", "Enter MPesa code", "error");
-      }
-
-      await axios.post("/loan-payments", {
-        loan_id: selectedLoan.id,
-        amount,
-        payment_method: paymentMethod,
-        mpesa_code: paymentMethod === "mpesa" ? mpesaCode : null,
-      });
-
-      Swal.fire("Success", "Payment recorded", "success");
-
-      setAmount("");
-      setMpesaCode("");
-      setPaymentMethod("cash");
-
-      fetchLoans();
-      setShowModal(false);
-    } catch {
-      Swal.fire("Error", "Failed to record payment", "error");
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex justify-center items-center h-[70vh]">
@@ -199,17 +137,17 @@ const Loans = () => {
   }
 
   return (
-    <div className="space-y-4 text-[11px]">
+    <div className="space-y-4 text-[10px]">
       {/* HEADER */}
-      <div className="bg-white p-4 rounded-xl border flex items-center gap-2">
+      <div className="bg-white p-3 rounded-xl border flex items-center gap-2">
         <FaMoneyBillWave className="text-green-600" />
-        <h2 className="font-semibold">Loans Management</h2>
+        <h2 className="font-semibold text-[11px]">Loans Management</h2>
       </div>
 
       {/* FILTERS */}
-      <div className="bg-white p-3 rounded-xl border flex flex-wrap gap-2">
+      <div className="bg-white p-2 rounded-xl border flex flex-wrap gap-2 text-[10px]">
         <input
-          className="border px-2 py-1 rounded w-60"
+          className="border px-2 py-1 rounded w-52 text-[10px]"
           placeholder="Search member / ID..."
           value={search}
           onChange={(e) => {
@@ -219,7 +157,7 @@ const Loans = () => {
         />
 
         <select
-          className="border px-2 py-1 rounded"
+          className="border px-2 py-1 rounded text-[10px]"
           value={statusFilter}
           onChange={(e) => {
             setStatusFilter(e.target.value);
@@ -233,7 +171,7 @@ const Loans = () => {
         </select>
 
         <select
-          className="border px-2 py-1 rounded"
+          className="border px-2 py-1 rounded text-[10px]"
           value={groupFilter}
           onChange={(e) => {
             setGroupFilter(e.target.value);
@@ -252,14 +190,14 @@ const Loans = () => {
       {/* TABLE */}
       <div className="bg-white border rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-[11px]">
+          <table className="w-full text-[10px]">
             <thead>
               <tr className="bg-gray-50">
-                <th className="p-3 text-left">Member</th>
-                <th className="p-3 text-left">Amount</th>
-                <th className="p-3 text-left">Status</th>
-                <th className="p-3 text-left">Progress</th>
-                <th className="p-3 text-right">Actions</th>
+                <th className="px-3 py-2 text-left">Member</th>
+                <th className="px-3 py-2 text-left">Amount</th>
+                <th className="px-3 py-2 text-left">Status</th>
+                <th className="px-3 py-2 text-left">Progress</th>
+                <th className="px-3 py-2 text-center">Actions</th>
               </tr>
             </thead>
 
@@ -269,33 +207,37 @@ const Loans = () => {
 
                 return (
                   <tr key={loan.id} className="border-b">
-                    <td className="p-3">{loan.fullname}</td>
-                    <td className="p-3">
+                    <td className="px-3 py-2">{loan.fullname}</td>
+
+                    <td className="px-3 py-2">
                       KES {Number(loan.amount).toLocaleString()}
                     </td>
-                    <td className="p-3 capitalize">{loan.status}</td>
 
-                    <td className="p-3 w-52">
-                      <div className="h-2 bg-gray-200 rounded-full">
-                        <div
-                          className="h-2 bg-green-500 rounded-full"
-                          style={{ width: `${progress}%` }}
-                        />
+                    <td className="px-3 py-2 capitalize">{loan.status}</td>
+
+                    <td className="px-3 py-2 w-44">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-green-500"
+                            style={{ width: `${progress}%` }}
+                          />
+                        </div>
+                        <span className="text-[9px] text-gray-500 min-w-[35px]">
+                          {progress.toFixed(0)}%
+                        </span>
                       </div>
-                      <span className="text-[10px] text-gray-500">
-                        {progress.toFixed(1)}%
-                      </span>
                     </td>
 
-                    <td className="p-3 text-right">
+                    <td className="px-3 py-2 text-center">
                       <button
                         onClick={() => {
                           setSelectedLoan(loan);
                           setShowModal(true);
                         }}
-                        className="h-7 w-7 bg-blue-100 text-blue-600 rounded"
+                        className="h-7 w-7 bg-blue-100 text-blue-600 rounded flex items-center justify-center mx-auto"
                       >
-                        <FaEye />
+                        <FaEye size={12} />
                       </button>
                     </td>
                   </tr>
@@ -306,7 +248,7 @@ const Loans = () => {
         </div>
 
         {/* PAGINATION */}
-        <div className="flex justify-between p-3 border-t">
+        <div className="flex justify-between p-3 border-t text-[10px]">
           <button disabled={page === 1} onClick={() => setPage(page - 1)}>
             Prev
           </button>
@@ -331,58 +273,25 @@ const Loans = () => {
           onClick={() => setShowModal(false)}
         >
           <div
-            className="bg-white p-5 rounded-xl w-full max-w-md text-[12px]"
+            className="bg-white p-4 rounded-xl w-full max-w-md text-[10px]"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="font-semibold mb-4">Loan Details</h2>
+            <h2 className="font-semibold mb-3 text-[11px]">
+              Loan Details
+            </h2>
 
             <div className="space-y-2">
-              <p>
-                <b>Member:</b> {selectedLoan.fullname}
-              </p>
-
-              <p>
-                <b>Amount:</b> KES{" "}
-                {Number(selectedLoan.amount).toLocaleString()}
-              </p>
-
-              <p>
-                <b>Interest:</b> {selectedLoan.interest_rate}%
-              </p>
-
-              <p>
-                <b>Duration:</b> {selectedLoan.duration_months} Months
-              </p>
-
-              <p>
-                <b>Group:</b> {selectedLoan.group_name || "-"}
-              </p>
-
-              <p>
-                <b>Status:</b>{" "}
-                <span className="capitalize">{selectedLoan.status}</span>
-              </p>
-
-              <p>
-                <b>Total Payable:</b> KES{" "}
-                {calculateLoan(selectedLoan).totalPayable.toLocaleString()}
-              </p>
-
-              <p>
-                <b>Monthly Installment:</b> KES{" "}
-                {calculateLoan(selectedLoan).monthlyInstallment.toLocaleString(
-                  undefined,
-                  {
-                    maximumFractionDigits: 2,
-                  },
-                )}
-              </p>
+              <p><b>Member:</b> {selectedLoan.fullname}</p>
+              <p><b>Amount:</b> KES {Number(selectedLoan.amount).toLocaleString()}</p>
+              <p><b>Interest:</b> {selectedLoan.interest_rate}%</p>
+              <p><b>Duration:</b> {selectedLoan.duration_months} Months</p>
+              <p><b>Status:</b> <span className="capitalize">{selectedLoan.status}</span></p>
             </div>
 
-            <div className="flex flex-wrap justify-end gap-2 mt-6">
+            <div className="flex flex-wrap justify-end gap-2 mt-4">
               <button
                 onClick={() => setShowModal(false)}
-                className="px-3 py-1 border rounded"
+                className="px-2 py-1 border rounded"
               >
                 Close
               </button>
@@ -391,10 +300,9 @@ const Loans = () => {
                 <button
                   onClick={() => {
                     setShowModal(false);
-
                     navigate(`/dashboard/loan-repayments/${selectedLoan.id}`);
                   }}
-                  className="px-3 py-1 bg-purple-600 text-white rounded flex items-center gap-1"
+                  className="px-2 py-1 bg-purple-600 text-white rounded flex items-center gap-1"
                 >
                   <FaCreditCard />
                   Repayments
@@ -406,37 +314,22 @@ const Loans = () => {
                   <button
                     disabled={isActionLoading("reject", selectedLoan.id)}
                     onClick={() => rejectLoan(selectedLoan.id)}
-                    className="px-3 py-1 bg-red-500 text-white rounded flex items-center gap-1"
+                    className="px-2 py-1 bg-red-500 text-white rounded flex items-center gap-1"
                   >
                     <FaTimes />
-                    {isActionLoading("reject", selectedLoan.id)
-                      ? "Rejecting..."
-                      : "Reject"}
+                    Reject
                   </button>
 
                   <button
                     disabled={isActionLoading("approve", selectedLoan.id)}
                     onClick={() => approveLoan(selectedLoan.id)}
-                    className="px-3 py-1 bg-green-600 text-white rounded flex items-center gap-1"
+                    className="px-2 py-1 bg-green-600 text-white rounded flex items-center gap-1"
                   >
                     <FaCheck />
-                    {isActionLoading("approve", selectedLoan.id)
-                      ? "Approving..."
-                      : "Approve"}
+                    Approve
                   </button>
                 </>
               )}
-
-              <button
-                disabled={isActionLoading("delete", selectedLoan.id)}
-                onClick={() => deleteLoan(selectedLoan.id)}
-                className="px-3 py-1 bg-gray-700 text-white rounded flex items-center gap-1"
-              >
-                <FaTrash />
-                {isActionLoading("delete", selectedLoan.id)
-                  ? "Deleting..."
-                  : "Delete"}
-              </button>
             </div>
           </div>
         </div>
