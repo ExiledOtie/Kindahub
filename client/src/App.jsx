@@ -16,14 +16,14 @@ import Contributions from "./assets/Pages/Contributions";
 import Loans from "./assets/Pages/Loans";
 import MemberProfile from "./assets/Pages/MemberProfile";
 import ProfileTab from "./assets/Pages/MemberTabs/ProfileTab";
-import LoanRepayments from "./assets/Pages/LoanRepaymentDetails";
+import LoanRepaymentDetails from "./assets/Pages/LoanRepaymentDetails";
+import LoanRepayments from "./assets/Pages/LoanRepayments";
 
 const App = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-
           {/* LOGIN */}
           <Route path="/" element={<Login />} />
 
@@ -42,11 +42,11 @@ const App = () => {
             <Route path="loans" element={<Loans />} />
             <Route path="members/:id" element={<MemberProfile />} />
             <Route path="profile" element={<ProfileTab />} />
-
+            <Route path="loan-repayments" element={<LoanRepayments />} />
             {/* ✅ FIXED: loanId param route */}
             <Route
               path="loan-repayments/:loanId"
-              element={<LoanRepayments />}
+              element={<LoanRepaymentDetails />}
             />
           </Route>
 
@@ -61,7 +61,6 @@ const App = () => {
           >
             <Route index element={<UserDashboard />} />
           </Route>
-
         </Routes>
       </AuthProvider>
     </BrowserRouter>
