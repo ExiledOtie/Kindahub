@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ClipLoader } from "react-spinners";
 import Swal from "sweetalert2";
 import { FaMoneyBillWave, FaSearch } from "react-icons/fa";
+import { GiPayMoney, GiTakeMyMoney } from "react-icons/gi";
 
 import axios from "../Utils/axios";
 
@@ -11,7 +12,6 @@ const Contributions = () => {
   const [loading, setLoading] = useState(true);
   const [contributions, setContributions] = useState([]);
 
-  // filters
   const [search, setSearch] = useState("");
   const [groupFilter, setGroupFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -27,7 +27,6 @@ const Contributions = () => {
       const res = await axios.get("/contributions");
       setContributions(res.data || []);
     } catch (error) {
-      console.log(error);
       Swal.fire({
         icon: "error",
         title: "Error",
@@ -48,7 +47,9 @@ const Contributions = () => {
       day: "numeric",
     });
 
-  // totals
+  // ========================
+  // TOTAL CONTRIBUTIONS
+  // ========================
   const totalAmount = useMemo(
     () =>
       contributions.reduce(
@@ -58,11 +59,52 @@ const Contributions = () => {
     [contributions]
   );
 
-  // unique filters
-  const groups = [...new Set(contributions.map(c => c.group_name).filter(Boolean))];
-  const statuses = [...new Set(contributions.map(c => c.status).filter(Boolean))];
+  // ========================
+  // GROUP TOTALS (SINGLE SOURCE OF TRUTH)
+  // ========================
+  const groupTotalsArray = useMemo(() => {
+    const map = {};
 
-  // filtering
+    contributions.forEach((c) => {
+      if (!c.group_name) return;
+
+      if (!map[c.group_name]) {
+        map[c.group_name] = 0;
+      }
+
+      map[c.group_name] += Number(c.amount || 0);
+    });
+
+    return Object.entries(map).map(([group, total]) => ({
+      group,
+      total,
+    }));
+  }, [contributions]);
+
+  // ========================
+  // SORTED GROUPS (ONLY ONCE)
+  // ========================
+  const sortedGroups = useMemo(() => {
+    return [...groupTotalsArray].sort((a, b) => b.total - a.total);
+  }, [groupTotalsArray]);
+
+  const topGroup = sortedGroups[0]?.group || "-";
+  const topAmount = sortedGroups[0]?.total || 0;
+
+  const baseGroupAmount =
+    sortedGroups.find((g) => g.group === "13 Amigos")?.total || 0;
+
+  const groups = [
+    ...new Set(contributions.map((c) => c.group_name).filter(Boolean)),
+  ];
+
+  const statuses = [
+    ...new Set(contributions.map((c) => c.status).filter(Boolean)),
+  ];
+
+  // ========================
+  // FILTERING
+  // ========================
   const filtered = useMemo(() => {
     return contributions.filter((c) => {
       const matchesSearch =
@@ -98,40 +140,97 @@ const Contributions = () => {
     <div className="space-y-3 text-[10px]">
 
       {/* HEADER */}
-      <div className="bg-white border rounded-xl p-3 flex items-center gap-2">
-        <FaMoneyBillWave className="text-green-600 text-sm" />
-        <div>
-          <h2 className="font-semibold text-sm">Contributions</h2>
-          <p className="text-[10px] text-gray-400">
-            View all member contributions
-          </p>
+      <div className="bg-white border rounded-xl p-3 flex items-center justify-between">
+
+        <div className="flex items-center gap-2">
+          <FaMoneyBillWave className="text-green-600 text-sm" />
+          <div>
+            <h2 className="font-semibold text-sm">Contributions</h2>
+            <p className="text-[10px] text-gray-400">
+              Manage and track all group contributions
+            </p>
+          </div>
+        </div>
+
+        {/* RIGHT */}
+        <div className="flex items-center gap-3">
+
+          <div className="flex items-center gap-2 bg-purple-50 px-3 py-1 rounded-lg border">
+            <GiPayMoney className="text-purple-600 text-sm" />
+            <div className="text-right">
+              <p className="text-[9px] text-gray-500">Top Group</p>
+              <p className="text-[11px] font-bold text-purple-700">
+                {topGroup}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 bg-blue-50 px-3 py-1 rounded-lg border">
+            <GiTakeMyMoney className="text-blue-600 text-sm" />
+            <div className="text-right">
+              <p className="text-[9px] text-gray-500">Top Amount</p>
+              <p className="text-[11px] font-bold text-blue-700">
+                KES {formatCurrency(topAmount)}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 bg-green-50 px-3 py-1 rounded-lg border">
+            <GiPayMoney className="text-green-600 text-sm" />
+            <div className="text-right">
+              <p className="text-[9px] text-gray-500">13 Amigos</p>
+              <p className="text-[11px] font-bold text-green-700">
+                KES {formatCurrency(baseGroupAmount)}
+              </p>
+            </div>
+          </div>
+
         </div>
       </div>
 
       {/* STATS */}
-      <div className="grid md:grid-cols-2 gap-3">
-        <div className="bg-white border rounded-xl p-3">
-          <p className="text-gray-500 text-[10px]">Total Records</p>
-          <h3 className="text-base font-bold">{contributions.length}</h3>
+      <div className="grid md:grid-cols-3 gap-2">
+
+        <div className="bg-white border rounded-lg p-2 flex items-center gap-2">
+          <GiTakeMyMoney className="text-green-600 text-sm" />
+          <div>
+            <p className="text-gray-500 text-[9px]">Total</p>
+            <h3 className="text-sm font-bold text-green-600">
+              KES {formatCurrency(totalAmount)}
+            </h3>
+          </div>
         </div>
 
-        <div className="bg-white border rounded-xl p-3">
-          <p className="text-gray-500 text-[10px]">Total Amount</p>
-          <h3 className="text-base font-bold text-green-600">
-            KES {formatCurrency(totalAmount)}
-          </h3>
+        <div className="bg-white border rounded-lg p-2 flex items-center gap-2">
+          <FaMoneyBillWave className="text-blue-600 text-sm" />
+          <div>
+            <p className="text-gray-500 text-[9px]">Groups</p>
+            <h3 className="text-sm font-bold text-blue-600">
+              {groupTotalsArray.length}
+            </h3>
+          </div>
         </div>
+
+        <div className="bg-white border rounded-lg p-2 flex items-center gap-2">
+          <GiPayMoney className="text-purple-600 text-sm" />
+          <div>
+            <p className="text-gray-500 text-[9px]">Top Amount</p>
+            <h3 className="text-sm font-bold text-purple-600">
+              KES {formatCurrency(topAmount)}
+            </h3>
+          </div>
+        </div>
+
       </div>
 
-      {/* FILTERS */}
-      <div className="bg-white border rounded-xl p-3 flex flex-wrap gap-2 text-[10px]">
+      {/* FILTERS + TABLE */}
+      <div className="bg-white border rounded-xl p-3 flex flex-wrap gap-2">
 
-        {/* SEARCH */}
         <div className="relative">
           <FaSearch className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
           <input
             className="border rounded-lg pl-7 pr-2 py-1 text-[10px]"
-            placeholder="Search member / group"
+            placeholder="Search..."
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
@@ -140,7 +239,6 @@ const Contributions = () => {
           />
         </div>
 
-        {/* GROUP FILTER */}
         <select
           className="border rounded-lg px-2 py-1 text-[10px]"
           value={groupFilter}
@@ -151,13 +249,10 @@ const Contributions = () => {
         >
           <option value="all">All Groups</option>
           {groups.map((g) => (
-            <option key={g} value={g}>
-              {g}
-            </option>
+            <option key={g} value={g}>{g}</option>
           ))}
         </select>
 
-        {/* STATUS FILTER */}
         <select
           className="border rounded-lg px-2 py-1 text-[10px]"
           value={statusFilter}
@@ -168,9 +263,7 @@ const Contributions = () => {
         >
           <option value="all">All Status</option>
           {statuses.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
+            <option key={s} value={s}>{s}</option>
           ))}
         </select>
 
@@ -178,10 +271,8 @@ const Contributions = () => {
 
       {/* TABLE */}
       <div className="bg-white border rounded-xl overflow-hidden">
-
         <div className="overflow-x-auto">
           <table className="w-full text-[10px]">
-
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-2 py-2 text-left">Member</th>
@@ -195,74 +286,23 @@ const Contributions = () => {
             </thead>
 
             <tbody>
-              {paginated.length > 0 ? (
-                paginated.map((c) => (
-                  <tr key={c.id} className="border-b hover:bg-gray-50">
-
-                    <td className="px-2 py-2">{c.fullname}</td>
-                    <td className="px-2 py-2">{c.group_name}</td>
-
-                    <td className="px-2 py-2 font-medium text-green-600">
-                      KES {formatCurrency(c.amount)}
-                    </td>
-
-                    <td className="px-2 py-2 capitalize">
-                      {c.payment_method}
-                    </td>
-
-                    <td className="px-2 py-2">
-                      {c.mpesa_code || "-"}
-                    </td>
-
-                    <td className="px-2 py-2">
-                      <span className="px-2 py-1 rounded-full text-[9px] bg-green-100 text-green-700">
-                        {c.status}
-                      </span>
-                    </td>
-
-                    <td className="px-2 py-2">
-                      {formatDate(c.created_at)}
-                    </td>
-
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="7" className="text-center py-6 text-gray-400">
-                    No contributions found
+              {paginated.map((c) => (
+                <tr key={c.id} className="border-b hover:bg-gray-50">
+                  <td className="px-2 py-2">{c.fullname}</td>
+                  <td className="px-2 py-2">{c.group_name}</td>
+                  <td className="px-2 py-2 text-green-600 font-medium">
+                    KES {formatCurrency(c.amount)}
                   </td>
+                  <td className="px-2 py-2 capitalize">{c.payment_method}</td>
+                  <td className="px-2 py-2">{c.mpesa_code || "-"}</td>
+                  <td className="px-2 py-2">{c.status}</td>
+                  <td className="px-2 py-2">{formatDate(c.created_at)}</td>
                 </tr>
-              )}
+              ))}
             </tbody>
 
           </table>
         </div>
-
-        {/* PAGINATION */}
-        <div className="flex justify-between items-center p-3 border-t text-[10px]">
-
-          <button
-            disabled={page === 1}
-            onClick={() => setPage(page - 1)}
-            className="px-2 py-1 border rounded disabled:opacity-50"
-          >
-            Prev
-          </button>
-
-          <span>
-            Page {page} of {totalPages || 1}
-          </span>
-
-          <button
-            disabled={page === totalPages || totalPages === 0}
-            onClick={() => setPage(page + 1)}
-            className="px-2 py-1 border rounded disabled:opacity-50"
-          >
-            Next
-          </button>
-
-        </div>
-
       </div>
 
     </div>
