@@ -18,6 +18,7 @@ import MemberProfile from "./assets/Pages/MemberProfile";
 import ProfileTab from "./assets/Pages/MemberTabs/ProfileTab";
 import LoanRepaymentDetails from "./assets/Pages/LoanRepaymentDetails";
 import LoanRepayments from "./assets/Pages/LoanRepayments";
+import Reports from "./assets/Pages/Reports";
 
 const App = () => {
   return (
@@ -43,6 +44,7 @@ const App = () => {
             <Route path="members/:id" element={<MemberProfile />} />
             <Route path="profile" element={<ProfileTab />} />
             <Route path="loan-repayments" element={<LoanRepayments />} />
+            <Route path="reports" element={<Reports />} />
             {/* ✅ FIXED: loanId param route */}
             <Route
               path="loan-repayments/:loanId"
