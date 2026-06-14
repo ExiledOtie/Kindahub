@@ -323,121 +323,132 @@ const deleteUserModel = async (id) => {
   return true;
 };
 
+/*
+|--------------------------------------------------------------------------
+| GET MEMBER SUMMARY
+|--------------------------------------------------------------------------
+*/
 
-const getMemberSummaryModel =
-  async (userId) => {
+const getMemberSummaryModel = async (userId) => {
+  const userResult = await pool.query(
+    `
+    SELECT
+      u.id,
+      u.fullname,
+      u.email,
+      u.phone,
+      u.username,
+      u.role,
+      u.status,
+      u.created_at,
 
-    const userResult =
-      await pool.query(
-        `
-        SELECT
-          u.*,
-          g.name as group_name
+      g.id AS group_id,
+      g.name AS group_name,
 
-        FROM users u
+      ug.role AS group_role
 
-        LEFT JOIN user_groups ug
-          ON ug.user_id = u.id
+    FROM users u
 
-        LEFT JOIN groups g
-          ON g.id = ug.group_id
+    LEFT JOIN user_groups ug
+      ON ug.user_id = u.id
 
-        WHERE u.id = $1
-        `,
-        [userId]
-      );
+    LEFT JOIN groups g
+      ON g.id = ug.group_id
 
-    const contributionResult =
-      await pool.query(
-        `
-        SELECT
-          COALESCE(
-            SUM(amount),
-            0
-          ) as total
+    WHERE u.id = $1
+    `,
+    [userId]
+  );
 
-        FROM contributions
+  const contributionResult = await pool.query(
+    `
+    SELECT
+      COALESCE(SUM(amount), 0) AS total
+    FROM contributions
+    WHERE user_id = $1
+    `,
+    [userId]
+  );
 
-        WHERE user_id = $1
-        `,
-        [userId]
-      );
+  const savingsResult = await pool.query(
+    `
+    SELECT
+      COALESCE(SUM(amount), 0) AS total
+    FROM savings
+    WHERE user_id = $1
+    `,
+    [userId]
+  );
 
-    const savingsResult =
-      await pool.query(
-        `
-        SELECT
-          COALESCE(
-            SUM(amount),
-            0
-          ) as total
+  const activeLoansResult = await pool.query(
+    `
+    SELECT COUNT(*) AS total
+    FROM loans
+    WHERE user_id = $1
+      AND status = 'approved'
+    `,
+    [userId]
+  );
 
-        FROM savings
+  const activitiesResult = await pool.query(
+    `
+    SELECT
+      'contribution' AS type,
+      amount,
+      created_at
+    FROM contributions
+    WHERE user_id = $1
 
-        WHERE user_id = $1
-        `,
-        [userId]
-      );
+    UNION ALL
 
-    const recentContributions =
-      await pool.query(
-        `
-        SELECT *
-        FROM contributions
+    SELECT
+      'saving' AS type,
+      amount,
+      created_at
+    FROM savings
+    WHERE user_id = $1
 
-        WHERE user_id = $1
+    UNION ALL
 
-        ORDER BY created_at DESC
+    SELECT
+      'loan' AS type,
+      amount,
+      created_at
+    FROM loans
+    WHERE user_id = $1
 
-        LIMIT 5
-        `,
-        [userId]
-      );
+    ORDER BY created_at DESC
+    LIMIT 5
+    `,
+    [userId]
+  );
 
-    const recentSavings =
-      await pool.query(
-        `
-        SELECT *
-        FROM savings
+  const totalContributions = Number(
+    contributionResult.rows[0].total
+  );
 
-        WHERE user_id = $1
+  const totalSavings = Number(
+    savingsResult.rows[0].total
+  );
 
-        ORDER BY created_at DESC
+  const activeLoans = Number(
+    activeLoansResult.rows[0].total
+  );
 
-        LIMIT 5
-        `,
-        [userId]
-      );
+  return {
+    member: userResult.rows[0],
 
-    const totalContributions =
-      Number(
-        contributionResult.rows[0].total
-      );
-
-    const totalSavings =
-      Number(
-        savingsResult.rows[0].total
-      );
-
-    return {
-      user:
-        userResult.rows[0],
-
+    stats: {
       totalContributions,
-
       totalSavings,
-
       currentBalance:
-        totalContributions +
-        totalSavings,
+        totalContributions + totalSavings,
+      activeLoans,
+    },
 
-      recentContributions:
-        recentContributions.rows,
-
-      recentSavings:
-        recentSavings.rows,
-    };
+    activities: activitiesResult.rows,
   };
+};
 
 module.exports = {
   createUserModel,
