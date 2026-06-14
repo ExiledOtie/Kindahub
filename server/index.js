@@ -15,6 +15,7 @@ const contributionRoutes = require("./routes/contributionRoutes");
 const savingsRoutes = require("./routes/savingsRoutes");
 const loanRoutes = require("./routes/loanRoutes");
 const loanPaymentRoutes = require("./routes/loanPaymentsRoutes");
+const reportRoutes = require("./routes/reportRoutes");
 
 
 const app = express();
@@ -34,6 +35,7 @@ app.use("/api/contributions", contributionRoutes);
 app.use("/api/savings", savingsRoutes);
 app.use("/api/loans", loanRoutes);
 app.use("/api/loan-payments", loanPaymentRoutes);
+app.use("/api/reports", reportRoutes);
 app.get("/", (req, res) => {
   res.send("Kindahub API Running");
 });
