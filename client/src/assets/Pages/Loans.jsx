@@ -62,13 +62,19 @@ const Loans = () => {
   };
 
   const getProgress = (loan) => {
-    const calc = calculateLoan(loan);
-    const paid = Number(loan.total_paid || 0);
+  const paid = Number(loan.total_paid ?? 0);
 
-    if (!calc.totalPayable) return 0;
+  const principal = Number(loan.amount || 0);
+  const rate = Number(loan.interest_rate || 0);
+  const months = Number(loan.duration_months || 1);
 
-    return Math.min((paid / calc.totalPayable) * 100, 100);
-  };
+  const totalInterest = (principal * rate) / 100;
+  const totalPayable = principal + totalInterest;
+
+  if (!totalPayable) return 0;
+
+  return Math.min((paid / totalPayable) * 100, 100);
+};
 
   const filteredLoans = useMemo(() => {
     return loans.filter((loan) => {
