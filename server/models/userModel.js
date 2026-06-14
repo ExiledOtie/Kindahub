@@ -12,7 +12,7 @@ const createUserModel = async (
   phone,
   password,
   role,
-  username
+  username,
 ) => {
   const result = await pool.query(
     `
@@ -38,14 +38,7 @@ const createUserModel = async (
       status,
       created_at
     `,
-    [
-      fullname,
-      email,
-      phone,
-      password,
-      role,
-      username,
-    ]
+    [fullname, email, phone, password, role, username],
   );
 
   return result.rows[0];
@@ -57,11 +50,7 @@ const createUserModel = async (
 |--------------------------------------------------------------------------
 */
 
-const assignUserToGroupModel = async (
-  userId,
-  groupId,
-  role = "member"
-) => {
+const assignUserToGroupModel = async (userId, groupId, role = "member") => {
   const result = await pool.query(
     `
     INSERT INTO user_groups
@@ -75,11 +64,7 @@ const assignUserToGroupModel = async (
 
     RETURNING *
     `,
-    [
-      userId,
-      groupId,
-      role,
-    ]
+    [userId, groupId, role],
   );
 
   return result.rows[0];
@@ -107,7 +92,7 @@ const getUserGroupsModel = async (userId) => {
 
     WHERE ug.user_id = $1
     `,
-    [userId]
+    [userId],
   );
 
   return result.rows;
@@ -147,7 +132,7 @@ const getMemberProfileModel = async (userId) => {
 
     WHERE u.id = $1
     `,
-    [userId]
+    [userId],
   );
 
   return result.rows;
@@ -211,7 +196,7 @@ const getSingleUserModel = async (id) => {
 
     WHERE id = $1
     `,
-    [id]
+    [id],
   );
 
   return result.rows[0];
@@ -230,7 +215,7 @@ const findUserByEmailModel = async (email) => {
     FROM users
     WHERE email = $1
     `,
-    [email]
+    [email],
   );
 
   return result.rows[0];
@@ -249,7 +234,7 @@ const findUserByUsernameModel = async (username) => {
     FROM users
     WHERE username = $1
     `,
-    [username]
+    [username],
   );
 
   return result.rows[0];
@@ -261,14 +246,7 @@ const findUserByUsernameModel = async (username) => {
 |--------------------------------------------------------------------------
 */
 
-const updateUserModel = async (
-  id,
-  fullname,
-  email,
-  phone,
-  role,
-  status
-) => {
+const updateUserModel = async (id, fullname, email, phone, role, status) => {
   const result = await pool.query(
     `
     UPDATE users
@@ -292,14 +270,27 @@ const updateUserModel = async (
       status,
       created_at
     `,
-    [
-      fullname,
-      email,
-      phone,
-      role,
-      status,
-      id,
-    ]
+    [fullname, email, phone, role, status, id],
+  );
+
+  return result.rows[0];
+};
+
+/*
+|--------------------------------------------------------------------------
+| RESET PASSWORD
+|--------------------------------------------------------------------------
+*/
+
+const resetPasswordModel = async (userId, hashedPassword) => {
+  const result = await pool.query(
+    `
+    UPDATE users
+    SET password = $1
+    WHERE id = $2
+    RETURNING id
+    `,
+    [hashedPassword, userId],
   );
 
   return result.rows[0];
@@ -317,7 +308,7 @@ const deleteUserModel = async (id) => {
     DELETE FROM users
     WHERE id = $1
     `,
-    [id]
+    [id],
   );
 
   return true;
@@ -331,63 +322,74 @@ const deleteUserModel = async (id) => {
 
 const getMemberSummaryModel = async (userId) => {
   const userResult = await pool.query(
-    `
-    SELECT
-      u.id,
-      u.fullname,
-      u.email,
-      u.phone,
-      u.username,
-      u.role,
-      u.status,
-      u.created_at,
+  `
+  SELECT
+    u.id,
+    u.fullname,
+    u.email,
+    u.phone,
+    u.username,
+    u.role,
+    u.status,
+    u.created_at,
+    u.last_login,
 
-      g.id AS group_id,
-      g.name AS group_name,
+    g.id AS group_id,
+    g.name AS group_name,
 
-      ug.role AS group_role
+    ug.role AS group_role
 
-    FROM users u
+  FROM users u
 
-    LEFT JOIN user_groups ug
-      ON ug.user_id = u.id
+  LEFT JOIN user_groups ug
+    ON ug.user_id = u.id
 
-    LEFT JOIN groups g
-      ON g.id = ug.group_id
+  LEFT JOIN groups g
+    ON g.id = ug.group_id
 
-    WHERE u.id = $1
-    `,
-    [userId]
-  );
+  WHERE u.id = $1
+
+  ORDER BY ug.id DESC
+
+  LIMIT 1
+  `,
+  [userId]
+);
 
   const contributionResult = await pool.query(
     `
     SELECT
       COALESCE(SUM(amount), 0) AS total
+
     FROM contributions
+
     WHERE user_id = $1
     `,
-    [userId]
+    [userId],
   );
 
   const savingsResult = await pool.query(
     `
     SELECT
       COALESCE(SUM(amount), 0) AS total
+
     FROM savings
+
     WHERE user_id = $1
     `,
-    [userId]
+    [userId],
   );
 
   const activeLoansResult = await pool.query(
     `
     SELECT COUNT(*) AS total
+
     FROM loans
+
     WHERE user_id = $1
       AND status = 'approved'
     `,
-    [userId]
+    [userId],
   );
 
   const activitiesResult = await pool.query(
@@ -395,8 +397,13 @@ const getMemberSummaryModel = async (userId) => {
     SELECT
       'contribution' AS type,
       amount,
-      created_at
+      created_at,
+      'Contribution of KES ' ||
+      TO_CHAR(amount, 'FM999,999,999') ||
+      ' added' AS description
+
     FROM contributions
+
     WHERE user_id = $1
 
     UNION ALL
@@ -404,45 +411,81 @@ const getMemberSummaryModel = async (userId) => {
     SELECT
       'saving' AS type,
       amount,
-      created_at
+      created_at,
+      'Savings of KES ' ||
+      TO_CHAR(amount, 'FM999,999,999') ||
+      ' added' AS description
+
     FROM savings
+
     WHERE user_id = $1
 
     UNION ALL
 
     SELECT
-      'loan' AS type,
+      'loan_application' AS type,
       amount,
-      created_at
+      created_at,
+
+      CASE
+        WHEN status = 'approved' THEN
+          'Loan of KES ' ||
+          TO_CHAR(amount, 'FM999,999,999') ||
+          ' approved'
+
+        WHEN status = 'rejected' THEN
+          'Loan of KES ' ||
+          TO_CHAR(amount, 'FM999,999,999') ||
+          ' rejected'
+
+        ELSE
+          'Loan application of KES ' ||
+          TO_CHAR(amount, 'FM999,999,999') ||
+          ' submitted'
+      END AS description
+
     FROM loans
+
     WHERE user_id = $1
 
+    UNION ALL
+
+    SELECT
+      'loan_payment' AS type,
+      lp.amount,
+      lp.created_at,
+      'Loan repayment of KES ' ||
+      TO_CHAR(lp.amount, 'FM999,999,999') ||
+      ' made' AS description
+
+    FROM loan_payments lp
+
+    INNER JOIN loans l
+      ON l.id = lp.loan_id
+
+    WHERE l.user_id = $1
+
     ORDER BY created_at DESC
+
     LIMIT 5
     `,
-    [userId]
+    [userId],
   );
 
-  const totalContributions = Number(
-    contributionResult.rows[0].total
-  );
+  const totalContributions = Number(contributionResult.rows[0].total);
 
-  const totalSavings = Number(
-    savingsResult.rows[0].total
-  );
+  const totalSavings = Number(savingsResult.rows[0].total);
 
-  const activeLoans = Number(
-    activeLoansResult.rows[0].total
-  );
+  const activeLoans = Number(activeLoansResult.rows[0].total);
 
   return {
-    member: userResult.rows[0],
+    user: userResult.rows[0],
 
     stats: {
       totalContributions,
       totalSavings,
-      currentBalance:
-        totalContributions + totalSavings,
+      currentBalance: totalContributions + totalSavings,
+
       activeLoans,
     },
 

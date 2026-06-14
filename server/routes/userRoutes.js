@@ -12,6 +12,7 @@ const {
   getMemberProfile,
   updateUser,
   updateMyProfile,
+  resetPassword,
   deleteUser,
 } = require("../controllers/userController");
 
@@ -111,6 +112,19 @@ router.put(
   authMiddleware,
   authorizeRoles("super_admin"),
   updateUser
+);
+
+/*
+|--------------------------------------------------------------------------
+| RESET PASSWORD USER
+|--------------------------------------------------------------------------
+*/
+
+router.put(
+  "/:id/reset-password",
+  authMiddleware,
+  authorizeRoles("super_admin"),
+  resetPassword
 );
 
 /*

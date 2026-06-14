@@ -1,5 +1,6 @@
 const bcrypt = require("bcryptjs");
 const generateToken = require("../utils/generateToken");
+const pool = require("../config/db");
 
 const {
   findUserByEmailModel,
@@ -33,18 +34,26 @@ const login = async (req, res) => {
       });
     }
 
-    const isMatch = await bcrypt.compare(
-      password,
-      user.password
-    );
-
-    console.log("PASSWORD MATCH:", isMatch);
-
     if (!isMatch) {
       return res.status(401).json({
         message: "Invalid credentials",
       });
     }
+
+    /*
+|--------------------------------------------------------------------------
+| UPDATE LAST LOGIN
+|--------------------------------------------------------------------------
+*/
+
+    await pool.query(
+      `
+  UPDATE users
+  SET last_login = CURRENT_TIMESTAMP
+  WHERE id = $1
+  `,
+      [user.id],
+    );
 
     const token = generateToken(user);
 
