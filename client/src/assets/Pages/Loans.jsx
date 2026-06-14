@@ -29,12 +29,42 @@ const Loans = () => {
   const [showModal, setShowModal] = useState(false);
 
   const [actionLoading, setActionLoading] = useState(null);
+  const [loanProgress, setLoanProgress] = useState({});
 
   const fetchLoans = async () => {
     try {
       setLoading(true);
+
       const res = await axios.get("/loans");
-      setLoans(res.data);
+      const loansData = res.data || [];
+
+      setLoans(loansData);
+
+      const balances = await Promise.all(
+        loansData.map(async (loan) => {
+          try {
+            const res = await axios.get(`/loan-payments/${loan.id}/balance`);
+
+            return {
+              id: loan.id,
+              progress:
+                res.data.totalPayable > 0
+                  ? (res.data.totalPaid / res.data.totalPayable) * 100
+                  : 0,
+            };
+          } catch {
+            return { id: loan.id, progress: 0 };
+          }
+        }),
+      );
+
+      const map = {};
+
+      balances.forEach((b) => {
+        map[b.id] = b.progress;
+      });
+
+      setLoanProgress(map);
     } catch {
       Swal.fire("Error", "Failed to fetch loans", "error");
     } finally {
@@ -62,19 +92,8 @@ const Loans = () => {
   };
 
   const getProgress = (loan) => {
-  const paid = Number(loan.total_paid ?? 0);
-
-  const principal = Number(loan.amount || 0);
-  const rate = Number(loan.interest_rate || 0);
-  const months = Number(loan.duration_months || 1);
-
-  const totalInterest = (principal * rate) / 100;
-  const totalPayable = principal + totalInterest;
-
-  if (!totalPayable) return 0;
-
-  return Math.min((paid / totalPayable) * 100, 100);
-};
+    return loanProgress[loan.id] || 0;
+  };
 
   const filteredLoans = useMemo(() => {
     return loans.filter((loan) => {
@@ -282,16 +301,26 @@ const Loans = () => {
             className="bg-white p-4 rounded-xl w-full max-w-md text-[10px]"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="font-semibold mb-3 text-[11px]">
-              Loan Details
-            </h2>
+            <h2 className="font-semibold mb-3 text-[11px]">Loan Details</h2>
 
             <div className="space-y-2">
-              <p><b>Member:</b> {selectedLoan.fullname}</p>
-              <p><b>Amount:</b> KES {Number(selectedLoan.amount).toLocaleString()}</p>
-              <p><b>Interest:</b> {selectedLoan.interest_rate}%</p>
-              <p><b>Duration:</b> {selectedLoan.duration_months} Months</p>
-              <p><b>Status:</b> <span className="capitalize">{selectedLoan.status}</span></p>
+              <p>
+                <b>Member:</b> {selectedLoan.fullname}
+              </p>
+              <p>
+                <b>Amount:</b> KES{" "}
+                {Number(selectedLoan.amount).toLocaleString()}
+              </p>
+              <p>
+                <b>Interest:</b> {selectedLoan.interest_rate}%
+              </p>
+              <p>
+                <b>Duration:</b> {selectedLoan.duration_months} Months
+              </p>
+              <p>
+                <b>Status:</b>{" "}
+                <span className="capitalize">{selectedLoan.status}</span>
+              </p>
             </div>
 
             <div className="flex flex-wrap justify-end gap-2 mt-4">
