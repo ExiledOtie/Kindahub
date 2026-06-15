@@ -19,6 +19,8 @@ import ProfileTab from "./assets/Pages/MemberTabs/ProfileTab";
 import LoanRepaymentDetails from "./assets/Pages/LoanRepaymentDetails";
 import LoanRepayments from "./assets/Pages/LoanRepayments";
 import Reports from "./assets/Pages/Reports";
+import GroupChats from "./assets/Pages/Communication/GroupChats";
+import PrivateMessages from "./assets/Pages/Communication/PrivateMessages";
 
 const App = () => {
   return (
@@ -45,6 +47,14 @@ const App = () => {
             <Route path="profile" element={<ProfileTab />} />
             <Route path="loan-repayments" element={<LoanRepayments />} />
             <Route path="reports" element={<Reports />} />
+            <Route
+              path="/dashboard/communication/groups"
+              element={<GroupChats />}
+            />
+            <Route
+              path="/dashboard/communication/private"
+              element={<PrivateMessages />}
+            />
             {/* ✅ FIXED: loanId param route */}
             <Route
               path="loan-repayments/:loanId"
