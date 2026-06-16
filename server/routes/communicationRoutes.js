@@ -5,9 +5,7 @@ const communicationController = require(
   "../controllers/communicationController"
 );
 
-const authenticateToken = require(
-  "../middleware/authenticateToken"
-);
+const authenticateToken = require("../middleware/authMiddleware");
 
 // ========================================
 // All routes require authentication
