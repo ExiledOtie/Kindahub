@@ -34,6 +34,19 @@ const login = async (req, res) => {
       });
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | VERIFY PASSWORD
+    |--------------------------------------------------------------------------
+    */
+
+    const isMatch = await bcrypt.compare(
+      password,
+      user.password
+    );
+
+    console.log("PASSWORD MATCH:", isMatch);
+
     if (!isMatch) {
       return res.status(401).json({
         message: "Invalid credentials",
@@ -41,18 +54,18 @@ const login = async (req, res) => {
     }
 
     /*
-|--------------------------------------------------------------------------
-| UPDATE LAST LOGIN
-|--------------------------------------------------------------------------
-*/
+    |--------------------------------------------------------------------------
+    | UPDATE LAST LOGIN
+    |--------------------------------------------------------------------------
+    */
 
     await pool.query(
       `
-  UPDATE users
-  SET last_login = CURRENT_TIMESTAMP
-  WHERE id = $1
-  `,
-      [user.id],
+      UPDATE users
+      SET last_login = CURRENT_TIMESTAMP
+      WHERE id = $1
+      `,
+      [user.id]
     );
 
     const token = generateToken(user);
