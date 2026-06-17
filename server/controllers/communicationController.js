@@ -201,17 +201,17 @@ exports.getGroupConversation = async (
   try {
     const { groupId } = req.params;
 
-    const conversation =
+    let conversation =
       await CommunicationModel.getGroupConversation(
         groupId
       );
 
     if (!conversation) {
-      return res.status(404).json({
-        success: false,
-        message:
-          "Group conversation not found",
-      });
+      conversation =
+        await CommunicationModel.createConversation(
+          "group",
+          groupId
+        );
     }
 
     res.status(200).json({

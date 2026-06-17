@@ -63,39 +63,52 @@ const GroupChats = () => {
     }
   };
 
-  const handleSelectConversation = async (group) => {
-    try {
-      setSelectedConversation(group);
+const handleSelectConversation = async (group) => {
+  console.log("GROUP CLICKED:", group);
 
-      const res = await api.get(`/communications/groups/${group.id}`);
+  try {
+    setSelectedConversation(group);
 
-      const id = res.data.data.id;
+    const res = await api.get(
+      `/communications/groups/${group.id}`
+    );
 
-      setConversationId(id);
+    console.log("GROUP RESPONSE:", res.data);
 
-      fetchMessages(id);
-    } catch (error) {
-      console.error(error);
-    }
-  };
+    const id = res.data.data.id;
 
-  const handleSend = async () => {
-    if (!message.trim()) return;
+    setConversationId(id);
 
-    if (!conversationId) return;
+    fetchMessages(id);
+  } catch (error) {
+    console.error(error);
+  }
+};
 
-    try {
-      await api.post(`/communications/${conversationId}/messages`, {
-        message,
-      });
+ const handleSend = async () => {
+  console.log("conversationId:", conversationId);
+  console.log("message:", message);
 
-      setMessage("");
+  if (!message.trim()) return;
 
-      fetchMessages(conversationId);
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  if (!conversationId) {
+    console.log("No conversation selected");
+    return;
+  }
+
+  try {
+    await api.post(
+      `/communications/${conversationId}/messages`,
+      { message }
+    );
+
+    setMessage("");
+
+    fetchMessages(conversationId);
+  } catch (error) {
+    console.error(error);
+  }
+};
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({
