@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { FaUsers } from "react-icons/fa";
-
+import api from "../../Utils/axios";
 import ConversationList from "./Components/ConversationList";
 import MessageBubble from "./Components/MessageBubble";
 import MessageInput from "./Components/MessageInput";
@@ -11,99 +11,97 @@ const GroupChats = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [message, setMessage] = useState("");
 
-  const [groups] = useState([
-    {
-      id: 1,
-      name: "Family Chama",
-      avatar: "F",
-      unread: 3,
-      members: 18,
-      lastMessage: "Meeting starts at 6 PM.",
-      time: "10:45 AM",
-    },
-    {
-      id: 2,
-      name: "Investment Club",
-      avatar: "I",
-      unread: 1,
-      members: 12,
-      lastMessage: "Contributions close tomorrow.",
-      time: "Yesterday",
-    },
-    {
-      id: 3,
-      name: "Business Chama",
-      avatar: "B",
-      unread: 0,
-      members: 9,
-      lastMessage: "Loan approved.",
-      time: "Mon",
-    },
-  ]);
+  const [groups, setGroups] = useState([]);
+  const [messages, setMessages] = useState([]);
 
-  const [selectedConversation, setSelectedConversation] = useState(groups[0]);
+  const [selectedConversation, setSelectedConversation] = useState(null);
 
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      sender: "Mary Wanjiku",
-      text: "Good morning everyone.",
-      time: "09:15 AM",
-      isMe: false,
-    },
-    {
-      id: 2,
-      sender: "You",
-      text: "Morning Mary 👋",
-      time: "09:16 AM",
-      isMe: true,
-      read: true,
-    },
-    {
-      id: 3,
-      sender: "Peter Mutiso",
-      text: "Meeting starts at 6 PM today.",
-      time: "09:20 AM",
-      isMe: false,
-    },
-    {
-      id: 4,
-      sender: "You",
-      text: "Noted. I'll be there.",
-      time: "09:22 AM",
-      isMe: true,
-      read: false,
-    },
-  ]);
+  const [conversationId, setConversationId] = useState(null);
+
+  const currentUser = JSON.parse(localStorage.getItem("user"));
+
+  useEffect(() => {
+    fetchGroups();
+  }, []);
+
+  const fetchGroups = async () => {
+    try {
+      const res = await api.get("/groups");
+
+      const formatted = res.data.map((group) => ({
+        id: group.id,
+        name: group.name,
+        avatar: group.name?.charAt(0),
+        members: group.member_count || 0,
+        unread: 0,
+      }));
+
+      setGroups(formatted);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const fetchMessages = async (id) => {
+    try {
+      const res = await api.get(`/communications/${id}/messages`);
+
+      const formatted = res.data.data.map((msg) => ({
+        id: msg.id,
+        sender: msg.sender_name,
+        text: msg.message,
+        time: new Date(msg.created_at).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        isMe: Number(msg.sender_id) === Number(currentUser.id),
+      }));
+
+      setMessages(formatted);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleSelectConversation = async (group) => {
+    try {
+      setSelectedConversation(group);
+
+      const res = await api.get(`/communications/groups/${group.id}`);
+
+      const id = res.data.data.id;
+
+      setConversationId(id);
+
+      fetchMessages(id);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleSend = async () => {
+    if (!message.trim()) return;
+
+    if (!conversationId) return;
+
+    try {
+      await api.post(`/communications/${conversationId}/messages`, {
+        message,
+      });
+
+      setMessage("");
+
+      fetchMessages(conversationId);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({
       behavior: "smooth",
     });
   }, [messages]);
-
-  const handleSend = () => {
-    if (!message.trim()) return;
-
-    const newMessage = {
-      id: Date.now(),
-      sender: "You",
-      text: message,
-      time: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      isMe: true,
-      read: false,
-    };
-
-    setMessages((prev) => [...prev, newMessage]);
-
-    // TODO:
-    // socket.emit("send_group_message", newMessage)
-
-    setMessage("");
-  };
 
   return (
     <div className="h-[calc(100vh-110px)] bg-white rounded-xl shadow-sm overflow-hidden">
@@ -113,7 +111,7 @@ const GroupChats = () => {
           title="Group Chats"
           conversations={groups}
           selectedConversation={selectedConversation}
-          onSelectConversation={setSelectedConversation}
+          onSelectConversation={handleSelectConversation}
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
         />
@@ -121,37 +119,35 @@ const GroupChats = () => {
         {/* RIGHT CHAT SECTION */}
         <div className="flex-1 flex flex-col bg-gray-50">
           {/* CHAT HEADER */}
-          <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+          <div className="bg-white border-b border-gray-200 px-3 md:px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-semibold text-xs">
                 {selectedConversation?.avatar}
               </div>
 
               <div>
-                <h2 className="font-semibold text-gray-800">
-                  {selectedConversation?.name}
+                <h2 className="font-semibold text-xs md:text-sm text-gray-800">
+                  {selectedConversation?.name || "Select Group"}
                 </h2>
 
-                <p className="text-xs text-gray-500 flex items-center gap-2">
-                  <FaUsers />
-                  {selectedConversation?.members} Members
+                <p className="text-[10px] md:text-xs text-gray-500 flex items-center gap-1">
+                  <FaUsers size={10} />
+                  {selectedConversation?.members || 0}
+                  Members
                 </p>
               </div>
             </div>
           </div>
 
           {/* MESSAGES */}
-          <div className="flex-1 overflow-y-auto p-4 md:p-6">
+          <div className="flex-1 overflow-y-auto p-2 md:p-3">
             {messages.length === 0 ? (
               <div className="h-full flex items-center justify-center text-gray-500">
                 No messages yet.
               </div>
             ) : (
               messages.map((msg) => (
-                <MessageBubble
-                  key={msg.id}
-                  message={msg}
-                />
+                <MessageBubble key={msg.id} message={msg} />
               ))
             )}
 
