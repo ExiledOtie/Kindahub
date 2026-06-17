@@ -93,28 +93,29 @@ const CommunicationModel = {
   // Messages
   // ==========================
   async getMessages(conversationId) {
-    const query = `
-      SELECT
-        m.id,
-        m.conversation_id,
-        m.sender_id,
-        u.full_name AS sender_name,
-        m.message,
-        m.created_at
-      FROM messages m
-      INNER JOIN users u
-        ON m.sender_id = u.id
-      WHERE m.conversation_id = $1
-        AND m.is_deleted = FALSE
-      ORDER BY m.created_at ASC
-    `;
+  const query = `
+    SELECT
+      m.id,
+      m.conversation_id,
+      m.sender_id,
+      u.fullname AS sender_name,
+      m.message,
+      m.created_at,
+      m.read_at
+    FROM messages m
+    INNER JOIN users u
+      ON m.sender_id = u.id
+    WHERE m.conversation_id = $1
+      AND m.is_deleted = FALSE
+    ORDER BY m.created_at ASC
+  `;
 
-    const { rows } = await pool.query(query, [
-      conversationId,
-    ]);
+  const { rows } = await pool.query(query, [
+    conversationId,
+  ]);
 
-    return rows;
-  },
+  return rows;
+},
 
   async createMessage(
     conversationId,
