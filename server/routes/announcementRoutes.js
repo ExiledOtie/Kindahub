@@ -17,6 +17,7 @@ const {
   getUpcomingAnnouncement,
   getAllAnnouncements,
   deleteAnnouncement,
+  updateAnnouncementStatus
 } = require(
   "../controllers/announcementController"
 );
@@ -52,6 +53,12 @@ router.get(
 router.get(
   "/group/:groupId/upcoming",
   getUpcomingMeeting
+);
+
+router.put(
+  "/:id/status",
+  authorizeRoles("super_admin"),
+  updateAnnouncementStatus
 );
 
 // Delete

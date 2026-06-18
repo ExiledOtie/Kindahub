@@ -35,21 +35,26 @@ const AnnouncementModel = {
     return rows[0];
   },
 
-  async getAllAnnouncements() {
-    const query = `
-      SELECT
-        a.*,
-        g.name AS group_name
-      FROM announcements a
-      LEFT JOIN groups g
-        ON a.group_id = g.id
-      ORDER BY a.announcement_date ASC
-    `;
+async getAllAnnouncements() {
+  const query = `
+    SELECT
+      a.*,
+      g.name AS group_name,
+      CASE
+        WHEN a.announcement_date < CURRENT_DATE
+        THEN 'completed'
+        ELSE a.status
+      END AS computed_status
+    FROM announcements a
+    LEFT JOIN groups g
+      ON a.group_id = g.id
+    ORDER BY a.announcement_date ASC
+  `;
 
-    const { rows } = await pool.query(query);
+  const { rows } = await pool.query(query);
 
-    return rows;
-  },
+  return rows;
+},
 
   async getGroupAnnouncements(groupId) {
     const query = `

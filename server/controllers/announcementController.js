@@ -207,3 +207,29 @@ exports.getUpcomingAnnouncement = async (
     });
   }
 };
+exports.updateAnnouncementStatus = async (
+  req,
+  res
+) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const announcement =
+      await AnnouncementModel.updateStatus(
+        id,
+        status
+      );
+
+    res.status(200).json({
+      success: true,
+      data: announcement,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message:
+        "Failed to update status",
+    });
+  }
+};
