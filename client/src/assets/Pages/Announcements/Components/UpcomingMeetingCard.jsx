@@ -18,10 +18,16 @@ const UpcomingMeetingCard = ({ meeting }) => {
     );
   }
 
-  const daysRemaining = Math.ceil(
-    (new Date(meeting.announcement_date) -
-      new Date()) /
-      (1000 * 60 * 60 * 24)
+  const meetingDate = new Date(
+    meeting.announcement_date
+  );
+
+  const daysRemaining = Math.max(
+    0,
+    Math.ceil(
+      (meetingDate - new Date()) /
+        (1000 * 60 * 60 * 24)
+    )
   );
 
   return (
@@ -32,7 +38,7 @@ const UpcomingMeetingCard = ({ meeting }) => {
             NEXT MEETING
           </p>
 
-          <h2 className="text-lg font-bold">
+          <h2 className="text-xl font-bold">
             {meeting.title}
           </h2>
         </div>
@@ -43,9 +49,7 @@ const UpcomingMeetingCard = ({ meeting }) => {
           </p>
 
           <p className="text-lg font-bold">
-            {daysRemaining > 0
-              ? daysRemaining
-              : 0}
+            {daysRemaining}
           </p>
         </div>
       </div>
@@ -57,22 +61,22 @@ const UpcomingMeetingCard = ({ meeting }) => {
       <div className="grid grid-cols-2 gap-3 text-sm">
         <p className="flex items-center gap-2">
           <FaCalendarAlt />
-          {meeting.announcement_date}
+          {meetingDate.toLocaleDateString()}
         </p>
 
         <p className="flex items-center gap-2">
           <FaClock />
-          {meeting.meeting_time || "N/A"}
+          {meeting.meeting_time}
         </p>
 
         <p className="flex items-center gap-2">
           <FaMapMarkerAlt />
-          {meeting.venue || "N/A"}
+          {meeting.venue}
         </p>
 
         <p className="flex items-center gap-2">
           <FaUser />
-          {meeting.host || "N/A"}
+          {meeting.host}
         </p>
 
         {meeting.group_name && (

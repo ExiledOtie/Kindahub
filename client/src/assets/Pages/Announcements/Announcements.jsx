@@ -106,20 +106,24 @@ const Announcements = () => {
           <UpcomingMeetingCard meeting={upcomingMeeting} />
         </div>
       </div>
+      
+      {/* ALL SCHEDULED MEETINGS */}
+      <div className="bg-white rounded-xl shadow-sm p-4">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-semibold">All Scheduled Meetings</h2>
 
-      {/* ANNOUNCEMENTS */}
-      <div className="bg-white rounded-xl shadow-sm p-3">
-        <h2 className="text-sm font-semibold mb-3">
-          Announcements for {selectedDate.toLocaleDateString()}
-        </h2>
+          <span className="text-xs text-gray-500">
+            {announcements.length} meetings
+          </span>
+        </div>
 
-        {filteredAnnouncements.length === 0 ? (
+        {announcements.length === 0 ? (
           <div className="text-xs text-gray-500 py-6 text-center">
-            No announcements found.
+            No meetings scheduled.
           </div>
         ) : (
-          <div className="space-y-3">
-            {filteredAnnouncements.map((announcement) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {announcements.map((announcement) => (
               <AnnouncementCard
                 key={announcement.id}
                 announcement={announcement}
