@@ -1,9 +1,6 @@
 const pool = require("../config/db");
 
 const AnnouncementModel = {
-  // ==========================
-  // Create Announcement
-  // ==========================
   async createAnnouncement(data) {
     const query = `
       INSERT INTO announcements (
@@ -17,9 +14,7 @@ const AnnouncementModel = {
         type,
         created_by
       )
-      VALUES (
-        $1,$2,$3,$4,$5,$6,$7,$8,$9
-      )
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
       RETURNING *
     `;
 
@@ -31,44 +26,48 @@ const AnnouncementModel = {
       data.meeting_time,
       data.venue,
       data.host,
-      data.type,
+      data.type || "meeting",
       data.created_by,
     ];
 
-    const { rows } = await pool.query(
-      query,
-      values
-    );
+    const { rows } = await pool.query(query, values);
 
     return rows[0];
   },
 
-  // ==========================
-  // Get Group Announcements
-  // ==========================
-  async getGroupAnnouncements(groupId) {
+  async getAllAnnouncements() {
     const query = `
       SELECT
         a.*,
-        u.fullname AS created_by_name
+        g.name AS group_name
       FROM announcements a
-      LEFT JOIN users u
-        ON a.created_by = u.id
-      WHERE a.group_id = $1
+      LEFT JOIN groups g
+        ON a.group_id = g.id
       ORDER BY a.announcement_date ASC
     `;
 
-    const { rows } = await pool.query(
-      query,
-      [groupId]
-    );
+    const { rows } = await pool.query(query);
 
     return rows;
   },
 
-  // ==========================
-  // Get Upcoming Meeting
-  // ==========================
+  async getGroupAnnouncements(groupId) {
+    const query = `
+      SELECT
+        a.*,
+        g.name AS group_name
+      FROM announcements a
+      LEFT JOIN groups g
+        ON a.group_id = g.id
+      WHERE a.group_id = $1
+      ORDER BY a.announcement_date ASC
+    `;
+
+    const { rows } = await pool.query(query, [groupId]);
+
+    return rows;
+  },
+
   async getUpcomingMeeting(groupId) {
     const query = `
       SELECT *
@@ -79,17 +78,29 @@ const AnnouncementModel = {
       LIMIT 1
     `;
 
-    const { rows } = await pool.query(
-      query,
-      [groupId]
-    );
+    const { rows } = await pool.query(query, [groupId]);
 
     return rows[0];
   },
 
-  // ==========================
-  // Delete Announcement
-  // ==========================
+  async getUpcomingAnnouncement() {
+    const query = `
+      SELECT
+        a.*,
+        g.name AS group_name
+      FROM announcements a
+      LEFT JOIN groups g
+        ON a.group_id = g.id
+      WHERE a.announcement_date >= CURRENT_DATE
+      ORDER BY a.announcement_date ASC
+      LIMIT 1
+    `;
+
+    const { rows } = await pool.query(query);
+
+    return rows[0];
+  },
+
   async deleteAnnouncement(id) {
     const query = `
       DELETE FROM announcements
@@ -97,10 +108,7 @@ const AnnouncementModel = {
       RETURNING *
     `;
 
-    const { rows } = await pool.query(
-      query,
-      [id]
-    );
+    const { rows } = await pool.query(query, [id]);
 
     return rows[0];
   },

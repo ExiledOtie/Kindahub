@@ -14,49 +14,47 @@ const {
   createAnnouncement,
   getGroupAnnouncements,
   getUpcomingMeeting,
+  getUpcomingAnnouncement,
+  getAllAnnouncements,
   deleteAnnouncement,
 } = require(
   "../controllers/announcementController"
 );
 
-// ======================================
-// All routes protected
-// ======================================
-
 router.use(authMiddleware);
 
-// ======================================
-// Create Announcement
-// ======================================
-
+// Create
 router.post(
   "/",
   authorizeRoles("super_admin"),
   createAnnouncement
 );
 
-// ======================================
-// Get Group Announcements
-// ======================================
+// Get all announcements
+router.get(
+  "/",
+  getAllAnnouncements
+);
 
+// Get next upcoming meeting
+router.get(
+  "/upcoming",
+  getUpcomingAnnouncement
+);
+
+// Group announcements
 router.get(
   "/group/:groupId",
   getGroupAnnouncements
 );
 
-// ======================================
-// Get Upcoming Meeting
-// ======================================
-
+// Group upcoming meeting
 router.get(
   "/group/:groupId/upcoming",
   getUpcomingMeeting
 );
 
-// ======================================
-// Delete Announcement
-// ======================================
-
+// Delete
 router.delete(
   "/:id",
   authorizeRoles("super_admin"),

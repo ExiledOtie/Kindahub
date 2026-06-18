@@ -155,3 +155,55 @@ exports.deleteAnnouncement =
       });
     }
   };
+
+  exports.getAllAnnouncements = async (
+  req,
+  res
+) => {
+  try {
+    const announcements =
+      await AnnouncementModel.getAllAnnouncements();
+
+    res.status(200).json({
+      success: true,
+      data: announcements,
+    });
+  } catch (error) {
+    console.error(
+      "Get announcements error:",
+      error
+    );
+
+    res.status(500).json({
+      success: false,
+      message:
+        "Failed to fetch announcements",
+    });
+  }
+};
+
+exports.getUpcomingAnnouncement = async (
+  req,
+  res
+) => {
+  try {
+    const meeting =
+      await AnnouncementModel.getUpcomingAnnouncement();
+
+    res.status(200).json({
+      success: true,
+      data: meeting,
+    });
+  } catch (error) {
+    console.error(
+      "Get upcoming announcement error:",
+      error
+    );
+
+    res.status(500).json({
+      success: false,
+      message:
+        "Failed to fetch upcoming announcement",
+    });
+  }
+};
