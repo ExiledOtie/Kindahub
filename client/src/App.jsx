@@ -21,6 +21,7 @@ import LoanRepayments from "./assets/Pages/LoanRepayments";
 import Reports from "./assets/Pages/Reports";
 import GroupChats from "./assets/Pages/Communication/GroupChats";
 import PrivateMessages from "./assets/Pages/Communication/PrivateMessages";
+import Announcements from "./assets/Pages/Announcements/Announcements";
 
 const App = () => {
   return (
@@ -47,6 +48,7 @@ const App = () => {
             <Route path="profile" element={<ProfileTab />} />
             <Route path="loan-repayments" element={<LoanRepayments />} />
             <Route path="reports" element={<Reports />} />
+            <Route path="announcements" element={<Announcements />} />
             <Route
               path="/dashboard/communication/groups"
               element={<GroupChats />}

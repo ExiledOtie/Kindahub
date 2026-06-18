@@ -19,6 +19,7 @@ import {
   FaEnvelope,
   FaChevronDown,
   FaChevronRight,
+  FaCalendarAlt,
 } from "react-icons/fa";
 
 const Sidebar = ({ role = "admin" }) => {
@@ -63,9 +64,8 @@ const Sidebar = ({ role = "admin" }) => {
     { name: "Reports", icon: <FaFileAlt />, path: "/dashboard/reports" },
     {
       name: "Announcements",
-      icon: <FaBell />,
+      icon: <FaCalendarAlt />,
       path: "/dashboard/announcements",
-      badge: 6,
     },
     {
       name: "Notifications",
