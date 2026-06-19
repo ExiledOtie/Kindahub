@@ -11,26 +11,19 @@ import {
 } from "./Services/notificationService";
 
 const Notifications = () => {
-  const [notifications, setNotifications] =
-    useState([]);
+  const [notifications, setNotifications] = useState([]);
 
-  const [loading, setLoading] =
-    useState(true);
+  const [loading, setLoading] = useState(true);
 
   const fetchNotifications = async () => {
     try {
-      const data =
-        await getNotifications();
+      const data = await getNotifications();
 
       setNotifications(data);
     } catch (error) {
       console.error(error);
 
-      Swal.fire(
-        "Error",
-        "Failed to load notifications",
-        "error"
-      );
+      Swal.fire("Error", "Failed to load notifications", "error");
     } finally {
       setLoading(false);
     }
@@ -45,11 +38,7 @@ const Notifications = () => {
       await markAsRead(id);
 
       setNotifications((prev) =>
-        prev.map((n) =>
-          n.id === id
-            ? { ...n, is_read: true }
-            : n
-        )
+        prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)),
       );
     } catch (error) {
       console.error(error);
@@ -64,7 +53,7 @@ const Notifications = () => {
         prev.map((n) => ({
           ...n,
           is_read: true,
-        }))
+        })),
       );
     } catch (error) {
       console.error(error);
@@ -72,19 +61,13 @@ const Notifications = () => {
   };
 
   if (loading) {
-    return (
-      <div className="p-6">
-        Loading notifications...
-      </div>
-    );
+    return <div className="p-6">Loading notifications...</div>;
   }
 
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">
-          Notifications
-        </h1>
+        <h1 className="text-2xl font-bold">Notifications</h1>
 
         <button
           onClick={handleReadAll}
@@ -98,15 +81,13 @@ const Notifications = () => {
         <EmptyNotifications />
       ) : (
         <div className="space-y-3">
-          {notifications.map(
-            (notification) => (
-              <NotificationCard
-                key={notification.id}
-                notification={notification}
-                onRead={handleRead}
-              />
-            )
-          )}
+          {notifications.map((notification) => (
+            <NotificationCard
+              key={notification.id}
+              notification={notification}
+              onRead={handleRead}
+            />
+          ))}
         </div>
       )}
     </div>

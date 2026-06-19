@@ -1,13 +1,8 @@
 import { useEffect, useState } from "react";
 import { FaBell } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
-
-import NotificationBadge from "./NotificationBadge";
 import { getUnreadCount } from "../Services/notificationService";
 
 const NotificationBell = () => {
-  const navigate = useNavigate();
-
   const [count, setCount] = useState(0);
 
   const fetchUnreadCount = async () => {
@@ -15,7 +10,7 @@ const NotificationBell = () => {
       const data = await getUnreadCount();
       setCount(data.count || 0);
     } catch (error) {
-      console.error(error);
+      console.error("Notification count error:", error);
     }
   };
 
@@ -30,24 +25,35 @@ const NotificationBell = () => {
   }, []);
 
   return (
-    <div
-      onClick={() => navigate("/notifications")}
-      className="
-        relative
-        cursor-pointer
-        flex
-        items-center
-        justify-center
-      "
-    >
+    <div className="relative flex items-center">
       <FaBell
         className={`
-          text-lg
+          text-[11px]
           ${count > 0 ? "bell-alert" : ""}
         `}
       />
 
-      <NotificationBadge count={count} />
+      {count > 0 && (
+        <span
+          className="
+            absolute
+            -top-2
+            -right-2
+            min-w-[18px]
+            h-[18px]
+            rounded-full
+            bg-red-500
+            text-white
+            text-[9px]
+            flex
+            items-center
+            justify-center
+            font-bold
+          "
+        >
+          {count > 99 ? "99+" : count}
+        </span>
+      )}
     </div>
   );
 };

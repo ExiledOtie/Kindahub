@@ -22,6 +22,8 @@ import Reports from "./assets/Pages/Reports";
 import GroupChats from "./assets/Pages/Communication/GroupChats";
 import PrivateMessages from "./assets/Pages/Communication/PrivateMessages";
 import Announcements from "./assets/Pages/Announcements/Announcements";
+import Notifications from "./assets/Pages/Notification/Notifications";
+import "./assets/Pages/Notification/Styles/notifications.css";
 
 const App = () => {
   return (
@@ -49,6 +51,7 @@ const App = () => {
             <Route path="loan-repayments" element={<LoanRepayments />} />
             <Route path="reports" element={<Reports />} />
             <Route path="announcements" element={<Announcements />} />
+            <Route path="notifications" element={<Notifications />} />
             <Route
               path="/dashboard/communication/groups"
               element={<GroupChats />}

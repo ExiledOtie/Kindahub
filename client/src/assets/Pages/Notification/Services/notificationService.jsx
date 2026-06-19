@@ -1,4 +1,4 @@
-import axios from "../../../../Utils/axios";
+import axios from "../../../Utils/axios";
 
 export const getNotifications = async () => {
   const response = await axios.get("/notifications");
@@ -11,25 +11,19 @@ export const getUnreadCount = async () => {
 };
 
 export const markAsRead = async (id) => {
-  const response = await axios.put(
-    `/notifications/${id}/read`
-  );
+  const response = await axios.put(`/notifications/${id}/read`);
 
   return response.data;
 };
 
 export const markAllAsRead = async () => {
-  const response = await axios.put(
-    "/notifications/read-all"
-  );
+  const response = await axios.put("/notifications/read-all");
 
   return response.data;
 };
 
 export const deleteNotification = async (id) => {
-  const response = await axios.delete(
-    `/notifications/${id}`
-  );
+  const response = await axios.delete(`/notifications/${id}`);
 
   return response.data;
 };

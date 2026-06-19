@@ -21,6 +21,7 @@ import {
   FaChevronRight,
   FaCalendarAlt,
 } from "react-icons/fa";
+import NotificationBell from "../Pages/Notification/Components/NotificationBell";
 
 const Sidebar = ({ role = "admin" }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -69,9 +70,8 @@ const Sidebar = ({ role = "admin" }) => {
     },
     {
       name: "Notifications",
-      icon: <FaBell />,
+      icon: <NotificationBell />,
       path: "/dashboard/notifications",
-      badge: 8,
     },
     { name: "Settings", icon: <FaCog />, path: "/dashboard/settings" },
   ];
@@ -117,9 +117,8 @@ const Sidebar = ({ role = "admin" }) => {
 
     {
       name: "Notifications",
-      icon: <FaBell />,
+      icon: <NotificationBell />,
       path: "/dashboard/user-notifications",
-      badge: 8,
     },
     { name: "Profile", icon: <FaUserCircle />, path: "/dashboard/profile" },
     { name: "Settings", icon: <FaCog />, path: "/dashboard/settings" },
