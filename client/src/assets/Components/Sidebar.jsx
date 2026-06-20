@@ -218,11 +218,9 @@ const Sidebar = ({ role = "admin" }) => {
                             }
                           >
                             <div className="flex items-center gap-3">
-                              <div className="w-5 flex justify-center items-center">
-                                {item.icon}
-                              </div>
+                              <span>{child.icon}</span>
 
-                              <span>{item.name}</span>
+                              <span>{child.name}</span>
                             </div>
 
                             {child.badge && (
