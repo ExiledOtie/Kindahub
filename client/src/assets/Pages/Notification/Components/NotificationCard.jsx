@@ -38,7 +38,7 @@ const NotificationCard = ({
     <div
       onClick={() => onRead(notification.id)}
       className={`
-        p-4
+        p-3
         rounded-lg
         shadow-sm
         border
@@ -52,21 +52,21 @@ const NotificationCard = ({
         }
       `}
     >
-      <div className="flex gap-3">
-        <div className="text-xl">
+      <div className="flex gap-2">
+        <div className="text-base mt-0.5">
           {getIcon()}
         </div>
 
         <div className="flex-1">
-          <h3 className="font-semibold">
+          <h3 className="text-sm font-medium">
             {notification.title}
           </h3>
 
-          <p className="text-sm text-gray-600">
+          <p className="text-xs text-gray-600 mt-1">
             {notification.message}
           </p>
 
-          <small className="text-gray-400">
+          <small className="text-[10px] text-gray-400">
             {new Date(
               notification.created_at
             ).toLocaleString()}

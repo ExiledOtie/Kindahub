@@ -10,7 +10,10 @@ const NotificationBell = () => {
       const data = await getUnreadCount();
       setCount(data.count || 0);
     } catch (error) {
-      console.error("Notification count error:", error);
+      console.error(
+        "Notification count error:",
+        error
+      );
     }
   };
 
@@ -28,7 +31,7 @@ const NotificationBell = () => {
     <div className="relative flex items-center">
       <FaBell
         className={`
-          text-[11px]
+          text-[10px]
           ${count > 0 ? "bell-alert" : ""}
         `}
       />
@@ -37,14 +40,14 @@ const NotificationBell = () => {
         <span
           className="
             absolute
-            -top-2
-            -right-2
-            min-w-[18px]
-            h-[18px]
+            -top-1.5
+            -right-1.5
+            min-w-[14px]
+            h-[14px]
             rounded-full
             bg-red-500
             text-white
-            text-[9px]
+            text-[8px]
             flex
             items-center
             justify-center
