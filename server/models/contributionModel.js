@@ -12,7 +12,8 @@ const createContributionModel = async (
   amount,
   paymentMethod,
   mpesaCode,
-  createdBy
+  createdBy,
+  status = "pending"
 ) => {
   const result = await pool.query(
     `
@@ -23,10 +24,11 @@ const createContributionModel = async (
       amount,
       payment_method,
       mpesa_code,
-      created_by
+      created_by,
+      status
     )
 
-    VALUES ($1,$2,$3,$4,$5,$6)
+    VALUES ($1,$2,$3,$4,$5,$6,$7)
 
     RETURNING *
     `,
@@ -37,6 +39,7 @@ const createContributionModel = async (
       paymentMethod,
       mpesaCode,
       createdBy,
+      status,
     ]
   );
 
@@ -133,6 +136,39 @@ const getContributionStatsModel =
     return result.rows[0];
   };
 
+const approveContributionModel = async (
+  contributionId
+) => {
+  const result = await pool.query(
+    `
+    UPDATE contributions
+    SET status = 'completed'
+    WHERE id = $1
+    RETURNING *
+    `,
+    [contributionId]
+  );
+
+  return result.rows[0];
+};
+
+const rejectContributionModel = async (
+  contributionId
+) => {
+  const result = await pool.query(
+    `
+    UPDATE contributions
+    SET status = 'rejected'
+    WHERE id = $1
+    RETURNING *
+    `,
+    [contributionId]
+  );
+
+  return result.rows[0];
+};
+
+
 /*
 |--------------------------------------------------------------------------
 | DELETE
@@ -158,4 +194,6 @@ module.exports = {
   getAllContributionsModel,
   getContributionStatsModel,
   deleteContributionModel,
+  approveContributionModel,
+  rejectContributionModel,
 };

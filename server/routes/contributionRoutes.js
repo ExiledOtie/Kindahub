@@ -12,6 +12,8 @@ const {
   getAllContributions,
   getContributionStats,
   deleteContribution,
+  approveContribution,
+  rejectContribution,
 } = require("../controllers/contributionController");
 
 const authMiddleware =
@@ -48,7 +50,17 @@ router.post(
   createMyContribution
 );
 
+router.put(
+  "/:id/approve",
+  authMiddleware,
+  approveContribution
+);
 
+router.put(
+  "/:id/reject",
+  authMiddleware,
+  rejectContribution
+);
 
 
 /*

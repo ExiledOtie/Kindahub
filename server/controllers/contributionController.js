@@ -4,6 +4,8 @@ const {
   getAllContributionsModel,
   getContributionStatsModel,
   deleteContributionModel,
+  approveContributionModel,
+  rejectContributionModel,
 } = require("../models/contributionModel");
 const Notification = require("../models/notificationModel");
 
@@ -328,6 +330,100 @@ const deleteContribution =
     }
   };
 
+
+  const approveContribution = async (
+  req,
+  res
+) => {
+  try {
+
+    const contribution =
+      await approveContributionModel(
+        req.params.id
+      );
+
+    if (!contribution) {
+      return res.status(404).json({
+        message:
+          "Contribution not found",
+      });
+    }
+
+    await createNotification({
+      user_id:
+        contribution.user_id,
+      title:
+        "Contribution Approved",
+      message:
+        `Your contribution of KES ${contribution.amount} has been approved.`,
+      type: "contribution",
+      reference_id:
+        contribution.id,
+    });
+
+    res.status(200).json({
+      message:
+        "Contribution approved successfully",
+      contribution,
+    });
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      message: "Server error",
+    });
+
+  }
+};
+const rejectContribution = async (
+  req,
+  res
+) => {
+  try {
+
+    const contribution =
+      await rejectContributionModel(
+        req.params.id
+      );
+
+    if (!contribution) {
+      return res.status(404).json({
+        message:
+          "Contribution not found",
+      });
+    }
+
+    await createNotification({
+      user_id:
+        contribution.user_id,
+      title:
+        "Contribution Rejected",
+      message:
+        `Your contribution of KES ${contribution.amount} was rejected. Please verify your Mpesa code.`,
+      type: "contribution",
+      reference_id:
+        contribution.id,
+    });
+
+    res.status(200).json({
+      message:
+        "Contribution rejected successfully",
+      contribution,
+    });
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      message: "Server error",
+    });
+
+  }
+};
+
 module.exports = {
   createContribution,
   createMyContribution,
@@ -336,4 +432,6 @@ module.exports = {
   getAllContributions,
   getContributionStats,
   deleteContribution,
+  approveContribution,
+  rejectContribution,
 };
