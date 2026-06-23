@@ -77,22 +77,27 @@ const Sidebar = ({ role = "admin" }) => {
   ];
 
   const userLinks = [
-    { name: "Dashboard", icon: <FaTachometerAlt />, path: "/user-dashboard" },
+    { name: "Dashboard", 
+      icon: <FaTachometerAlt />, 
+      path: "/user-dashboard" 
+    },
     {
       name: "Contributions",
       icon: <FaCreditCard />,
-      path: "/dashboard/user-contributions",
+      path: "/user-dashboard/contributions",
     },
-    { name: "Loans", icon: <FaUniversity />, path: "/dashboard/user-loans" },
+    { name: "Loans", 
+      icon: <FaUniversity />, 
+      path: "/user-dashboard/loans" },
     {
       name: "Payments",
       icon: <FaMoneyBillWave />,
-      path: "/dashboard/user-payments",
+      path: "/user-dashboard/payments",
     },
     {
       name: "Statements",
       icon: <FaFileAlt />,
-      path: "/dashboard/user-statements",
+      path: "/user-dashboard/statements",
     },
 
     // Communication
@@ -103,13 +108,13 @@ const Sidebar = ({ role = "admin" }) => {
         {
           name: "Group Chats",
           icon: <FaComments />,
-          path: "/dashboard/communication/groups",
+          path: "/user-dashboard/communication/groups",
           badge: 2,
         },
         {
           name: "Private Messages",
           icon: <FaEnvelope />,
-          path: "/dashboard/communication/private",
+          path: "/user-dashboard/communication/private",
           badge: 4,
         },
       ],
@@ -118,10 +123,12 @@ const Sidebar = ({ role = "admin" }) => {
     {
       name: "Notifications",
       icon: <NotificationBell />,
-      path: "/dashboard/user-notifications",
+      path: "/user-dashboard/notifications",
     },
-    { name: "Profile", icon: <FaUserCircle />, path: "/dashboard/profile" },
-    { name: "Settings", icon: <FaCog />, path: "/dashboard/settings" },
+    { name: "Profile", icon: <FaUserCircle />, path: "/user-dashboard/profile" },
+    { name: "Settings", 
+      icon: <FaCog />, path: 
+      "/user-dashboard/settings" },
   ];
 
   const links = role === "admin" ? adminLinks : userLinks;

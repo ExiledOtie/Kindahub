@@ -25,6 +25,8 @@ import Announcements from "./assets/Pages/Announcements/Announcements";
 import Notifications from "./assets/Pages/Notification/Notifications";
 import "./assets/Pages/Notification/Styles/notifications.css";
 
+import UserContributions from "./assets/Pages/Users/UserContributions";
+
 const App = () => {
   return (
     <BrowserRouter>
@@ -77,6 +79,7 @@ const App = () => {
             }
           >
             <Route index element={<UserDashboard />} />
+            <Route path="contributions" element={<UserContributions />} />
           </Route>
         </Routes>
       </AuthProvider>

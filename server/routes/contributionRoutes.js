@@ -6,13 +6,13 @@ const router =
 
 const {
   createContribution,
+  createMyContribution,
+  getMyContributions,
   getUserContributions,
   getAllContributions,
   getContributionStats,
   deleteContribution,
-} = require(
-  "../controllers/contributionController"
-);
+} = require("../controllers/contributionController");
 
 const authMiddleware =
   require("../middleware/authMiddleware");
@@ -28,6 +28,28 @@ router.post(
   authMiddleware,
   createContribution
 );
+
+
+/*
+|--------------------------------------------------------------------------
+| MEMBER CONTRIBUTIONS
+|--------------------------------------------------------------------------
+*/
+
+router.get(
+  "/my",
+  authMiddleware,
+  getMyContributions
+);
+
+router.post(
+  "/my",
+  authMiddleware,
+  createMyContribution
+);
+
+
+
 
 /*
 |--------------------------------------------------------------------------

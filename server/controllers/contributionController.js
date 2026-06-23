@@ -5,6 +5,7 @@ const {
   getContributionStatsModel,
   deleteContributionModel,
 } = require("../models/contributionModel");
+const Notification = require("../models/notificationModel");
 
 const pool =
   require("../config/db");
@@ -71,6 +72,155 @@ const createContribution =
       });
     }
   };
+
+
+  const createMyContribution = async (
+  req,
+  res
+) => {
+  try {
+
+    const {
+      amount,
+      payment_method,
+      mpesa_code,
+    } = req.body;
+
+    const userId = req.user.id;
+
+    const member =
+      await pool.query(
+        `
+        SELECT id, fullname
+        FROM users
+        WHERE id = $1
+        `,
+        [userId]
+      );
+
+    const group =
+      await pool.query(
+        `
+        SELECT group_id
+        FROM user_groups
+        WHERE user_id = $1
+        LIMIT 1
+        `,
+        [userId]
+      );
+
+    const groupId =
+      group.rows[0]?.group_id;
+
+    if (!groupId) {
+      return res.status(400).json({
+        message:
+          "You are not assigned to any group",
+      });
+    }
+
+    const contribution =
+      await createContributionModel(
+        userId,
+        groupId,
+        amount,
+        payment_method,
+        mpesa_code || null,
+        userId
+      );
+
+    /*
+    |--------------------------------------------------------------------------
+    | SET STATUS TO PENDING
+    |--------------------------------------------------------------------------
+    */
+
+    await pool.query(
+      `
+      UPDATE contributions
+      SET status = 'pending'
+      WHERE id = $1
+      `,
+      [contribution.id]
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | NOTIFY SUPER ADMINS
+    |--------------------------------------------------------------------------
+    */
+
+    const admins =
+      await pool.query(
+        `
+        SELECT id
+        FROM users
+        WHERE is_super_admin = true
+        `
+      );
+
+    for (const admin of admins.rows) {
+
+      await Notification.createNotification({
+        user_id: admin.id,
+        title: "New Contribution Submitted",
+        message: `${member.rows[0].fullname} submitted KES ${Number(
+          amount
+        ).toLocaleString()}
+        via ${payment_method}.
+        Mpesa Code: ${
+          mpesa_code || "N/A"
+        }`,
+        type: "contribution",
+        reference_id:
+          contribution.id,
+      });
+
+    }
+
+    res.status(201).json({
+      message:
+        "Contribution submitted successfully",
+      contribution,
+    });
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      message:
+        "Failed to submit contribution",
+    });
+
+  }
+};
+
+
+  const getMyContributions = async (
+  req,
+  res
+) => {
+  try {
+    const contributions =
+      await getUserContributionsModel(
+        req.user.id
+      );
+
+    res.status(200).json(
+      contributions
+    );
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      message: "Server error",
+    });
+
+  }
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -180,6 +330,8 @@ const deleteContribution =
 
 module.exports = {
   createContribution,
+  createMyContribution,
+  getMyContributions,
   getUserContributions,
   getAllContributions,
   getContributionStats,
