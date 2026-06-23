@@ -3,6 +3,8 @@ import { ClipLoader } from "react-spinners";
 import Swal from "sweetalert2";
 import { FaMoneyBillWave, FaSearch } from "react-icons/fa";
 import { GiPayMoney, GiTakeMyMoney } from "react-icons/gi";
+import { SiAdblock } from "react-icons/si";
+import { IoCheckmarkDoneCircleSharp } from "react-icons/io5";
 
 import axios from "../Utils/axios";
 
@@ -37,8 +39,7 @@ const Contributions = () => {
     }
   };
 
-  const formatCurrency = (amount) =>
-    Number(amount || 0).toLocaleString();
+  const formatCurrency = (amount) => Number(amount || 0).toLocaleString();
 
   const formatDate = (date) =>
     new Date(date).toLocaleDateString("en-KE", {
@@ -52,11 +53,8 @@ const Contributions = () => {
   // ========================
   const totalAmount = useMemo(
     () =>
-      contributions.reduce(
-        (sum, item) => sum + Number(item.amount || 0),
-        0
-      ),
-    [contributions]
+      contributions.reduce((sum, item) => sum + Number(item.amount || 0), 0),
+    [contributions],
   );
 
   // ========================
@@ -114,8 +112,7 @@ const Contributions = () => {
       const matchesGroup =
         groupFilter === "all" || c.group_name === groupFilter;
 
-      const matchesStatus =
-        statusFilter === "all" || c.status === statusFilter;
+      const matchesStatus = statusFilter === "all" || c.status === statusFilter;
 
       return matchesSearch && matchesGroup && matchesStatus;
     });
@@ -135,13 +132,54 @@ const Contributions = () => {
       </div>
     );
   }
+  const approveContribution = async (id) => {
+    try {
+      await axios.put(`/contributions/${id}/approve`);
+
+      Swal.fire({
+        icon: "success",
+        title: "Approved",
+        text: "Contribution approved successfully",
+      });
+
+      fetchContributions();
+    } catch (error) {
+      console.log(error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to approve contribution",
+      });
+    }
+  };
+
+  const rejectContribution = async (id) => {
+    try {
+      await axios.put(`/contributions/${id}/reject`);
+
+      Swal.fire({
+        icon: "success",
+        title: "Rejected",
+        text: "Contribution rejected successfully",
+      });
+
+      fetchContributions();
+    } catch (error) {
+      console.log(error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to reject contribution",
+      });
+    }
+  };
 
   return (
     <div className="space-y-3 text-[10px]">
-
       {/* HEADER */}
       <div className="bg-white border rounded-xl p-3 flex items-center justify-between">
-
         <div className="flex items-center gap-2">
           <FaMoneyBillWave className="text-green-600 text-sm" />
           <div>
@@ -154,7 +192,6 @@ const Contributions = () => {
 
         {/* RIGHT */}
         <div className="flex items-center gap-3">
-
           <div className="flex items-center gap-2 bg-purple-50 px-3 py-1 rounded-lg border">
             <GiPayMoney className="text-purple-600 text-sm" />
             <div className="text-right">
@@ -184,13 +221,11 @@ const Contributions = () => {
               </p>
             </div>
           </div>
-
         </div>
       </div>
 
       {/* STATS */}
       <div className="grid md:grid-cols-3 gap-2">
-
         <div className="bg-white border rounded-lg p-2 flex items-center gap-2">
           <GiTakeMyMoney className="text-green-600 text-sm" />
           <div>
@@ -220,12 +255,10 @@ const Contributions = () => {
             </h3>
           </div>
         </div>
-
       </div>
 
       {/* FILTERS + TABLE */}
       <div className="bg-white border rounded-xl p-3 flex flex-wrap gap-2">
-
         <div className="relative">
           <FaSearch className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
           <input
@@ -249,7 +282,9 @@ const Contributions = () => {
         >
           <option value="all">All Groups</option>
           {groups.map((g) => (
-            <option key={g} value={g}>{g}</option>
+            <option key={g} value={g}>
+              {g}
+            </option>
           ))}
         </select>
 
@@ -263,10 +298,11 @@ const Contributions = () => {
         >
           <option value="all">All Status</option>
           {statuses.map((s) => (
-            <option key={s} value={s}>{s}</option>
+            <option key={s} value={s}>
+              {s}
+            </option>
           ))}
         </select>
-
       </div>
 
       {/* TABLE */}
@@ -282,6 +318,7 @@ const Contributions = () => {
                 <th className="px-2 py-2 text-left">MPESA</th>
                 <th className="px-2 py-2 text-left">Status</th>
                 <th className="px-2 py-2 text-left">Date</th>
+                <th className="px-2 py-2 text-left">Actions</th>
               </tr>
             </thead>
 
@@ -295,16 +332,59 @@ const Contributions = () => {
                   </td>
                   <td className="px-2 py-2 capitalize">{c.payment_method}</td>
                   <td className="px-2 py-2">{c.mpesa_code || "-"}</td>
-                  <td className="px-2 py-2">{c.status}</td>
+                  <td className="px-2 py-2">
+                    <span
+                      className={`px-2 py-1 rounded-full text-[10px] font-medium ${
+                        c.status === "completed"
+                          ? "bg-green-100 text-green-700"
+                          : c.status === "pending"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : "bg-red-100 text-red-700"
+                      }`}
+                    >
+                      {c.status}
+                    </span>
+                  </td>
                   <td className="px-2 py-2">{formatDate(c.created_at)}</td>
+                  <td className="px-2 py-2">
+                    {c.status === "pending" ? (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => approveContribution(c.id)}
+                          className="
+          px-2 py-1
+          bg-green-600
+          hover:bg-green-700
+          text-white
+          rounded
+        "
+                        >
+                          <IoCheckmarkDoneCircleSharp />
+                        </button>
+
+                        <button
+                          onClick={() => rejectContribution(c.id)}
+                          className="
+          px-2 py-1
+          bg-red-600
+          hover:bg-red-700
+          text-white
+          rounded
+        "
+                        >
+                          <SiAdblock />
+                        </button>
+                      </div>
+                    ) : (
+                      "-"
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
-
           </table>
         </div>
       </div>
-
     </div>
   );
 };
