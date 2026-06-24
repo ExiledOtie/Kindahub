@@ -9,8 +9,7 @@ const {
 } = require("../models/contributionModel");
 const Notification = require("../models/notificationModel");
 
-const pool =
-  require("../config/db");
+const pool = require("../config/db");
 
 /*
 |--------------------------------------------------------------------------
@@ -18,118 +17,91 @@ const pool =
 |--------------------------------------------------------------------------
 */
 
-const createContribution =
-  async (req, res) => {
-    try {
-      const {
-        user_id,
-        amount,
-        payment_method,
-        mpesa_code,
-      } = req.body;
+const createContribution = async (req, res) => {
+  try {
+    const { user_id, amount, payment_method, mpesa_code } = req.body;
 
-      const group =
-        await pool.query(
-          `
+    const group = await pool.query(
+      `
           SELECT group_id
           FROM user_groups
           WHERE user_id = $1
           LIMIT 1
           `,
-          [user_id]
-        );
+      [user_id],
+    );
 
-      const groupId =
-        group.rows[0]?.group_id;
+    const groupId = group.rows[0]?.group_id;
 
-      if (!groupId) {
-        return res.status(400).json({
-          message:
-            "Member is not assigned to any group",
-        });
-      }
-
-      const contribution =
-        await createContributionModel(
-          user_id,
-          groupId,
-          amount,
-          payment_method,
-          mpesa_code || null,
-          req.user.id
-        );
-
-      res.status(201).json({
-        message:
-          "Contribution added successfully",
-        contribution,
-      });
-
-    } catch (error) {
-      console.log(error);
-
-      res.status(500).json({
-        message:
-          error.message,
+    if (!groupId) {
+      return res.status(400).json({
+        message: "Member is not assigned to any group",
       });
     }
-  };
 
-
-  const createMyContribution = async (
-  req,
-  res
-) => {
-  try {
-
-    const {
+    const contribution = await createContributionModel(
+      user_id,
+      groupId,
       amount,
       payment_method,
-      mpesa_code,
-    } = req.body;
+      mpesa_code || null,
+      req.user.id,
+    );
+
+    res.status(201).json({
+      message: "Contribution added successfully",
+      contribution,
+    });
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+const createMyContribution = async (req, res) => {
+  try {
+    const { amount, payment_method, mpesa_code } = req.body;
 
     const userId = req.user.id;
 
-    const member =
-      await pool.query(
-        `
+    const member = await pool.query(
+      `
         SELECT id, fullname
         FROM users
         WHERE id = $1
         `,
-        [userId]
-      );
+      [userId],
+    );
 
-    const group =
-      await pool.query(
-        `
+    const group = await pool.query(
+      `
         SELECT group_id
         FROM user_groups
         WHERE user_id = $1
         LIMIT 1
         `,
-        [userId]
-      );
+      [userId],
+    );
 
-    const groupId =
-      group.rows[0]?.group_id;
+    const groupId = group.rows[0]?.group_id;
 
     if (!groupId) {
       return res.status(400).json({
-        message:
-          "You are not assigned to any group",
+        message: "You are not assigned to any group",
       });
     }
 
-    const contribution =
-      await createContributionModel(
-        userId,
-        groupId,
-        amount,
-        payment_method,
-        mpesa_code || null,
-        userId
-      );
+    const contribution = await createContributionModel(
+      userId,
+      groupId,
+      amount,
+      payment_method,
+      mpesa_code || null,
+      userId,
+    );
 
     /*
     |--------------------------------------------------------------------------
@@ -143,7 +115,7 @@ const createContribution =
       SET status = 'pending'
       WHERE id = $1
       `,
-      [contribution.id]
+      [contribution.id],
     );
 
     /*
@@ -152,75 +124,52 @@ const createContribution =
     |--------------------------------------------------------------------------
     */
 
-    const admins =
-      await pool.query(
-        `
+    const admins = await pool.query(
+      `
         SELECT id
         FROM users
         WHERE is_super_admin = true
-        `
-      );
+        `,
+    );
 
     for (const admin of admins.rows) {
-
       await Notification.createNotification({
         user_id: admin.id,
         title: "New Contribution Submitted",
         message: `${member.rows[0].fullname} submitted KES ${Number(
-          amount
+          amount,
         ).toLocaleString()}
         via ${payment_method}.
-        Mpesa Code: ${
-          mpesa_code || "N/A"
-        }`,
+        Mpesa Code: ${mpesa_code || "N/A"}`,
         type: "contribution",
-        reference_id:
-          contribution.id,
+        reference_id: contribution.id,
       });
-
     }
 
     res.status(201).json({
-      message:
-        "Contribution submitted successfully",
+      message: "Contribution submitted successfully",
       contribution,
     });
-
   } catch (error) {
-
     console.log(error);
 
     res.status(500).json({
-      message:
-        "Failed to submit contribution",
+      message: "Failed to submit contribution",
     });
-
   }
 };
 
-
-  const getMyContributions = async (
-  req,
-  res
-) => {
+const getMyContributions = async (req, res) => {
   try {
-    const contributions =
-      await getUserContributionsModel(
-        req.user.id
-      );
+    const contributions = await getUserContributionsModel(req.user.id);
 
-    res.status(200).json(
-      contributions
-    );
-
+    res.status(200).json(contributions);
   } catch (error) {
-
     console.log(error);
 
     res.status(500).json({
       message: "Server error",
     });
-
   }
 };
 
@@ -230,26 +179,19 @@ const createContribution =
 |--------------------------------------------------------------------------
 */
 
-const getUserContributions =
-  async (req, res) => {
-    try {
-      const contributions =
-        await getUserContributionsModel(
-          req.params.userId
-        );
+const getUserContributions = async (req, res) => {
+  try {
+    const contributions = await getUserContributionsModel(req.params.userId);
 
-      res.status(200).json(
-        contributions
-      );
+    res.status(200).json(contributions);
+  } catch (error) {
+    console.log(error);
 
-    } catch (error) {
-      console.log(error);
-
-      res.status(500).json({
-        message: "Server error",
-      });
-    }
-  };
+    res.status(500).json({
+      message: "Server error",
+    });
+  }
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -257,26 +199,19 @@ const getUserContributions =
 |--------------------------------------------------------------------------
 */
 
-const getAllContributions =
-  async (req, res) => {
-    try {
-      const contributions =
-        await getAllContributionsModel();
+const getAllContributions = async (req, res) => {
+  try {
+    const contributions = await getAllContributionsModel();
 
-      res.status(200).json(
-        contributions
-      );
+    res.status(200).json(contributions);
+  } catch (error) {
+    console.log(error);
 
-    } catch (error) {
-      console.log(error);
-
-      res.status(500).json({
-        message: "Server error",
-      });
-    }
-  };
-
-  
+    res.status(500).json({
+      message: "Server error",
+    });
+  }
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -284,24 +219,19 @@ const getAllContributions =
 |--------------------------------------------------------------------------
 */
 
-const getContributionStats =
-  async (req, res) => {
-    try {
-      const stats =
-        await getContributionStatsModel();
+const getContributionStats = async (req, res) => {
+  try {
+    const stats = await getContributionStatsModel();
 
-      res.status(200).json(
-        stats
-      );
+    res.status(200).json(stats);
+  } catch (error) {
+    console.log(error);
 
-    } catch (error) {
-      console.log(error);
-
-      res.status(500).json({
-        message: "Server error",
-      });
-    }
-  };
+    res.status(500).json({
+      message: "Server error",
+    });
+  }
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -309,118 +239,80 @@ const getContributionStats =
 |--------------------------------------------------------------------------
 */
 
-const deleteContribution =
-  async (req, res) => {
-    try {
-      await deleteContributionModel(
-        req.params.id
-      );
-
-      res.status(200).json({
-        message:
-          "Contribution deleted successfully",
-      });
-
-    } catch (error) {
-      console.log(error);
-
-      res.status(500).json({
-        message: "Server error",
-      });
-    }
-  };
-
-
-  const approveContribution = async (
-  req,
-  res
-) => {
+const deleteContribution = async (req, res) => {
   try {
-
-    const contribution =
-      await approveContributionModel(
-        req.params.id
-      );
-
-    if (!contribution) {
-      return res.status(404).json({
-        message:
-          "Contribution not found",
-      });
-    }
-
-    await createNotification({
-      user_id:
-        contribution.user_id,
-      title:
-        "Contribution Approved",
-      message:
-        `Your contribution of KES ${contribution.amount} has been approved.`,
-      type: "contribution",
-      reference_id:
-        contribution.id,
-    });
+    await deleteContributionModel(req.params.id);
 
     res.status(200).json({
-      message:
-        "Contribution approved successfully",
-      contribution,
+      message: "Contribution deleted successfully",
     });
-
   } catch (error) {
-
     console.log(error);
 
     res.status(500).json({
       message: "Server error",
     });
-
   }
 };
-const rejectContribution = async (
-  req,
-  res
-) => {
-  try {
 
-    const contribution =
-      await rejectContributionModel(
-        req.params.id
-      );
+const approveContribution = async (req, res) => {
+  try {
+    const contribution = await approveContributionModel(req.params.id);
 
     if (!contribution) {
       return res.status(404).json({
-        message:
-          "Contribution not found",
+        message: "Contribution not found",
       });
     }
 
-    await createNotification({
-      user_id:
-        contribution.user_id,
-      title:
-        "Contribution Rejected",
-      message:
-        `Your contribution of KES ${contribution.amount} was rejected. Please verify your Mpesa code.`,
+    await Notification.createNotification({
+      user_id: contribution.user_id,
+      title: "Contribution Approved",
+      message: `Your contribution of KES ${contribution.amount} has been approved.`,
       type: "contribution",
-      reference_id:
-        contribution.id,
+      reference_id: contribution.id,
     });
 
     res.status(200).json({
-      message:
-        "Contribution rejected successfully",
+      message: "Contribution approved successfully",
       contribution,
     });
-
   } catch (error) {
-
     console.log(error);
 
     res.status(500).json({
       message: "Server error",
     });
+  }
+};
+const rejectContribution = async (req, res) => {
+  try {
+    const contribution = await rejectContributionModel(req.params.id);
 
+    if (!contribution) {
+      return res.status(404).json({
+        message: "Contribution not found",
+      });
+    }
+
+    await Notification.createNotification({
+      user_id: contribution.user_id,
+      title: "Contribution Rejected",
+      message: `Your contribution of KES ${contribution.amount} was rejected. Please verify your Mpesa code.`,
+      type: "contribution",
+      reference_id: contribution.id,
+    });
+
+    res.status(200).json({
+      message: "Contribution rejected successfully",
+      contribution,
+    });
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      message: "Server error",
+    });
   }
 };
 
