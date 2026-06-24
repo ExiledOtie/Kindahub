@@ -12,7 +12,8 @@ const createSavingModel = async (
   amount,
   paymentMethod,
   mpesaCode,
-  createdBy
+  createdBy,
+  status = "completed",
 ) => {
   const result = await pool.query(
     `
@@ -23,21 +24,15 @@ const createSavingModel = async (
       amount,
       payment_method,
       mpesa_code,
-      created_by
+      created_by,
+      status
     )
 
-    VALUES ($1, $2, $3, $4, $5, $6)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
 
     RETURNING *
     `,
-    [
-      userId,
-      groupId,
-      amount,
-      paymentMethod,
-      mpesaCode,
-      createdBy,
-    ]
+    [userId, groupId, amount, paymentMethod, mpesaCode, createdBy, status],
   );
 
   return result.rows[0];
@@ -67,7 +62,7 @@ const getAllSavingsModel = async () => {
       ON g.id = s.group_id
 
     ORDER BY s.created_at DESC
-    `
+    `,
   );
 
   return result.rows;
@@ -79,9 +74,7 @@ const getAllSavingsModel = async () => {
 |--------------------------------------------------------------------------
 */
 
-const getUserSavingsModel = async (
-  userId
-) => {
+const getUserSavingsModel = async (userId) => {
   const result = await pool.query(
     `
     SELECT
@@ -102,7 +95,7 @@ const getUserSavingsModel = async (
 
     ORDER BY s.created_at DESC
     `,
-    [userId]
+    [userId],
   );
 
   return result.rows;
@@ -114,16 +107,14 @@ const getUserSavingsModel = async (
 |--------------------------------------------------------------------------
 */
 
-const getSingleSavingModel = async (
-  id
-) => {
+const getSingleSavingModel = async (id) => {
   const result = await pool.query(
     `
     SELECT *
     FROM savings
     WHERE id = $1
     `,
-    [id]
+    [id],
   );
 
   return result.rows[0];
@@ -135,10 +126,9 @@ const getSingleSavingModel = async (
 |--------------------------------------------------------------------------
 */
 
-const getSavingsStatsModel =
-  async () => {
-    const result = await pool.query(
-      `
+const getSavingsStatsModel = async () => {
+  const result = await pool.query(
+    `
       SELECT
         COUNT(*) AS total_transactions,
 
@@ -148,11 +138,39 @@ const getSavingsStatsModel =
         ) AS total_savings
 
       FROM savings
-      `
-    );
+      `,
+  );
 
-    return result.rows[0];
-  };
+  return result.rows[0];
+};
+
+const approveSavingModel = async (savingId) => {
+  const result = await pool.query(
+    `
+    UPDATE savings
+    SET status = 'completed'
+    WHERE id = $1
+    RETURNING *
+    `,
+    [savingId],
+  );
+
+  return result.rows[0];
+};
+
+const rejectSavingModel = async (savingId) => {
+  const result = await pool.query(
+    `
+    UPDATE savings
+    SET status = 'rejected'
+    WHERE id = $1
+    RETURNING *
+    `,
+    [savingId],
+  );
+
+  return result.rows[0];
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -160,15 +178,13 @@ const getSavingsStatsModel =
 |--------------------------------------------------------------------------
 */
 
-const deleteSavingModel = async (
-  id
-) => {
+const deleteSavingModel = async (id) => {
   await pool.query(
     `
     DELETE FROM savings
     WHERE id = $1
     `,
-    [id]
+    [id],
   );
 
   return true;
@@ -180,5 +196,7 @@ module.exports = {
   getUserSavingsModel,
   getSingleSavingModel,
   getSavingsStatsModel,
+  approveSavingModel,
+  rejectSavingModel,
   deleteSavingModel,
 };
