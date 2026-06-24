@@ -21,6 +21,7 @@ import {
   FaChevronRight,
   FaCalendarAlt,
 } from "react-icons/fa";
+import { MdSavings } from "react-icons/md";
 import NotificationBell from "../Pages/Notification/Components/NotificationBell";
 
 const Sidebar = ({ role = "admin" }) => {
@@ -88,7 +89,13 @@ const Sidebar = ({ role = "admin" }) => {
     },
     { name: "Loans", 
       icon: <FaUniversity />, 
-      path: "/user-dashboard/loans" },
+      path: "/user-dashboard/loans" 
+    },
+    {
+      name: "Savings",
+      icon: <MdSavings />,
+      path: "/user-dashboard/savings",
+    },
     {
       name: "Payments",
       icon: <FaMoneyBillWave />,
