@@ -2,8 +2,7 @@ const express = require("express");
 
 const router = express.Router();
 
-const authMiddleware =
-  require("../middleware/authMiddleware");
+const authMiddleware = require("../middleware/authMiddleware");
 
 const {
   createSaving,
@@ -12,6 +11,10 @@ const {
   getSingleSaving,
   getSavingsStats,
   deleteSaving,
+  createMySaving,
+  getMySavings,
+  approveSaving,
+  rejectSaving,
 } = require("../controllers/savingsController");
 
 /*
@@ -20,11 +23,7 @@ const {
 |--------------------------------------------------------------------------
 */
 
-router.post(
-  "/",
-  authMiddleware,
-  createSaving
-);
+router.post("/", authMiddleware, createSaving);
 
 /*
 |--------------------------------------------------------------------------
@@ -32,11 +31,7 @@ router.post(
 |--------------------------------------------------------------------------
 */
 
-router.get(
-  "/",
-  authMiddleware,
-  getAllSavings
-);
+router.get("/", authMiddleware, getAllSavings);
 
 /*
 |--------------------------------------------------------------------------
@@ -44,11 +39,7 @@ router.get(
 |--------------------------------------------------------------------------
 */
 
-router.get(
-  "/user/:userId",
-  authMiddleware,
-  getUserSavings
-);
+router.get("/user/:userId", authMiddleware, getUserSavings);
 
 /*
 |--------------------------------------------------------------------------
@@ -56,11 +47,7 @@ router.get(
 |--------------------------------------------------------------------------
 */
 
-router.get(
-  "/stats",
-  authMiddleware,
-  getSavingsStats
-);
+router.get("/stats", authMiddleware, getSavingsStats);
 
 /*
 |--------------------------------------------------------------------------
@@ -68,11 +55,7 @@ router.get(
 |--------------------------------------------------------------------------
 */
 
-router.get(
-  "/:id",
-  authMiddleware,
-  getSingleSaving
-);
+router.get("/:id", authMiddleware, getSingleSaving);
 
 /*
 |--------------------------------------------------------------------------
@@ -80,10 +63,14 @@ router.get(
 |--------------------------------------------------------------------------
 */
 
-router.delete(
-  "/:id",
-  authMiddleware,
-  deleteSaving
-);
+router.delete("/:id", authMiddleware, deleteSaving);
+
+router.post("/my", authMiddleware, createMySaving);
+
+router.get("/my", authMiddleware, getMySavings);
+
+router.put("/:id/approve", authMiddleware, approveSaving);
+
+router.put("/:id/reject", authMiddleware, rejectSaving);
 
 module.exports = router;

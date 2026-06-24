@@ -69,6 +69,130 @@ const createSaving = async (
   }
 };
 
+const createMySaving = async (
+  req,
+  res
+) => {
+  try {
+
+    const {
+      amount,
+      payment_method,
+      mpesa_code,
+    } = req.body;
+
+    const userId = req.user.id;
+
+    const member =
+      await pool.query(
+        `
+        SELECT id, fullname
+        FROM users
+        WHERE id = $1
+        `,
+        [userId]
+      );
+
+    const group =
+      await pool.query(
+        `
+        SELECT group_id
+        FROM user_groups
+        WHERE user_id = $1
+        LIMIT 1
+        `,
+        [userId]
+      );
+
+    const groupId =
+      group.rows[0]?.group_id;
+
+    if (!groupId) {
+      return res.status(400).json({
+        message:
+          "You are not assigned to any group",
+      });
+    }
+
+    const saving =
+      await createSavingModel(
+        userId,
+        groupId,
+        amount,
+        payment_method,
+        mpesa_code || null,
+        userId,
+        "pending"
+      );
+
+    const admins =
+      await pool.query(
+        `
+        SELECT id
+        FROM users
+        WHERE is_super_admin = true
+        `
+      );
+
+    for (const admin of admins.rows) {
+
+      await Notification.createNotification({
+        user_id: admin.id,
+        title: "New Saving Submitted",
+        message: `${member.rows[0].fullname} submitted a saving of KES ${Number(
+          amount
+        ).toLocaleString()}`,
+        type: "saving",
+        reference_id: saving.id,
+      });
+
+    }
+
+    res.status(201).json({
+      message:
+        "Saving submitted successfully",
+      saving,
+    });
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      message:
+        "Failed to submit saving",
+    });
+
+  }
+};
+
+
+const getMySavings = async (
+  req,
+  res
+) => {
+  try {
+
+    const savings =
+      await getUserSavingsModel(
+        req.user.id
+      );
+
+    res.status(200).json(
+      savings
+    );
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      message: "Server error",
+    });
+
+  }
+};
+
 /*
 |--------------------------------------------------------------------------
 | GET ALL SAVINGS
@@ -192,6 +316,101 @@ const getSavingsStats =
     }
   };
 
+  const approveSaving = async (
+  req,
+  res
+) => {
+  try {
+
+    const saving =
+      await approveSavingModel(
+        req.params.id
+      );
+
+    if (!saving) {
+      return res.status(404).json({
+        message:
+          "Saving not found",
+      });
+    }
+
+    await Notification.createNotification({
+      user_id:
+        saving.user_id,
+      title:
+        "Saving Approved",
+      message:
+        `Your saving of KES ${saving.amount} has been approved.`,
+      type: "saving",
+      reference_id:
+        saving.id,
+    });
+
+    res.status(200).json({
+      message:
+        "Saving approved successfully",
+      saving,
+    });
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      message: "Server error",
+    });
+
+  }
+};
+
+
+const rejectSaving = async (
+  req,
+  res
+) => {
+  try {
+
+    const saving =
+      await rejectSavingModel(
+        req.params.id
+      );
+
+    if (!saving) {
+      return res.status(404).json({
+        message:
+          "Saving not found",
+      });
+    }
+
+    await Notification.createNotification({
+      user_id:
+        saving.user_id,
+      title:
+        "Saving Rejected",
+      message:
+        `Your saving of KES ${saving.amount} was rejected.`,
+      type: "saving",
+      reference_id:
+        saving.id,
+    });
+
+    res.status(200).json({
+      message:
+        "Saving rejected successfully",
+      saving,
+    });
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      message: "Server error",
+    });
+
+  }
+};
+
 /*
 |--------------------------------------------------------------------------
 | DELETE SAVING
@@ -236,9 +455,13 @@ const deleteSaving =
 
 module.exports = {
   createSaving,
+  createMySaving,
+  getMySavings,
   getAllSavings,
   getUserSavings,
   getSingleSaving,
   getSavingsStats,
   deleteSaving,
+  approveSaving,
+  rejectSaving,
 };
