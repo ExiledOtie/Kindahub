@@ -115,6 +115,34 @@ const getUserLoansModel = async (
 
 /*
 |--------------------------------------------------------------------------
+| ACTIVE LOAN
+|--------------------------------------------------------------------------
+*/
+
+const getActiveLoanModel =
+  async (userId) => {
+
+    const result =
+      await pool.query(
+        `
+        SELECT *
+        FROM loans
+
+        WHERE user_id = $1
+        AND status = 'approved'
+        AND balance > 0
+
+        ORDER BY created_at DESC
+        LIMIT 1
+        `,
+        [userId]
+      );
+
+    return result.rows[0];
+};
+
+/*
+|--------------------------------------------------------------------------
 | GET SINGLE LOAN
 |--------------------------------------------------------------------------
 */
@@ -156,21 +184,51 @@ const approveLoanModel = async (
   loanId,
   approvedBy
 ) => {
-  const result = await pool.query(
-    `
-    UPDATE loans
 
-    SET
-      status = 'approved',
-      approved_by = $2,
-      approved_at = CURRENT_TIMESTAMP
+  const loanResult =
+    await pool.query(
+      `
+      SELECT *
+      FROM loans
+      WHERE id = $1
+      `,
+      [loanId]
+    );
 
-    WHERE id = $1
+  const loan =
+    loanResult.rows[0];
 
-    RETURNING *
-    `,
-    [loanId, approvedBy]
-  );
+  if (!loan) return null;
+
+  const totalPayable =
+    Number(loan.amount) +
+    (
+      Number(loan.amount) *
+      Number(loan.interest_rate)
+    ) / 100;
+
+  const result =
+    await pool.query(
+      `
+      UPDATE loans
+
+      SET
+        status = 'approved',
+        approved_by = $2,
+        approved_at = CURRENT_TIMESTAMP,
+        total_payable = $3,
+        balance = $3
+
+      WHERE id = $1
+
+      RETURNING *
+      `,
+      [
+        loanId,
+        approvedBy,
+        totalPayable,
+      ]
+    );
 
   return result.rows[0];
 };
@@ -268,4 +326,5 @@ module.exports = {
   rejectLoanModel,
   getLoanStatsModel,
   deleteLoanModel,
+  getActiveLoanModel,
 };

@@ -28,6 +28,7 @@ import "./assets/Pages/Notification/Styles/notifications.css";
 
 import UserContributions from "./assets/Pages/Users/UserContributions";
 import UserSavings from "./assets/Pages/Users/UserSavings";
+import UserLoans from "./assets/Pages/Users/UserLoans";
 
 const App = () => {
   return (
@@ -84,6 +85,7 @@ const App = () => {
             <Route index element={<UserDashboard />} />
             <Route path="contributions" element={<UserContributions />} />
             <Route path="savings" element={<UserSavings />} />
+            <Route path="loans" element={<UserLoans />} />
           </Route>
         </Routes>
       </AuthProvider>

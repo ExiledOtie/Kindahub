@@ -7,6 +7,7 @@ const {
   rejectLoanModel,
   getLoanStatsModel,
   deleteLoanModel,
+  getActiveLoanModel,
 } = require("../models/loanModel");
 const Notification = require("../models/notificationModel");
 
@@ -49,7 +50,34 @@ const createLoan = async (req, res) => {
       interest_rate,
       duration_months,
     );
+    const member = await pool.query(
+      `
+  SELECT fullname
+  FROM users
+  WHERE id = $1
+  `,
+      [user_id],
+    );
 
+    const admins = await pool.query(
+      `
+  SELECT id
+  FROM users
+  WHERE is_super_admin = true
+  `,
+    );
+
+    for (const admin of admins.rows) {
+      await Notification.createNotification({
+        user_id: admin.id,
+        title: "New Loan Request",
+        message: `${member.rows[0].fullname}
+      requested a loan of
+      KES ${Number(amount).toLocaleString()}`,
+        type: "loan",
+        reference_id: loan.id,
+      });
+    }
     res.status(201).json({
       message: "Loan application submitted successfully",
       loan,
@@ -312,33 +340,38 @@ const rejectLoan = async (req, res) => {
   }
 };
 
-
-const getMyLoans = async (
-  req,
-  res
-) => {
+const getMyLoans = async (req, res) => {
   try {
+    const loans = await getUserLoansModel(req.user.id);
 
-    const loans =
-      await getUserLoansModel(
-        req.user.id
-      );
-
-    res.status(200).json(
-      loans
-    );
-
+    res.status(200).json(loans);
   } catch (error) {
-
     console.log(error);
 
     res.status(500).json({
       message: "Server error",
     });
-
   }
 };
+/*
+|--------------------------------------------------------------------------
+| ACTIVE LOAN
+|--------------------------------------------------------------------------
+*/
 
+const getMyActiveLoan = async (req, res) => {
+  try {
+    const loan = await getActiveLoanModel(req.user.id);
+
+    res.status(200).json(loan || null);
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      message: "Server error",
+    });
+  }
+};
 /*
 |--------------------------------------------------------------------------
 | LOAN STATS
@@ -400,4 +433,5 @@ module.exports = {
   rejectLoan,
   getLoanStats,
   deleteLoan,
+  getMyActiveLoan,
 };

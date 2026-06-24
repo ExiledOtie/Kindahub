@@ -4,8 +4,8 @@ import Swal from "sweetalert2";
 import { ClipLoader } from "react-spinners";
 import { Plus, CreditCard } from "lucide-react";
 
-import LoanRequestModal from "../Modals/LoanRequestModal";
-import LoanRepaymentModal from "../Modals/LoanRepaymentModal";
+import LoanRequestModal from "./Modals/LoanRequestModal";
+import LoanRepaymentModal from "./Modals/LoanRepaymentModal";
 
 const ITEMS_PER_PAGE = 10;
 

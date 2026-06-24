@@ -10,6 +10,7 @@ const {
   approveLoan,
   rejectLoan,
   getLoanStats,
+  getMyActiveLoan,
   createMyLoan,
   getMyLoans,
   deleteLoan,
@@ -54,7 +55,12 @@ router.get("/stats", authMiddleware, getLoanStats);
 */
 router.post("/my", authMiddleware, createMyLoan);
 
+router.get("/my/active", authMiddleware, getMyActiveLoan);
+
 router.get("/my", authMiddleware, getMyLoans);
+
+router.get("/user/:userId", authMiddleware, getUserLoans);
+
 router.get("/:id", authMiddleware, getSingleLoan);
 
 /*
