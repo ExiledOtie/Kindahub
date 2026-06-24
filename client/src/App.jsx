@@ -17,6 +17,7 @@ import Loans from "./assets/Pages/Loans";
 import MemberProfile from "./assets/Pages/MemberProfile";
 import ProfileTab from "./assets/Pages/MemberTabs/ProfileTab";
 import LoanRepaymentDetails from "./assets/Pages/LoanRepaymentDetails";
+import Savings from "./assets/Pages/Savings";
 import LoanRepayments from "./assets/Pages/LoanRepayments";
 import Reports from "./assets/Pages/Reports";
 import GroupChats from "./assets/Pages/Communication/GroupChats";
@@ -52,6 +53,7 @@ const App = () => {
             <Route path="members/:id" element={<MemberProfile />} />
             <Route path="profile" element={<ProfileTab />} />
             <Route path="loan-repayments" element={<LoanRepayments />} />
+            <Route path="savings" element={<Savings />} />
             <Route path="reports" element={<Reports />} />
             <Route path="announcements" element={<Announcements />} />
             <Route path="notifications" element={<Notifications />} />

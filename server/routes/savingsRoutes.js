@@ -2,7 +2,8 @@ const express = require("express");
 
 const router = express.Router();
 
-const authMiddleware = require("../middleware/authMiddleware");
+const authMiddleware =
+  require("../middleware/authMiddleware");
 
 const {
   createSaving,
@@ -19,11 +20,51 @@ const {
 
 /*
 |--------------------------------------------------------------------------
+| MY SAVINGS
+|--------------------------------------------------------------------------
+*/
+
+router.post(
+  "/my",
+  authMiddleware,
+  createMySaving
+);
+
+router.get(
+  "/my",
+  authMiddleware,
+  getMySavings
+);
+
+/*
+|--------------------------------------------------------------------------
+| APPROVE / REJECT
+|--------------------------------------------------------------------------
+*/
+
+router.put(
+  "/:id/approve",
+  authMiddleware,
+  approveSaving
+);
+
+router.put(
+  "/:id/reject",
+  authMiddleware,
+  rejectSaving
+);
+
+/*
+|--------------------------------------------------------------------------
 | CREATE
 |--------------------------------------------------------------------------
 */
 
-router.post("/", authMiddleware, createSaving);
+router.post(
+  "/",
+  authMiddleware,
+  createSaving
+);
 
 /*
 |--------------------------------------------------------------------------
@@ -31,7 +72,11 @@ router.post("/", authMiddleware, createSaving);
 |--------------------------------------------------------------------------
 */
 
-router.get("/", authMiddleware, getAllSavings);
+router.get(
+  "/",
+  authMiddleware,
+  getAllSavings
+);
 
 /*
 |--------------------------------------------------------------------------
@@ -39,7 +84,11 @@ router.get("/", authMiddleware, getAllSavings);
 |--------------------------------------------------------------------------
 */
 
-router.get("/user/:userId", authMiddleware, getUserSavings);
+router.get(
+  "/user/:userId",
+  authMiddleware,
+  getUserSavings
+);
 
 /*
 |--------------------------------------------------------------------------
@@ -47,15 +96,23 @@ router.get("/user/:userId", authMiddleware, getUserSavings);
 |--------------------------------------------------------------------------
 */
 
-router.get("/stats", authMiddleware, getSavingsStats);
+router.get(
+  "/stats",
+  authMiddleware,
+  getSavingsStats
+);
 
 /*
 |--------------------------------------------------------------------------
-| Single SAVING
+| SINGLE SAVING
 |--------------------------------------------------------------------------
 */
 
-router.get("/:id", authMiddleware, getSingleSaving);
+router.get(
+  "/:id",
+  authMiddleware,
+  getSingleSaving
+);
 
 /*
 |--------------------------------------------------------------------------
@@ -63,14 +120,10 @@ router.get("/:id", authMiddleware, getSingleSaving);
 |--------------------------------------------------------------------------
 */
 
-router.delete("/:id", authMiddleware, deleteSaving);
-
-router.post("/my", authMiddleware, createMySaving);
-
-router.get("/my", authMiddleware, getMySavings);
-
-router.put("/:id/approve", authMiddleware, approveSaving);
-
-router.put("/:id/reject", authMiddleware, rejectSaving);
+router.delete(
+  "/:id",
+  authMiddleware,
+  deleteSaving
+);
 
 module.exports = router;

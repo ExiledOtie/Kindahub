@@ -42,6 +42,11 @@ const Sidebar = ({ role = "admin" }) => {
       icon: <FaMoneyBillWave />,
       path: "/dashboard/loan-repayments",
     },
+    {
+      name: "Savings",
+      icon: <MdSavings />,
+      path: "/dashboard/savings",
+    },
 
     // Communication
     {

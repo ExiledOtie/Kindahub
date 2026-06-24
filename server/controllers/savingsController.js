@@ -10,6 +10,7 @@ const {
 } = require("../models/savingsModel");
 
 const Notification = require("../models/notificationModel");
+const pool = require("../config/db");
 
 /*
 |--------------------------------------------------------------------------
