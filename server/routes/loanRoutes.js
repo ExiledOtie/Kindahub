@@ -10,10 +10,10 @@ const {
   approveLoan,
   rejectLoan,
   getLoanStats,
+  createMyLoan,
+  getMyLoans,
   deleteLoan,
-} = require(
-  "../controllers/loanController"
-);
+} = require("../controllers/loanController");
 
 /*
 |--------------------------------------------------------------------------
@@ -21,11 +21,7 @@ const {
 |--------------------------------------------------------------------------
 */
 
-router.post(
-  "/",
-  authMiddleware,
-  createLoan
-);
+router.post("/", authMiddleware, createLoan);
 
 /*
 |--------------------------------------------------------------------------
@@ -33,11 +29,7 @@ router.post(
 |--------------------------------------------------------------------------
 */
 
-router.get(
-  "/",
-  authMiddleware,
-  getAllLoans
-);
+router.get("/", authMiddleware, getAllLoans);
 
 /*
 |--------------------------------------------------------------------------
@@ -45,11 +37,7 @@ router.get(
 |--------------------------------------------------------------------------
 */
 
-router.get(
-  "/user/:userId",
-  authMiddleware,
-  getUserLoans
-);
+router.get("/user/:userId", authMiddleware, getUserLoans);
 
 /*
 |--------------------------------------------------------------------------
@@ -57,23 +45,17 @@ router.get(
 |--------------------------------------------------------------------------
 */
 
-router.get(
-  "/stats",
-  authMiddleware,
-  getLoanStats
-);
+router.get("/stats", authMiddleware, getLoanStats);
 
 /*
 |--------------------------------------------------------------------------
 | SINGLE LOAN
 |--------------------------------------------------------------------------
 */
+router.post("/my", authMiddleware, createMyLoan);
 
-router.get(
-  "/:id",
-  authMiddleware,
-  getSingleLoan
-);
+router.get("/my", authMiddleware, getMyLoans);
+router.get("/:id", authMiddleware, getSingleLoan);
 
 /*
 |--------------------------------------------------------------------------
@@ -81,11 +63,7 @@ router.get(
 |--------------------------------------------------------------------------
 */
 
-router.patch(
-  "/:id/approve",
-  authMiddleware,
-  approveLoan
-);
+router.patch("/:id/approve", authMiddleware, approveLoan);
 
 /*
 |--------------------------------------------------------------------------
@@ -93,11 +71,7 @@ router.patch(
 |--------------------------------------------------------------------------
 */
 
-router.patch(
-  "/:id/reject",
-  authMiddleware,
-  rejectLoan
-);
+router.patch("/:id/reject", authMiddleware, rejectLoan);
 
 /*
 |--------------------------------------------------------------------------
@@ -105,10 +79,6 @@ router.patch(
 |--------------------------------------------------------------------------
 */
 
-router.delete(
-  "/:id",
-  authMiddleware,
-  deleteLoan
-);
+router.delete("/:id", authMiddleware, deleteLoan);
 
 module.exports = router;
