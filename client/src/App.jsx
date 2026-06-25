@@ -31,6 +31,10 @@ import UserSavings from "./assets/Pages/Users/UserSavings";
 import UserLoans from "./assets/Pages/Users/UserLoans";
 import UserPayments from "./assets/Pages/Users/userPayments";
 import Statements from "./assets/Pages/Users/Statements";
+import UserGroupChats from "./assets/Pages/Users/Communication/UserGroupChats";
+import UserPrivateMessages from "./assets/Pages/Users/Communication/UserPrivateMessages";
+
+
 
 const App = () => {
   return (
@@ -90,6 +94,13 @@ const App = () => {
             <Route path="loans" element={<UserLoans />} />
             <Route path="payments" element={<UserPayments />} />
             <Route path="statements" element={<Statements />} />
+            <Route
+              path="/user-dashboard/communication/groups"
+              element={<UserGroupChats />}
+            />
+            <Route
+              path="/user-dashboard/communication/private"
+              element={<UserPrivateMessages />} />
           </Route>
         </Routes>
       </AuthProvider>

@@ -42,10 +42,7 @@ const CommunicationModel = {
       RETURNING *
     `;
 
-    const { rows } = await pool.query(query, [
-      type,
-      groupId,
-    ]);
+    const { rows } = await pool.query(query, [type, groupId]);
 
     return rows[0];
   },
@@ -63,10 +60,7 @@ const CommunicationModel = {
       RETURNING *
     `;
 
-    const { rows } = await pool.query(query, [
-      conversationId,
-      userId,
-    ]);
+    const { rows } = await pool.query(query, [conversationId, userId]);
 
     return rows[0];
   },
@@ -82,9 +76,7 @@ const CommunicationModel = {
       WHERE cp.conversation_id = $1
     `;
 
-    const { rows } = await pool.query(query, [
-      conversationId,
-    ]);
+    const { rows } = await pool.query(query, [conversationId]);
 
     return rows;
   },
@@ -93,7 +85,7 @@ const CommunicationModel = {
   // Messages
   // ==========================
   async getMessages(conversationId) {
-  const query = `
+    const query = `
     SELECT
       m.id,
       m.conversation_id,
@@ -110,18 +102,12 @@ const CommunicationModel = {
     ORDER BY m.created_at ASC
   `;
 
-  const { rows } = await pool.query(query, [
-    conversationId,
-  ]);
+    const { rows } = await pool.query(query, [conversationId]);
 
-  return rows;
-},
+    return rows;
+  },
 
-  async createMessage(
-    conversationId,
-    senderId,
-    message
-  ) {
+  async createMessage(conversationId, senderId, message) {
     const query = `
       INSERT INTO messages
       (conversation_id, sender_id, message)
@@ -136,11 +122,10 @@ const CommunicationModel = {
     ]);
 
     return rows[0];
-  }, 
-
+  },
 
   async findPrivateConversation(user1, user2) {
-  const query = `
+    const query = `
     SELECT c.*
     FROM conversations c
     INNER JOIN conversation_participants cp1
@@ -152,30 +137,64 @@ const CommunicationModel = {
       AND cp2.user_id = $2
   `;
 
-  const { rows } = await pool.query(query, [
-    user1,
-    user2,
-  ]);
+    const { rows } = await pool.query(query, [user1, user2]);
 
-  return rows[0];
-},
+    return rows[0];
+  },
 
+  async getMyGroupMembers(userId) {
+    const query = `
+    SELECT
+      u.id,
+      u.fullname,
+      u.username
+    FROM user_groups ug
+    INNER JOIN users u
+      ON ug.user_id = u.id
+    WHERE ug.group_id = (
+      SELECT group_id
+      FROM user_groups
+      WHERE user_id = $1
+      LIMIT 1
+    )
+    AND u.id != $1
+    ORDER BY u.fullname
+  `;
 
+    const { rows } = await pool.query(query, [userId]);
 
-async getGroupConversation(groupId) {
-  const query = `
+    return rows;
+  },
+
+  async getMyGroup(userId) {
+    const query = `
+    SELECT
+      g.id,
+      g.name
+    FROM user_groups ug
+    INNER JOIN groups g
+      ON ug.group_id = g.id
+    WHERE ug.user_id = $1
+    LIMIT 1
+  `;
+
+    const { rows } = await pool.query(query, [userId]);
+
+    return rows[0];
+  },
+
+  async getGroupConversation(groupId) {
+    const query = `
     SELECT *
     FROM conversations
     WHERE group_id = $1
       AND type = 'group'
   `;
 
-  const { rows } = await pool.query(query, [
-    groupId,
-  ]);
+    const { rows } = await pool.query(query, [groupId]);
 
-  return rows[0];
-},
+    return rows[0];
+  },
 
   async deleteMessage(messageId) {
     const query = `
@@ -185,9 +204,7 @@ async getGroupConversation(groupId) {
       RETURNING *
     `;
 
-    const { rows } = await pool.query(query, [
-      messageId,
-    ]);
+    const { rows } = await pool.query(query, [messageId]);
 
     return rows[0];
   },
