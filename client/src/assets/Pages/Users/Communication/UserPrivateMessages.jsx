@@ -8,9 +8,9 @@ import { FaCircle } from "react-icons/fa";
 
 import api from "../../../Utils/axios";
 
-import ConversationList from "./Components/ConversationList";
-import MessageBubble from "./Components/MessageBubble";
-import MessageInput from "./Components/MessageInput";
+import ConversationList from "../../Communication/Components/ConversationList";
+import MessageBubble from "../../Communication/Components/MessageBubble";
+import MessageInput from "../../Communication/Components/MessageInput";
 
 const UserPrivateMessages = () => {
   const messagesEndRef = useRef(null);

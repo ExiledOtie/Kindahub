@@ -2,8 +2,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { FaUsers } from "react-icons/fa";
 import api from "../../../Utils/axios";
 
-import MessageBubble from "./Components/MessageBubble";
-import MessageInput from "./Components/MessageInput";
+import MessageBubble from "../../Communication/Components/MessageBubble";
+import MessageInput from "../../Communication/Components/MessageInput";
 
 const UserGroupChats = () => {
   const messagesEndRef = useRef(null);
