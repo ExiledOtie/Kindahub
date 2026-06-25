@@ -30,7 +30,7 @@ import UserContributions from "./assets/Pages/Users/UserContributions";
 import UserSavings from "./assets/Pages/Users/UserSavings";
 import UserLoans from "./assets/Pages/Users/UserLoans";
 import UserPayments from "./assets/Pages/Users/userPayments";
-import Statements from "./assets/Pages/Users/Statements/Statements";
+import Statements from "./assets/Pages/Users/Statements";
 
 const App = () => {
   return (
