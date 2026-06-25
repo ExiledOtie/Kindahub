@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import axios from "../Utils/axios";
+import axios from "../../Utils/axios";
 import { ClipLoader } from "react-spinners";
 import { FaMoneyBillWave, FaSearch } from "react-icons/fa";
 
