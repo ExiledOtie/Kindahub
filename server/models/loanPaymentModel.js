@@ -136,6 +136,29 @@ const getPaymentBreakdownModel = async (loanId) => {
 
   return result.rows[0];
 };
+const getMyLoanPaymentsModel = async (
+  userId
+) => {
+  const result = await pool.query(
+    `
+    SELECT
+      lp.*,
+      l.id AS loan_number
+
+    FROM loan_payments lp
+
+    INNER JOIN loans l
+      ON l.id = lp.loan_id
+
+    WHERE l.user_id = $1
+
+    ORDER BY lp.created_at DESC
+    `,
+    [userId]
+  );
+
+  return result.rows;
+};
 
 module.exports = {
   createLoanPaymentModel,
@@ -143,4 +166,5 @@ module.exports = {
   getTotalPaidModel,
   getAllLoanPaymentsModel,
   getPaymentBreakdownModel,
+  getMyLoanPaymentsModel,
 };

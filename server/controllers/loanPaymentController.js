@@ -6,6 +6,7 @@ const {
   getTotalPaidModel,
   getAllLoanPaymentsModel,
   getPaymentBreakdownModel,
+  getMyLoanPaymentsModel,
 } = require("../models/loanPaymentModel");
 
 /*
@@ -225,6 +226,31 @@ const getLoanPayments = async (req, res) => {
   }
 };
 
+const getMyLoanPayments =
+  async (req, res) => {
+    try {
+
+      const payments =
+        await getMyLoanPaymentsModel(
+          req.user.id
+        );
+
+      res.status(200).json(
+        payments
+      );
+
+    } catch (error) {
+
+      console.log(error);
+
+      res.status(500).json({
+        message:
+          "Server error",
+      });
+
+    }
+  };
+
 /*
 |--------------------------------------------------------------------------
 | GET LOAN BALANCE + METRICS
@@ -252,4 +278,5 @@ module.exports = {
   getLoanPayments,
   getLoanBalance,
   getAllLoanPayments,
+  getMyLoanPayments,
 };

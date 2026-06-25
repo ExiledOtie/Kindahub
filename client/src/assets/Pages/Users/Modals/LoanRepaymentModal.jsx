@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "../../../Utils/axios";
 import Swal from "sweetalert2";
 
@@ -8,6 +8,15 @@ const LoanRepaymentModal = ({
   loan,
   onSuccess,
 }) => {
+  const [loading, setLoading] =
+    useState(false);
+
+  const [metricsLoading, setMetricsLoading] =
+    useState(false);
+
+  const [loanMetrics, setLoanMetrics] =
+    useState(null);
+
   const [formData, setFormData] =
     useState({
       amount: "",
@@ -15,8 +24,29 @@ const LoanRepaymentModal = ({
       mpesa_code: "",
     });
 
-  const [loading, setLoading] =
-    useState(false);
+  useEffect(() => {
+    if (open && loan) {
+      fetchLoanMetrics();
+    }
+  }, [open, loan]);
+
+  const fetchLoanMetrics = async () => {
+    try {
+      setMetricsLoading(true);
+
+      const res =
+        await axios.get(
+          `/loan-payments/${loan.id}/balance`
+        );
+
+      setLoanMetrics(res.data);
+
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setMetricsLoading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -67,147 +97,304 @@ const LoanRepaymentModal = ({
 
   if (!open || !loan) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
+  const progress =
+    loanMetrics
+      ? Math.min(
+          (
+            (loanMetrics.totalPaid /
+              loanMetrics.totalPayable) *
+            100
+          ).toFixed(1),
+          100
+        )
+      : 0;
 
-      <div className="bg-white rounded-xl p-5 w-full max-w-md">
+  return (
+    <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-3">
+
+      <div className="bg-white rounded-xl w-full max-w-lg p-5 max-h-[90vh] overflow-y-auto">
 
         <h2 className="text-sm font-semibold mb-4">
           Loan Repayment
         </h2>
 
-        {/* LOAN INFO */}
-
-        <div className="bg-gray-50 border rounded-lg p-3 mb-4 text-[11px]">
-
-          <div className="flex justify-between">
-            <span>Loan Amount</span>
-
-            <span className="font-semibold">
-              KES{" "}
-              {Number(
-                loan.amount
-              ).toLocaleString()}
-            </span>
+        {metricsLoading ? (
+          <div className="text-center py-6 text-[11px]">
+            Loading loan details...
           </div>
+        ) : (
+          <>
+            {/* SUMMARY */}
 
-          <div className="flex justify-between mt-2">
-            <span>Total Payable</span>
+            <div className="bg-gray-50 border rounded-lg p-3 mb-4 text-[11px] space-y-2">
 
-            <span className="font-semibold text-blue-600">
-              KES{" "}
-              {Number(
-                loan.total_payable || 0
-              ).toLocaleString()}
-            </span>
-          </div>
+              <div className="flex justify-between">
+                <span>Loan Amount</span>
 
-          <div className="flex justify-between mt-2">
-            <span>Balance</span>
+                <span className="font-semibold">
+                  KES{" "}
+                  {Number(
+                    loan.amount
+                  ).toLocaleString()}
+                </span>
+              </div>
 
-            <span className="font-semibold text-red-600">
-              KES{" "}
-              {Number(
-                loan.balance || 0
-              ).toLocaleString()}
-            </span>
-          </div>
+              <div className="flex justify-between">
+                <span>Total Payable</span>
 
-        </div>
+                <span className="font-semibold text-blue-600">
+                  KES{" "}
+                  {Number(
+                    loanMetrics?.totalPayable || 0
+                  ).toLocaleString()}
+                </span>
+              </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-3"
-        >
+              <div className="flex justify-between">
+                <span>Total Paid</span>
 
-          <input
-            type="number"
-            required
-            min="1"
-            max={loan.balance}
-            value={
-              formData.amount
-            }
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                amount:
-                  e.target.value,
-              })
-            }
-            placeholder="Repayment Amount"
-            className="w-full border rounded-lg p-2 text-[11px]"
-          />
+                <span className="font-semibold text-green-600">
+                  KES{" "}
+                  {Number(
+                    loanMetrics?.totalPaid || 0
+                  ).toLocaleString()}
+                </span>
+              </div>
 
-          <select
-            value={
-              formData.payment_method
-            }
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                payment_method:
-                  e.target.value,
-              })
-            }
-            className="w-full border rounded-lg p-2 text-[11px]"
-          >
-            <option value="cash">
-              Cash
-            </option>
+              <div className="flex justify-between">
+                <span>Balance</span>
 
-            <option value="mpesa">
-              Mpesa
-            </option>
+                <span className="font-semibold text-red-600">
+                  KES{" "}
+                  {Number(
+                    loanMetrics?.balance || 0
+                  ).toLocaleString()}
+                </span>
+              </div>
 
-            <option value="bank">
-              Bank
-            </option>
+            </div>
 
-          </select>
+            {/* PROGRESS */}
 
-          {formData.payment_method ===
-            "mpesa" && (
-            <input
-              type="text"
-              placeholder="Mpesa Code"
-              value={
-                formData.mpesa_code
-              }
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  mpesa_code:
-                    e.target.value,
-                })
-              }
-              className="w-full border rounded-lg p-2 text-[11px]"
-            />
-          )}
+            <div className="mb-4">
 
-          <div className="flex justify-end gap-2">
+              <div className="flex justify-between text-[10px] mb-1">
 
-            <button
-              type="button"
-              onClick={onClose}
-              className="border px-4 py-2 rounded-lg text-[11px]"
+                <span>
+                  Repayment Progress
+                </span>
+
+                <span>
+                  {progress}%
+                </span>
+
+              </div>
+
+              <div className="w-full bg-gray-200 rounded-full h-2">
+
+                <div
+                  className="bg-green-600 h-2 rounded-full transition-all duration-500"
+                  style={{
+                    width: `${progress}%`,
+                  }}
+                />
+
+              </div>
+
+            </div>
+
+            {/* OVERDUE */}
+
+            {Number(
+              loanMetrics?.overdue
+            ) > 0 && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 text-[10px]">
+
+                <p className="font-semibold text-red-600 mb-1">
+                  Loan Overdue
+                </p>
+
+                <p>
+                  Overdue Amount:
+                  <span className="font-semibold">
+                    {" "}
+                    KES{" "}
+                    {Number(
+                      loanMetrics?.overdue
+                    ).toLocaleString()}
+                  </span>
+                </p>
+
+                <p>
+                  Penalty:
+                  <span className="font-semibold">
+                    {" "}
+                    KES{" "}
+                    {Number(
+                      loanMetrics?.penalty
+                    ).toLocaleString()}
+                  </span>
+                </p>
+
+              </div>
+            )}
+
+            {/* METRICS */}
+
+            <div className="grid grid-cols-3 gap-2 mb-4 text-[10px]">
+
+              <div className="border rounded-lg p-2">
+                <p className="text-gray-400">
+                  Monthly
+                </p>
+
+                <p className="font-semibold">
+                  KES{" "}
+                  {Number(
+                    loanMetrics?.expectedMonthlyPayment ||
+                      0
+                  ).toLocaleString()}
+                </p>
+              </div>
+
+              <div className="border rounded-lg p-2">
+                <p className="text-gray-400">
+                  Months Passed
+                </p>
+
+                <p className="font-semibold">
+                  {loanMetrics?.monthsPassed ||
+                    0}
+                </p>
+              </div>
+
+              <div className="border rounded-lg p-2">
+                <p className="text-gray-400">
+                  Penalty
+                </p>
+
+                <p className="font-semibold text-red-600">
+                  KES{" "}
+                  {Number(
+                    loanMetrics?.penalty || 0
+                  ).toLocaleString()}
+                </p>
+              </div>
+
+            </div>
+
+            {/* FORM */}
+
+            <form
+              onSubmit={handleSubmit}
+              className="space-y-3"
             >
-              Cancel
-            </button>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-[11px]"
-            >
-              {loading
-                ? "Processing..."
-                : "Submit"}
-            </button>
+              <div>
 
-          </div>
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  max={
+                    loanMetrics?.balance ||
+                    0
+                  }
+                  value={
+                    formData.amount
+                  }
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      amount:
+                        e.target.value,
+                    })
+                  }
+                  placeholder="Repayment Amount"
+                  className="w-full border rounded-lg p-2 text-[11px]"
+                />
 
-        </form>
+                <p className="text-[10px] text-gray-500 mt-1">
+                  Remaining Balance:
+                  KES{" "}
+                  {Number(
+                    loanMetrics?.balance || 0
+                  ).toLocaleString()}
+                </p>
+
+              </div>
+
+              <select
+                value={
+                  formData.payment_method
+                }
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    payment_method:
+                      e.target.value,
+                  })
+                }
+                className="w-full border rounded-lg p-2 text-[11px]"
+              >
+                <option value="cash">
+                  Cash
+                </option>
+
+                <option value="mpesa">
+                  Mpesa
+                </option>
+
+                <option value="bank">
+                  Bank
+                </option>
+
+              </select>
+
+              {formData.payment_method ===
+                "mpesa" && (
+                <input
+                  type="text"
+                  placeholder="Mpesa Code"
+                  value={
+                    formData.mpesa_code
+                  }
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      mpesa_code:
+                        e.target.value,
+                    })
+                  }
+                  className="w-full border rounded-lg p-2 text-[11px]"
+                />
+              )}
+
+              <div className="flex justify-end gap-2 pt-2">
+
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="border px-4 py-2 rounded-lg text-[11px]"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-[11px]"
+                >
+                  {loading
+                    ? "Processing..."
+                    : "Submit Repayment"}
+                </button>
+
+              </div>
+
+            </form>
+          </>
+        )}
 
       </div>
 
