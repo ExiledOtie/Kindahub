@@ -30,6 +30,7 @@ import UserContributions from "./assets/Pages/Users/UserContributions";
 import UserSavings from "./assets/Pages/Users/UserSavings";
 import UserLoans from "./assets/Pages/Users/UserLoans";
 import UserPayments from "./assets/Pages/Users/userPayments";
+import Statements from "./assets/Pages/Users/Statements/Statements";
 
 const App = () => {
   return (
@@ -88,6 +89,7 @@ const App = () => {
             <Route path="savings" element={<UserSavings />} />
             <Route path="loans" element={<UserLoans />} />
             <Route path="payments" element={<UserPayments />} />
+            <Route path="statements" element={<Statements />} />
           </Route>
         </Routes>
       </AuthProvider>
