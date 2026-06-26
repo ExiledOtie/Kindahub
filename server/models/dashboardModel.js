@@ -1,0 +1,241 @@
+// models/dashboardModel.js
+
+const db = require("../config/db");
+
+/**
+ * ============================================
+ * SUPER ADMIN SUMMARY
+ * ============================================
+ */
+const getAdminSummary = async () => {
+  const query = `
+    SELECT
+      (SELECT COUNT(*) FROM users WHERE role='member')::INT AS members,
+
+      (SELECT COUNT(*) FROM groups)::INT AS groups,
+
+      (SELECT COUNT(*) FROM loans
+        WHERE LOWER(status)='pending')::INT AS "pendingLoans",
+
+      (SELECT COUNT(*) FROM loans
+        WHERE LOWER(status)='approved')::INT AS "approvedLoans",
+
+      (
+        SELECT COALESCE(SUM(amount),0)
+        FROM savings
+        WHERE DATE_TRUNC('month',created_at)
+            = DATE_TRUNC('month',CURRENT_DATE)
+      ) AS "monthlySavings",
+
+      (
+        SELECT COALESCE(SUM(amount),0)
+        FROM contributions
+        WHERE DATE_TRUNC('month',created_at)
+            = DATE_TRUNC('month',CURRENT_DATE)
+      ) AS "monthlyContributions",
+
+      (
+        SELECT COALESCE(
+          SUM(total_payable - amount),
+          0
+        )
+        FROM loans
+        WHERE LOWER(status)='approved'
+      ) AS "chamaWallet",
+
+      (
+        SELECT COUNT(*)
+        FROM notifications
+        WHERE is_read=false
+      )::INT AS notifications;
+  `;
+
+  const { rows } = await db.query(query);
+
+  return rows[0];
+};
+
+/**
+ * ============================================
+ * MEMBER SUMMARY
+ * ============================================
+ */
+const getMemberSummary = async (userId) => {
+  const query = `
+    SELECT
+
+      (
+        SELECT COALESCE(SUM(amount),0)
+        FROM savings
+        WHERE user_id=$1
+      ) AS "mySavings",
+
+      (
+        SELECT COALESCE(SUM(amount),0)
+        FROM contributions
+        WHERE user_id=$1
+      ) AS "myContributions",
+
+      (
+        SELECT COUNT(*)
+        FROM loans
+        WHERE user_id=$1
+      )::INT AS "myLoans",
+
+      (
+        SELECT COUNT(*)
+        FROM loans
+        WHERE user_id=$1
+        AND LOWER(status)='pending'
+      )::INT AS "pendingLoans",
+
+      (
+        SELECT COUNT(*)
+        FROM loans
+        WHERE user_id=$1
+        AND LOWER(status)='approved'
+      )::INT AS "approvedLoans",
+
+      (
+        SELECT COUNT(*)
+        FROM notifications
+        WHERE user_id=$1
+        AND is_read=false
+      )::INT AS notifications;
+  `;
+
+  const { rows } = await db.query(query, [userId]);
+
+  return rows[0];
+};
+
+/**
+ * ============================================
+ * RECENT ACTIVITIES
+ * ============================================
+ */
+const getRecentActivities = async (limit = 10) => {
+  const query = `
+      SELECT *
+      FROM (
+
+          SELECT
+              s.created_at,
+              'Saving' AS type,
+              CONCAT(u.fullname,' saved KES ',s.amount) AS description
+          FROM savings s
+          JOIN users u
+            ON u.id=s.user_id
+
+          UNION ALL
+
+          SELECT
+              c.created_at,
+              'Contribution',
+              CONCAT(u.fullname,' contributed KES ',c.amount)
+          FROM contributions c
+          JOIN users u
+            ON u.id=c.user_id
+
+          UNION ALL
+
+          SELECT
+              l.created_at,
+              'Loan',
+              CONCAT(
+                  u.fullname,
+                  ' requested KES ',
+                  l.amount
+              )
+          FROM loans l
+          JOIN users u
+            ON u.id=l.user_id
+
+          UNION ALL
+
+          SELECT
+              a.created_at,
+              'Announcement',
+              a.title
+          FROM announcements a
+
+      ) activity
+
+      ORDER BY created_at DESC
+      LIMIT $1;
+  `;
+
+  const { rows } = await db.query(query, [limit]);
+
+  return rows;
+};
+
+/**
+ * ============================================
+ * MONTHLY LOAN CHART
+ * ============================================
+ */
+const getLoanChart = async () => {
+  const query = `
+      SELECT
+
+      TO_CHAR(created_at,'Mon') AS month,
+
+      COALESCE(SUM(amount),0) AS amount
+
+      FROM loans
+
+      WHERE created_at >=
+      DATE_TRUNC('year',CURRENT_DATE)
+
+      GROUP BY
+      EXTRACT(MONTH FROM created_at),
+      TO_CHAR(created_at,'Mon')
+
+      ORDER BY
+      EXTRACT(MONTH FROM created_at);
+  `;
+
+  const { rows } = await db.query(query);
+
+  return rows;
+};
+
+/**
+ * ============================================
+ * MONTHLY SAVINGS CHART
+ * ============================================
+ */
+const getSavingsChart = async () => {
+  const query = `
+      SELECT
+
+      TO_CHAR(created_at,'Mon') AS month,
+
+      COALESCE(SUM(amount),0) AS amount
+
+      FROM savings
+
+      WHERE created_at >=
+      DATE_TRUNC('year',CURRENT_DATE)
+
+      GROUP BY
+      EXTRACT(MONTH FROM created_at),
+      TO_CHAR(created_at,'Mon')
+
+      ORDER BY
+      EXTRACT(MONTH FROM created_at);
+  `;
+
+  const { rows } = await db.query(query);
+
+  return rows;
+};
+
+module.exports = {
+  getAdminSummary,
+  getMemberSummary,
+  getRecentActivities,
+  getLoanChart,
+  getSavingsChart,
+};
