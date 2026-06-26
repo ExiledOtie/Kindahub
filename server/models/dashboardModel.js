@@ -111,6 +111,104 @@ const getMemberSummary = async (userId) => {
 
 /**
  * ============================================
+ * ADMIN LOAN CHART
+ * ============================================
+ */
+const getAdminLoanChart = async () => {
+  const query = `
+    SELECT
+      TO_CHAR(created_at,'Mon') AS month,
+      COALESCE(SUM(amount),0) AS amount
+    FROM loans
+    WHERE created_at >= DATE_TRUNC('year',CURRENT_DATE)
+    GROUP BY
+      EXTRACT(MONTH FROM created_at),
+      TO_CHAR(created_at,'Mon')
+    ORDER BY
+      EXTRACT(MONTH FROM created_at);
+  `;
+
+  const { rows } = await db.query(query);
+
+  return rows;
+};
+
+/**
+ * ============================================
+ * MEMBER LOAN CHART
+ * ============================================
+ */
+const getMemberLoanChart = async (userId) => {
+  const query = `
+    SELECT
+      TO_CHAR(created_at,'Mon') AS month,
+      COALESCE(SUM(amount),0) AS amount
+    FROM loans
+    WHERE user_id=$1
+      AND created_at >= DATE_TRUNC('year',CURRENT_DATE)
+    GROUP BY
+      EXTRACT(MONTH FROM created_at),
+      TO_CHAR(created_at,'Mon')
+    ORDER BY
+      EXTRACT(MONTH FROM created_at);
+  `;
+
+  const { rows } = await db.query(query, [userId]);
+
+  return rows;
+};
+
+/**
+ * ============================================
+ * ADMIN SAVINGS CHART
+ * ============================================
+ */
+const getAdminSavingsChart = async () => {
+  const query = `
+    SELECT
+      TO_CHAR(created_at,'Mon') AS month,
+      COALESCE(SUM(amount),0) AS amount
+    FROM savings
+    WHERE created_at >= DATE_TRUNC('year',CURRENT_DATE)
+    GROUP BY
+      EXTRACT(MONTH FROM created_at),
+      TO_CHAR(created_at,'Mon')
+    ORDER BY
+      EXTRACT(MONTH FROM created_at);
+  `;
+
+  const { rows } = await db.query(query);
+
+  return rows;
+};
+
+/**
+ * ============================================
+ * MEMBER SAVINGS CHART
+ * ============================================
+ */
+const getMemberSavingsChart = async (userId) => {
+  const query = `
+    SELECT
+      TO_CHAR(created_at,'Mon') AS month,
+      COALESCE(SUM(amount),0) AS amount
+    FROM savings
+    WHERE user_id=$1
+      AND created_at >= DATE_TRUNC('year',CURRENT_DATE)
+    GROUP BY
+      EXTRACT(MONTH FROM created_at),
+      TO_CHAR(created_at,'Mon')
+    ORDER BY
+      EXTRACT(MONTH FROM created_at);
+  `;
+
+  const { rows } = await db.query(query, [userId]);
+
+  return rows;
+};
+
+/**
+ * ============================================
  * RECENT ACTIVITIES
  * ============================================
  */
@@ -166,6 +264,70 @@ const getRecentActivities = async (limit = 10) => {
   `;
 
   const { rows } = await db.query(query, [limit]);
+
+  return rows;
+};
+
+/**
+ * ============================================
+ * MEMBER RECENT ACTIVITIES
+ * ============================================
+ */
+const getMemberRecentActivities = async (userId, limit = 10) => {
+  const query = `
+    SELECT *
+    FROM (
+
+      SELECT
+        s.created_at,
+        'Saving' AS type,
+        CONCAT('You saved KES ',s.amount) AS description
+      FROM savings s
+      WHERE s.user_id=$1
+
+      UNION ALL
+
+      SELECT
+        c.created_at,
+        'Contribution',
+        CONCAT('You contributed KES ',c.amount)
+      FROM contributions c
+      WHERE c.user_id=$1
+
+      UNION ALL
+
+      SELECT
+        l.created_at,
+        'Loan',
+        CONCAT(
+          'Loan request of KES ',
+          l.amount,
+          ' (',
+          l.status,
+          ')'
+        )
+      FROM loans l
+      WHERE l.user_id=$1
+
+      UNION ALL
+
+      SELECT
+        a.created_at,
+        'Announcement',
+        a.title
+      FROM announcements a
+      JOIN user_groups ug
+        ON ug.group_id=a.group_id
+      WHERE ug.user_id=$1
+
+    ) activity
+
+    ORDER BY created_at DESC
+
+    LIMIT $2;
+  `;
+
+  const { rows } = await db.query(query, [userId, limit]);
 
   return rows;
 };
@@ -236,6 +398,9 @@ module.exports = {
   getAdminSummary,
   getMemberSummary,
   getRecentActivities,
-  getLoanChart,
-  getSavingsChart,
+  getMemberRecentActivities,
+  getAdminLoanChart,
+  getMemberLoanChart,
+  getAdminSavingsChart,
+  getMemberSavingsChart,
 };
