@@ -28,6 +28,8 @@ const Sidebar = ({ role = "admin" }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [communicationOpen, setCommunicationOpen] = useState(true);
 
+  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+
   const adminLinks = [
     { name: "Dashboard", icon: <FaTachometerAlt />, path: "/dashboard" },
     { name: "Members", icon: <FaUsers />, path: "/dashboard/members" },
@@ -83,19 +85,13 @@ const Sidebar = ({ role = "admin" }) => {
   ];
 
   const userLinks = [
-    { name: "Dashboard", 
-      icon: <FaTachometerAlt />, 
-      path: "/user-dashboard" 
-    },
+    { name: "Dashboard", icon: <FaTachometerAlt />, path: "/user-dashboard" },
     {
       name: "Contributions",
       icon: <FaCreditCard />,
       path: "/user-dashboard/contributions",
     },
-    { name: "Loans", 
-      icon: <FaUniversity />, 
-      path: "/user-dashboard/loans" 
-    },
+    { name: "Loans", icon: <FaUniversity />, path: "/user-dashboard/loans" },
     {
       name: "Savings",
       icon: <MdSavings />,
@@ -137,10 +133,12 @@ const Sidebar = ({ role = "admin" }) => {
       icon: <NotificationBell />,
       path: "/user-dashboard/notifications",
     },
-    { name: "Profile", icon: <FaUserCircle />, path: "/user-dashboard/profile" },
-    { name: "Settings", 
-      icon: <FaCog />, path: 
-      "/user-dashboard/settings" },
+    {
+      name: "Profile",
+      icon: <FaUserCircle />,
+      path: "/user-dashboard/profile",
+    },
+    { name: "Settings", icon: <FaCog />, path: "/user-dashboard/settings" },
   ];
 
   const links = role === "admin" ? adminLinks : userLinks;
@@ -290,21 +288,17 @@ const Sidebar = ({ role = "admin" }) => {
 
         {/* Bottom Profile */}
         <div className="border-t border-white/10 pt-4 flex items-center gap-3">
-          <img
-            src="https://i.pravatar.cc/100"
-            alt="profile"
-            className="w-9 h-9 rounded-full"
-          />
-
-          <div>
-            <h3 className="text-[11px] font-semibold">
-              {role === "admin" ? "Super Admin" : "John Kamau"}
-            </h3>
-
-            <p className="text-[10px] text-gray-300">
-              {role === "admin" ? "Online" : "Member"}
-            </p>
+          <div className="w-9 h-9 rounded-full bg-emerald-600 flex items-center justify-center text-white font-semibold text-xs">
+            {currentUser?.fullname?.charAt(0)?.toUpperCase() || "U"}
           </div>
+
+          <h3 className="text-[11px] font-semibold truncate max-w-[130px]">
+            {currentUser?.fullname || "User"}
+          </h3>
+
+          <p className="text-[10px] text-gray-300 capitalize">
+            {currentUser?.role || "member"}
+          </p>
         </div>
       </div>
     </>
