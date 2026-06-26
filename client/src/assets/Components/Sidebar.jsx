@@ -133,11 +133,7 @@ const Sidebar = ({ role = "admin" }) => {
       icon: <NotificationBell />,
       path: "/user-dashboard/notifications",
     },
-    {
-      name: "Profile",
-      icon: <FaUserCircle />,
-      path: "/user-dashboard/profile",
-    },
+    
     { name: "Settings", icon: <FaCog />, path: "/user-dashboard/settings" },
   ];
 

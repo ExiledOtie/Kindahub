@@ -33,6 +33,7 @@ import UserPayments from "./assets/Pages/Users/userPayments";
 import Statements from "./assets/Pages/Users/Statements";
 import UserGroupChats from "./assets/Pages/Users/Communication/UserGroupChats";
 import UserPrivateMessages from "./assets/Pages/Users/Communication/UserPrivateMessages";
+import UserNotifications from "./assets/Pages/Users/UserNotifications";
 
 
 
@@ -101,6 +102,7 @@ const App = () => {
             <Route
               path="/user-dashboard/communication/private"
               element={<UserPrivateMessages />} />
+            <Route path="notifications" element={<UserNotifications />} />
           </Route>
         </Routes>
       </AuthProvider>
