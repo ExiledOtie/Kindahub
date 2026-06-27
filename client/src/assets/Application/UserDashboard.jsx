@@ -77,7 +77,6 @@ const loanData = [
 const UserDashboard = () => {
   return (
     <div className="bg-[#f5f7fb] min-h-screen">
-
       {/* Main Content */}
       <div className="flex-1 p-4 overflow-y-auto">
         {/* Header */}
@@ -104,17 +103,13 @@ const UserDashboard = () => {
                     {item.value}
                   </h2>
 
-                  <p className="text-[9px] text-gray-400 mt-1">
-                    {item.note}
-                  </p>
+                  <p className="text-[9px] text-gray-400 mt-1">{item.note}</p>
                 </div>
 
                 <div
                   className={`w-8 h-8 rounded-md flex items-center justify-center ${item.bg}`}
                 >
-                  <span className={`text-xs ${item.color}`}>
-                    {item.icon}
-                  </span>
+                  <span className={`text-xs ${item.color}`}>{item.icon}</span>
                 </div>
               </div>
             </div>
@@ -171,10 +166,7 @@ const UserDashboard = () => {
                     dataKey="value"
                   >
                     {loanData.map((entry, index) => (
-                      <Cell
-                        key={index}
-                        fill={entry.color}
-                      />
+                      <Cell key={index} fill={entry.color} />
                     ))}
                   </Pie>
                 </PieChart>
@@ -182,46 +174,30 @@ const UserDashboard = () => {
 
               {/* Center Text */}
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <h2 className="text-xl font-bold text-gray-700">
-                  60%
-                </h2>
+                <h2 className="text-xl font-bold text-gray-700">60%</h2>
 
-                <p className="text-[10px] text-gray-400">
-                  Paid
-                </p>
+                <p className="text-[10px] text-gray-400">Paid</p>
               </div>
             </div>
 
             {/* Loan Details */}
             <div className="space-y-2 mt-2 text-[10px]">
               <div className="flex justify-between">
-                <span className="text-gray-500">
-                  Total Loan
-                </span>
+                <span className="text-gray-500">Total Loan</span>
 
-                <span className="font-semibold text-gray-700">
-                  KES 50,000
-                </span>
+                <span className="font-semibold text-gray-700">KES 50,000</span>
               </div>
 
               <div className="flex justify-between">
-                <span className="text-gray-500">
-                  Paid
-                </span>
+                <span className="text-gray-500">Paid</span>
 
-                <span className="font-semibold text-green-600">
-                  KES 30,000
-                </span>
+                <span className="font-semibold text-green-600">KES 30,000</span>
               </div>
 
               <div className="flex justify-between">
-                <span className="text-gray-500">
-                  Balance
-                </span>
+                <span className="text-gray-500">Balance</span>
 
-                <span className="font-semibold text-red-500">
-                  KES 20,000
-                </span>
+                <span className="font-semibold text-red-500">KES 20,000</span>
               </div>
             </div>
           </div>
@@ -253,17 +229,12 @@ const UserDashboard = () => {
 
               <tbody>
                 {[1, 2, 3, 4].map((item) => (
-                  <tr
-                    key={item}
-                    className="border-b last:border-none"
-                  >
+                  <tr key={item} className="border-b last:border-none">
                     <td className="py-2">10 May 2024</td>
                     <td>Monthly</td>
                     <td>KES 2,000</td>
 
-                    <td className="text-green-600 font-semibold">
-                      Paid
-                    </td>
+                    <td className="text-green-600 font-semibold">Paid</td>
                   </tr>
                 ))}
               </tbody>
@@ -295,43 +266,27 @@ const UserDashboard = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <p className="text-gray-400">
-                    Amount
-                  </p>
+                  <p className="text-gray-400">Amount</p>
 
-                  <h4 className="font-semibold text-gray-700">
-                    KES 50,000
-                  </h4>
+                  <h4 className="font-semibold text-gray-700">KES 50,000</h4>
                 </div>
 
                 <div>
-                  <p className="text-gray-400">
-                    Paid
-                  </p>
+                  <p className="text-gray-400">Paid</p>
 
-                  <h4 className="font-semibold text-green-600">
-                    KES 30,000
-                  </h4>
+                  <h4 className="font-semibold text-green-600">KES 30,000</h4>
                 </div>
 
                 <div>
-                  <p className="text-gray-400">
-                    Balance
-                  </p>
+                  <p className="text-gray-400">Balance</p>
 
-                  <h4 className="font-semibold text-red-500">
-                    KES 20,000
-                  </h4>
+                  <h4 className="font-semibold text-red-500">KES 20,000</h4>
                 </div>
 
                 <div>
-                  <p className="text-gray-400">
-                    Next Payment
-                  </p>
+                  <p className="text-gray-400">Next Payment</p>
 
-                  <h4 className="font-semibold text-gray-700">
-                    25 May 2024
-                  </h4>
+                  <h4 className="font-semibold text-gray-700">25 May 2024</h4>
                 </div>
               </div>
             </div>
@@ -347,8 +302,8 @@ const UserDashboard = () => {
             </h2>
 
             <p className="text-[10px] text-gray-500 leading-relaxed">
-              Monthly meeting will be held on 25 May 2024 at
-              10:00 AM. All members are encouraged to attend.
+              Monthly meeting will be held on 25 May 2024 at 10:00 AM. All
+              members are encouraged to attend.
             </p>
           </div>
 

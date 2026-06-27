@@ -9,34 +9,43 @@ const Dashboard = require("../models/dashboardModel");
  */
 const getAdminDashboard = async (req, res) => {
   try {
+
     const [
       summary,
       recentActivities,
       loanChart,
       savingsChart,
     ] = await Promise.all([
+
       Dashboard.getAdminSummary(),
+
       Dashboard.getRecentActivities(),
-      Dashboard.getLoanChart(),
-      Dashboard.getSavingsChart(),
+
+      Dashboard.getAdminLoanChart(),
+
+      Dashboard.getAdminSavingsChart(),
+
     ]);
 
-    res.status(200).json({
-      success: true,
-      data: {
+    res.json({
+      success:true,
+      data:{
         ...summary,
         recentActivities,
         loanChart,
         savingsChart,
       },
     });
+
   } catch (error) {
-    console.error("Admin Dashboard Error:", error);
+
+    console.error(error);
 
     res.status(500).json({
-      success: false,
-      message: "Failed to load admin dashboard",
+      success:false,
+      message:"Failed to load admin dashboard",
     });
+
   }
 };
 
@@ -45,39 +54,50 @@ const getAdminDashboard = async (req, res) => {
  * MEMBER DASHBOARD
  * ============================================
  */
-const getMemberDashboard = async (req, res) => {
-  try {
-    const userId = req.user.id;
+const getMemberDashboard = async (req,res) => {
 
-    const [
+  try{
+
+    const userId=req.user.id;
+
+    const[
       summary,
       recentActivities,
       loanChart,
       savingsChart,
-    ] = await Promise.all([
+    ]=await Promise.all([
+
       Dashboard.getMemberSummary(userId),
-      Dashboard.getRecentActivities(),
-      Dashboard.getLoanChart(),
-      Dashboard.getSavingsChart(),
+
+      Dashboard.getMemberRecentActivities(userId),
+
+      Dashboard.getMemberLoanChart(userId),
+
+      Dashboard.getMemberSavingsChart(userId),
+
     ]);
 
-    res.status(200).json({
-      success: true,
-      data: {
+    res.json({
+      success:true,
+      data:{
         ...summary,
         recentActivities,
         loanChart,
         savingsChart,
       },
     });
-  } catch (error) {
-    console.error("Member Dashboard Error:", error);
+
+  }catch(error){
+
+    console.error(error);
 
     res.status(500).json({
-      success: false,
-      message: "Failed to load member dashboard",
+      success:false,
+      message:"Failed to load member dashboard",
     });
+
   }
+
 };
 
 /**
@@ -139,23 +159,38 @@ const getRecentActivities = async (req, res) => {
  * LOAN CHART
  * ============================================
  */
-const getLoanChart = async (req, res) => {
-  try {
-    const chart =
-      await Dashboard.getLoanChart();
+const getLoanChart = async (req,res)=>{
 
-    res.status(200).json({
-      success: true,
-      data: chart,
+  try{
+
+    let chart;
+
+    if(req.user.role==="admin" || req.user.is_super_admin){
+
+      chart=await Dashboard.getAdminLoanChart();
+
+    }else{
+
+      chart=await Dashboard.getMemberLoanChart(req.user.id);
+
+    }
+
+    res.json({
+      success:true,
+      data:chart,
     });
-  } catch (error) {
-    console.error("Loan Chart Error:", error);
+
+  }catch(error){
+
+    console.error(error);
 
     res.status(500).json({
-      success: false,
-      message: "Failed to load loan chart",
+      success:false,
+      message:"Failed to load loan chart",
     });
+
   }
+
 };
 
 /**
@@ -163,23 +198,38 @@ const getLoanChart = async (req, res) => {
  * SAVINGS CHART
  * ============================================
  */
-const getSavingsChart = async (req, res) => {
-  try {
-    const chart =
-      await Dashboard.getSavingsChart();
+const getSavingsChart = async (req,res)=>{
 
-    res.status(200).json({
-      success: true,
-      data: chart,
+  try{
+
+    let chart;
+
+    if(req.user.role==="admin" || req.user.is_super_admin){
+
+      chart=await Dashboard.getAdminSavingsChart();
+
+    }else{
+
+      chart=await Dashboard.getMemberSavingsChart(req.user.id);
+
+    }
+
+    res.json({
+      success:true,
+      data:chart,
     });
-  } catch (error) {
-    console.error("Savings Chart Error:", error);
+
+  }catch(error){
+
+    console.error(error);
 
     res.status(500).json({
-      success: false,
-      message: "Failed to load savings chart",
+      success:false,
+      message:"Failed to load savings chart",
     });
+
   }
+
 };
 
 module.exports = {

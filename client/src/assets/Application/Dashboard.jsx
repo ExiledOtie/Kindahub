@@ -1,6 +1,4 @@
-// Pages/Dashboard.jsx
-
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 import {
   FaUsers,
@@ -10,79 +8,11 @@ import {
   FaWallet,
 } from "react-icons/fa";
 
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-} from "recharts";
+import { ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
-const stats = [
-  {
-    title: "Total Members",
-    value: "128",
-    note: "+12 this month",
-    icon: <FaUsers />,
-    bg: "bg-blue-100",
-    color: "text-blue-600",
-  },
-  {
-    title: "Total Savings",
-    value: "KES 1,245,000",
-    note: "+8% this month",
-    icon: <FaPiggyBank />,
-    bg: "bg-purple-100",
-    color: "text-purple-600",
-  },
-  {
-    title: "Active Loans",
-    value: "KES 850,000",
-    note: "24 active loans",
-    icon: <FaMoneyBillWave />,
-    bg: "bg-orange-100",
-    color: "text-orange-500",
-  },
-  {
-    title: "Pending Loans",
-    value: "14",
-    note: "View requests",
-    icon: <FaClock />,
-    bg: "bg-yellow-100",
-    color: "text-yellow-600",
-  },
-  {
-    title: "Weekly Contributions",
-    value: "KES 85,300",
-    note: "This week",
-    icon: <FaPiggyBank />,
-    bg: "bg-indigo-100",
-    color: "text-indigo-600",
-  },
-  {
-    title: "Monthly Contributions",
-    value: "KES 320,600",
-    note: "This month",
-    icon: <FaPiggyBank />,
-    bg: "bg-green-100",
-    color: "text-green-600",
-  },
-  {
-    title: "Overdue Loans",
-    value: "KES 120,500",
-    note: "5 overdue loans",
-    icon: <FaMoneyBillWave />,
-    bg: "bg-red-100",
-    color: "text-red-600",
-  },
-  {
-    title: "Chama Wallet Balance",
-    value: "KES 75,600",
-    note: "Available balance",
-    icon: <FaWallet />,
-    bg: "bg-emerald-100",
-    color: "text-emerald-600",
-  },
-];
+import Swal from "sweetalert2";
+
+import { getAdminDashboard } from "../Pages/Services/dashboardService";
 
 const loanStatusData = [
   { name: "Approved", value: 45, color: "#4f46e5" },
@@ -92,17 +22,148 @@ const loanStatusData = [
 ];
 
 const Dashboard = () => {
-  return (
-    <div className="bg-[#f5f7fb] min-h-screen">
+  const [dashboard, setDashboard] = useState(null);
 
-      {/* Main Content */}
-      <div className="flex-1 p-4 overflow-y-auto">
-        {/* Header */}
-        <div className="mb-4">
-          <h1 className="text-sm font-bold text-gray-800 uppercase tracking-wide">
-            Dashboard (Super Admin View)
-          </h1>
-        </div>
+  const [loading, setLoading] = useState(true);
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const [error, setError] = useState("");
+
+  const fetchDashboard = async (showLoader = false) => {
+    try {
+      if (showLoader) {
+        setLoading(true);
+      } else {
+        setRefreshing(true);
+      }
+
+      const data = await getAdminDashboard();
+
+      setDashboard(data);
+
+      setError("");
+    } catch (err) {
+      console.error(err);
+
+      setError("Failed to load dashboard.");
+
+      Swal.fire("Error", "Unable to load dashboard.", "error");
+    } finally {
+      setLoading(false);
+
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboard(true);
+
+    const interval = setInterval(() => {
+      fetchDashboard(false);
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const currency = (value) => `KES ${Number(value || 0).toLocaleString()}`;
+
+  const stats = useMemo(() => {
+    if (!dashboard) return [];
+
+    return [
+      {
+        title: "Total Members",
+        value: dashboard.members,
+        note: "Registered Members",
+        icon: <FaUsers />,
+        bg: "bg-blue-100",
+        color: "text-blue-600",
+      },
+
+      {
+        title: "Monthly Savings",
+        value: currency(dashboard.monthlySavings),
+        note: "Current Month",
+        icon: <FaPiggyBank />,
+        bg: "bg-purple-100",
+        color: "text-purple-600",
+      },
+
+      {
+        title: "Approved Loans",
+        value: dashboard.approvedLoans,
+        note: "Approved Loans",
+        icon: <FaMoneyBillWave />,
+        bg: "bg-orange-100",
+        color: "text-orange-600",
+      },
+
+      {
+        title: "Pending Loans",
+        value: dashboard.pendingLoans,
+        note: "Awaiting Approval",
+        icon: <FaClock />,
+        bg: "bg-yellow-100",
+        color: "text-yellow-600",
+      },
+
+      {
+        title: "Monthly Contributions",
+        value: currency(dashboard.monthlyContributions),
+        note: "Current Month",
+        icon: <FaPiggyBank />,
+        bg: "bg-indigo-100",
+        color: "text-indigo-600",
+      },
+
+      {
+        title: "Notifications",
+        value: dashboard.notifications,
+        note: "Unread Notifications",
+        icon: <FaUsers />,
+        bg: "bg-red-100",
+        color: "text-red-600",
+      },
+
+      {
+        title: "Chama Wallet",
+        value: currency(dashboard.chamaWallet),
+        note: "Interest Earned",
+        icon: <FaWallet />,
+        bg: "bg-emerald-100",
+        color: "text-emerald-600",
+      },
+
+      {
+        title: "Groups",
+        value: dashboard.groups,
+        note: "Registered Groups",
+        icon: <FaUsers />,
+        bg: "bg-cyan-100",
+        color: "text-cyan-600",
+      },
+    ];
+  }, [dashboard]);
+
+  return (
+    if (loading) {
+
+  return (
+
+    <div className="flex justify-center items-center h-screen">
+
+      <div className="text-gray-500">
+
+        Loading Dashboard...
+
+      </div>
+
+    </div>
+
+  );
+
+}
 
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -121,17 +182,13 @@ const Dashboard = () => {
                     {item.value}
                   </h2>
 
-                  <p className="text-[9px] text-gray-400 mt-1">
-                    {item.note}
-                  </p>
+                  <p className="text-[9px] text-gray-400 mt-1">{item.note}</p>
                 </div>
 
                 <div
                   className={`w-8 h-8 rounded-md flex items-center justify-center ${item.bg}`}
                 >
-                  <span className={`text-xs ${item.color}`}>
-                    {item.icon}
-                  </span>
+                  <span className={`text-xs ${item.color}`}>{item.icon}</span>
                 </div>
               </div>
             </div>
@@ -161,7 +218,7 @@ const Dashboard = () => {
                     className="flex-1 bg-indigo-400 rounded-t-sm hover:bg-indigo-500 transition-all"
                     style={{ height: `${height}px` }}
                   ></div>
-                )
+                ),
               )}
             </div>
 
@@ -207,10 +264,7 @@ const Dashboard = () => {
                     dataKey="value"
                   >
                     {loanStatusData.map((entry, index) => (
-                      <Cell
-                        key={index}
-                        fill={entry.color}
-                      />
+                      <Cell key={index} fill={entry.color} />
                     ))}
                   </Pie>
                 </PieChart>
@@ -232,14 +286,10 @@ const Dashboard = () => {
                       }}
                     ></span>
 
-                    <span className="text-gray-600">
-                      {item.name}
-                    </span>
+                    <span className="text-gray-600">{item.name}</span>
                   </div>
 
-                  <span className="text-gray-500">
-                    {item.value}%
-                  </span>
+                  <span className="text-gray-500">{item.value}%</span>
                 </div>
               ))}
             </div>
@@ -268,9 +318,7 @@ const Dashboard = () => {
                       John Kamau
                     </h3>
 
-                    <p className="text-[9px] text-gray-400">
-                      Loan Request
-                    </p>
+                    <p className="text-[9px] text-gray-400">Loan Request</p>
                   </div>
 
                   <div className="text-right">
@@ -315,17 +363,12 @@ const Dashboard = () => {
 
               <tbody>
                 {[1, 2, 3, 4].map((item) => (
-                  <tr
-                    key={item}
-                    className="border-b last:border-none"
-                  >
+                  <tr key={item} className="border-b last:border-none">
                     <td className="py-2">John Kamau</td>
                     <td>Monthly</td>
                     <td>KES 12,000</td>
                     <td>10 May 2024</td>
-                    <td className="text-green-600 font-semibold">
-                      Paid
-                    </td>
+                    <td className="text-green-600 font-semibold">Paid</td>
                   </tr>
                 ))}
               </tbody>
@@ -356,16 +399,11 @@ const Dashboard = () => {
 
               <tbody>
                 {[1, 2, 3, 4].map((item) => (
-                  <tr
-                    key={item}
-                    className="border-b last:border-none"
-                  >
+                  <tr key={item} className="border-b last:border-none">
                     <td className="py-2">Grace Atieno</td>
                     <td>KES 75,000</td>
                     <td>10 May 2024</td>
-                    <td className="text-red-500 font-semibold">
-                      KES 45,000
-                    </td>
+                    <td className="text-red-500 font-semibold">KES 45,000</td>
                   </tr>
                 ))}
               </tbody>

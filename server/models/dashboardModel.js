@@ -393,14 +393,104 @@ const getSavingsChart = async () => {
 
   return rows;
 };
+const getRecentLoanRequests = async (limit = 5) => {
+  const query = `
+    SELECT
+      l.id,
+      u.fullname,
+      l.amount,
+      l.status,
+      l.created_at
+    FROM loans l
+    JOIN users u ON u.id = l.user_id
+    ORDER BY l.created_at DESC
+    LIMIT $1;
+  `;
+
+  const { rows } = await db.query(query, [limit]);
+
+  return rows;
+};
+
+const getRecentContributions = async (limit = 5) => {
+  const query = `
+    SELECT
+      c.id,
+      u.fullname,
+      c.amount,
+      c.status,
+      c.created_at,
+      'Monthly' AS type
+    FROM contributions c
+    JOIN users u
+      ON u.id = c.user_id
+    ORDER BY c.created_at DESC
+    LIMIT $1;
+  `;
+
+  const { rows } = await db.query(query, [limit]);
+
+  return rows;
+};
+
+const getOverdueLoans = async (limit = 5) => {
+  const query = `
+    SELECT
+      l.id,
+      u.fullname,
+      l.amount,
+      l.balance,
+      l.approved_at
+    FROM loans l
+    JOIN users u
+      ON u.id = l.user_id
+    WHERE
+      LOWER(l.status)='approved'
+      AND l.balance > 0
+    ORDER BY l.approved_at ASC
+    LIMIT $1;
+  `;
+
+  const { rows } = await db.query(query, [limit]);
+
+  return rows;
+};
+
+const getLoanStatusDistribution = async () => {
+  const query = `
+    SELECT
+      status,
+      COUNT(*)::INT AS value
+    FROM loans
+    GROUP BY status;
+  `;
+
+  const { rows } = await db.query(query);
+
+  const colors = {
+    approved: "#4f46e5",
+    pending: "#f59e0b",
+    rejected: "#ef4444",
+    repaid: "#10b981",
+  };
+
+  return rows.map((item) => ({
+    name:
+      item.status.charAt(0).toUpperCase() +
+      item.status.slice(1),
+    value: Number(item.value),
+    color: colors[item.status] || "#94a3b8",
+  }));
+};
 
 module.exports = {
   getAdminSummary,
   getMemberSummary,
   getRecentActivities,
-  getMemberRecentActivities,
-  getAdminLoanChart,
-  getMemberLoanChart,
-  getAdminSavingsChart,
-  getMemberSavingsChart,
+  getLoanChart,
+  getSavingsChart,
+  getRecentLoanRequests,
+  getRecentContributions,
+  getOverdueLoans,
+  getLoanStatusDistribution,
 };
