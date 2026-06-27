@@ -8,17 +8,17 @@ import {
   FaWallet,
 } from "react-icons/fa";
 
-import { ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { ResponsiveContainer, PieChart, Pie } from "recharts";
 
 import Swal from "sweetalert2";
 
 import { getAdminDashboard } from "../Pages/Services/dashboardService";
 
 const loanStatusData = [
-  { name: "Approved", value: 45, color: "#4f46e5" },
-  { name: "Pending", value: 25, color: "#f59e0b" },
-  { name: "Rejected", value: 15, color: "#ef4444" },
-  { name: "Repaid", value: 15, color: "#10b981" },
+  { name: "Approved", value: 45, fill: "#4f46e5" },
+  { name: "Pending", value: 25, fill: "#f59e0b" },
+  { name: "Rejected", value: 15, fill: "#ef4444" },
+  { name: "Repaid", value: 15, fill: "#10b981" },
 ];
 
 const Dashboard = () => {
@@ -146,25 +146,17 @@ const Dashboard = () => {
     ];
   }, [dashboard]);
 
-  return (
-    if (loading) {
-
-  return (
-
-    <div className="flex justify-center items-center h-screen">
-
-      <div className="text-gray-500">
-
-        Loading Dashboard...
-
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="text-gray-500">Loading Dashboard...</div>
       </div>
+    );
+  }
 
-    </div>
-
-  );
-
-}
-
+  return (
+    <div className="p-4">
+      <div className="space-y-4">
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {stats.map((item, index) => (
@@ -211,34 +203,31 @@ const Dashboard = () => {
 
             {/* Bar Chart */}
             <div className="h-[180px] flex items-end gap-2">
-              {[40, 60, 55, 75, 90, 80, 110, 120, 95, 130, 125, 140].map(
-                (height, index) => (
+              {dashboard?.savingsChart?.map((item, index) => {
+                const max = Math.max(
+                  ...dashboard.savingsChart.map((i) => Number(i.amount)),
+                );
+
+                const height =
+                  max === 0 ? 10 : (Number(item.amount) / max) * 160;
+
+                return (
                   <div
                     key={index}
                     className="flex-1 bg-indigo-400 rounded-t-sm hover:bg-indigo-500 transition-all"
-                    style={{ height: `${height}px` }}
-                  ></div>
-                ),
-              )}
+                    style={{
+                      height: `${height}px`,
+                    }}
+                    title={`KES ${Number(item.amount).toLocaleString()}`}
+                  />
+                );
+              })}
             </div>
 
             {/* Months */}
             <div className="flex justify-between mt-2 text-[9px] text-gray-400">
-              {[
-                "Jan",
-                "Feb",
-                "Mar",
-                "Apr",
-                "May",
-                "Jun",
-                "Jul",
-                "Aug",
-                "Sep",
-                "Oct",
-                "Nov",
-                "Dec",
-              ].map((month) => (
-                <span key={month}>{month}</span>
+              {dashboard?.savingsChart?.map((item) => (
+                <span key={item.month}>{item.month}</span>
               ))}
             </div>
           </div>
@@ -262,11 +251,7 @@ const Dashboard = () => {
                     outerRadius={58}
                     paddingAngle={2}
                     dataKey="value"
-                  >
-                    {loanStatusData.map((entry, index) => (
-                      <Cell key={index} fill={entry.color} />
-                    ))}
-                  </Pie>
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -282,7 +267,7 @@ const Dashboard = () => {
                     <span
                       className="w-2 h-2 rounded-full"
                       style={{
-                        backgroundColor: item.color,
+                        backgroundColor: item.fill,
                       }}
                     ></span>
 

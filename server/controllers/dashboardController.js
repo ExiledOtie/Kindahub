@@ -1,5 +1,3 @@
-// controllers/dashboardController.js
-
 const Dashboard = require("../models/dashboardModel");
 
 /**
@@ -9,43 +7,46 @@ const Dashboard = require("../models/dashboardModel");
  */
 const getAdminDashboard = async (req, res) => {
   try {
-
     const [
       summary,
       recentActivities,
       loanChart,
       savingsChart,
+      recentLoanRequests,
+      recentContributions,
+      overdueLoans,
+      loanStatusData,
     ] = await Promise.all([
-
       Dashboard.getAdminSummary(),
-
       Dashboard.getRecentActivities(),
-
-      Dashboard.getAdminLoanChart(),
-
-      Dashboard.getAdminSavingsChart(),
-
+      Dashboard.getLoanChart(),
+      Dashboard.getSavingsChart(),
+      Dashboard.getRecentLoanRequests(),
+      Dashboard.getRecentContributions(),
+      Dashboard.getOverdueLoans(),
+      Dashboard.getLoanStatusDistribution(),
     ]);
 
-    res.json({
-      success:true,
-      data:{
+    res.status(200).json({
+      success: true,
+      data: {
         ...summary,
         recentActivities,
         loanChart,
         savingsChart,
+        recentLoanRequests,
+        recentContributions,
+        overdueLoans,
+        loanStatusData,
       },
     });
-
   } catch (error) {
-
-    console.error(error);
+    console.error("Admin Dashboard Error:", error);
 
     res.status(500).json({
-      success:false,
-      message:"Failed to load admin dashboard",
+      success: false,
+      message: "Failed to load admin dashboard",
     });
-
   }
 };
 
@@ -54,74 +55,68 @@ const getAdminDashboard = async (req, res) => {
  * MEMBER DASHBOARD
  * ============================================
  */
-const getMemberDashboard = async (req,res) => {
+const getMemberDashboard = async (req, res) => {
+  try {
+    const userId = req.user.id;
 
-  try{
-
-    const userId=req.user.id;
-
-    const[
+    const [
       summary,
       recentActivities,
       loanChart,
       savingsChart,
-    ]=await Promise.all([
-
+      recentLoanRequests,
+      recentContributions,
+      loanStatusData,
+    ] = await Promise.all([
       Dashboard.getMemberSummary(userId),
-
       Dashboard.getMemberRecentActivities(userId),
-
       Dashboard.getMemberLoanChart(userId),
-
       Dashboard.getMemberSavingsChart(userId),
-
+      Dashboard.getMemberRecentLoanRequests(userId),
+      Dashboard.getMemberRecentContributions(userId),
+      Dashboard.getMemberLoanStatusDistribution(userId),
     ]);
 
-    res.json({
-      success:true,
-      data:{
+    res.status(200).json({
+      success: true,
+      data: {
         ...summary,
         recentActivities,
         loanChart,
         savingsChart,
+        recentLoanRequests,
+        recentContributions,
+        loanStatusData,
       },
     });
-
-  }catch(error){
-
-    console.error(error);
+  } catch (error) {
+    console.error("Member Dashboard Error:", error);
 
     res.status(500).json({
-      success:false,
-      message:"Failed to load member dashboard",
+      success: false,
+      message: "Failed to load member dashboard",
     });
-
   }
-
 };
 
 /**
  * ============================================
- * SUMMARY ONLY
- * (Used for realtime card refresh)
+ * SUMMARY
  * ============================================
  */
 const getDashboardSummary = async (req, res) => {
   try {
-    let summary;
-
-    if (req.user.role === "admin" || req.user.is_super_admin) {
-      summary = await Dashboard.getAdminSummary();
-    } else {
-      summary = await Dashboard.getMemberSummary(req.user.id);
-    }
+    const summary =
+      req.user.is_super_admin || req.user.role === "admin"
+        ? await Dashboard.getAdminSummary()
+        : await Dashboard.getMemberSummary(req.user.id);
 
     res.status(200).json({
       success: true,
       data: summary,
     });
   } catch (error) {
-    console.error("Dashboard Summary Error:", error);
+    console.error(error);
 
     res.status(500).json({
       success: false,
@@ -138,14 +133,16 @@ const getDashboardSummary = async (req, res) => {
 const getRecentActivities = async (req, res) => {
   try {
     const activities =
-      await Dashboard.getRecentActivities();
+      req.user.is_super_admin || req.user.role === "admin"
+        ? await Dashboard.getRecentActivities()
+        : await Dashboard.getMemberRecentActivities(req.user.id);
 
     res.status(200).json({
       success: true,
       data: activities,
     });
   } catch (error) {
-    console.error("Recent Activities Error:", error);
+    console.error(error);
 
     res.status(500).json({
       success: false,
@@ -159,38 +156,25 @@ const getRecentActivities = async (req, res) => {
  * LOAN CHART
  * ============================================
  */
-const getLoanChart = async (req,res)=>{
+const getLoanChart = async (req, res) => {
+  try {
+    const chart =
+      req.user.is_super_admin || req.user.role === "admin"
+        ? await Dashboard.getLoanChart()
+        : await Dashboard.getMemberLoanChart(req.user.id);
 
-  try{
-
-    let chart;
-
-    if(req.user.role==="admin" || req.user.is_super_admin){
-
-      chart=await Dashboard.getAdminLoanChart();
-
-    }else{
-
-      chart=await Dashboard.getMemberLoanChart(req.user.id);
-
-    }
-
-    res.json({
-      success:true,
-      data:chart,
+    res.status(200).json({
+      success: true,
+      data: chart,
     });
-
-  }catch(error){
-
+  } catch (error) {
     console.error(error);
 
     res.status(500).json({
-      success:false,
-      message:"Failed to load loan chart",
+      success: false,
+      message: "Failed to load loan chart",
     });
-
   }
-
 };
 
 /**
@@ -198,38 +182,25 @@ const getLoanChart = async (req,res)=>{
  * SAVINGS CHART
  * ============================================
  */
-const getSavingsChart = async (req,res)=>{
+const getSavingsChart = async (req, res) => {
+  try {
+    const chart =
+      req.user.is_super_admin || req.user.role === "admin"
+        ? await Dashboard.getSavingsChart()
+        : await Dashboard.getMemberSavingsChart(req.user.id);
 
-  try{
-
-    let chart;
-
-    if(req.user.role==="admin" || req.user.is_super_admin){
-
-      chart=await Dashboard.getAdminSavingsChart();
-
-    }else{
-
-      chart=await Dashboard.getMemberSavingsChart(req.user.id);
-
-    }
-
-    res.json({
-      success:true,
-      data:chart,
+    res.status(200).json({
+      success: true,
+      data: chart,
     });
-
-  }catch(error){
-
+  } catch (error) {
     console.error(error);
 
     res.status(500).json({
-      success:false,
-      message:"Failed to load savings chart",
+      success: false,
+      message: "Failed to load savings chart",
     });
-
   }
-
 };
 
 module.exports = {

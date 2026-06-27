@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const authenticateToken = require("../middleware/authMiddleware");
+const authMiddleware = require("../middleware/authMiddleware");
 
 const {
   getAdminDashboard,
@@ -12,14 +12,14 @@ const {
   getSavingsChart,
 } = require("../controllers/dashboardController");
 
-// ========================================
+// ==========================================
 // Authentication
-// ========================================
-router.use(authenticateToken);
+// ==========================================
+router.use(authMiddleware);
 
-// ========================================
+// ==========================================
 // COMPLETE DASHBOARDS
-// ========================================
+// ==========================================
 
 // Super Admin Dashboard
 router.get("/admin", getAdminDashboard);
@@ -27,29 +27,24 @@ router.get("/admin", getAdminDashboard);
 // Member Dashboard
 router.get("/member", getMemberDashboard);
 
-// ========================================
-// Dashboard Sections
-// ========================================
+// ==========================================
+// Individual Sections
+// ==========================================
 
-// Summary Cards
 router.get("/summary", getDashboardSummary);
 
-// Recent Activities
 router.get("/activities", getRecentActivities);
 
-// Loan Statistics
 router.get("/loan-chart", getLoanChart);
 
-// Savings Statistics
 router.get("/savings-chart", getSavingsChart);
 
-// ========================================
-// Real-time Dashboard Refresh
-// ========================================
-// Frontend polls this endpoint every 10-15 seconds
-// to refresh cards, charts and activities.
+// ==========================================
+// Realtime Refresh
+// ==========================================
+
 router.get("/refresh", (req, res) => {
-  if (req.user.is_super_admin) {
+  if (req.user.is_super_admin || req.user.role === "admin") {
     return getAdminDashboard(req, res);
   }
 
