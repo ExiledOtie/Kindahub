@@ -482,15 +482,107 @@ const getLoanStatusDistribution = async () => {
     color: colors[item.status] || "#94a3b8",
   }));
 };
+const getMemberRecentLoanRequests = async (
+  userId,
+  limit = 5
+) => {
+  const query = `
+    SELECT
+      l.id,
+      u.fullname,
+      l.amount,
+      l.status,
+      l.created_at
+    FROM loans l
+    JOIN users u
+      ON u.id=l.user_id
+    WHERE l.user_id=$1
+    ORDER BY l.created_at DESC
+    LIMIT $2;
+  `;
+
+  const { rows } = await db.query(query,[userId,limit]);
+
+  return rows;
+};
+
+const getMemberRecentContributions = async (
+  userId,
+  limit = 5
+) => {
+  const query = `
+    SELECT
+      c.id,
+      u.fullname,
+      c.amount,
+      c.status,
+      c.created_at,
+      'Monthly' AS type
+    FROM contributions c
+    JOIN users u
+      ON u.id=c.user_id
+    WHERE c.user_id=$1
+    ORDER BY c.created_at DESC
+    LIMIT $2;
+  `;
+
+  const { rows } = await db.query(query,[userId,limit]);
+
+  return rows;
+};
+
+const getMemberLoanStatusDistribution = async (
+  userId
+) => {
+
+  const query = `
+      SELECT
+        status,
+        COUNT(*)::INT AS value
+      FROM loans
+      WHERE user_id=$1
+      GROUP BY status;
+  `;
+
+  const { rows } = await db.query(query,[userId]);
+
+  const colors = {
+      approved:"#4f46e5",
+      pending:"#f59e0b",
+      rejected:"#ef4444",
+      repaid:"#10b981"
+  };
+
+  return rows.map(item=>({
+
+      name:
+      item.status.charAt(0).toUpperCase()+
+      item.status.slice(1),
+
+      value:Number(item.value),
+
+      color:colors[item.status] || "#94a3b8"
+
+  }));
+
+};
 
 module.exports = {
   getAdminSummary,
   getMemberSummary,
+  getAdminLoanChart,
+  getMemberLoanChart,
+  getAdminSavingsChart,
+  getMemberSavingsChart,
   getRecentActivities,
+  getMemberRecentActivities,
   getLoanChart,
   getSavingsChart,
   getRecentLoanRequests,
+  getMemberRecentLoanRequests,
   getRecentContributions,
+  getMemberRecentContributions,
   getOverdueLoans,
   getLoanStatusDistribution,
+  getMemberLoanStatusDistribution,
 };
