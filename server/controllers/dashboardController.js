@@ -7,25 +7,25 @@ const Dashboard = require("../models/dashboardModel");
  */
 const getAdminDashboard = async (req, res) => {
   try {
-    const [
-      summary,
-      recentActivities,
-      loanChart,
-      savingsChart,
-      recentLoanRequests,
-      recentContributions,
-      overdueLoans,
-      loanStatusData,
-    ] = await Promise.all([
-      Dashboard.getAdminSummary(),
-      Dashboard.getRecentActivities(),
-      Dashboard.getLoanChart(),
-      Dashboard.getSavingsChart(),
-      Dashboard.getRecentLoanRequests(),
-      Dashboard.getRecentContributions(),
-      Dashboard.getOverdueLoans(),
-      Dashboard.getLoanStatusDistribution(),
-    ]);
+ const [
+  summary,
+  recentActivities,
+  loanChart,
+  savingsChart,
+  recentLoanRequests,
+  recentContributions,
+  overdueLoans,
+  loanStatusData,
+] = await Promise.all([
+  Dashboard.getAdminSummary(),
+  Dashboard.getRecentActivities(),
+  Dashboard.getAdminLoanChart(),
+  Dashboard.getAdminSavingsChart(),
+  Dashboard.getRecentLoanRequests(),
+  Dashboard.getRecentContributions(),
+  Dashboard.getOverdueLoans(),
+  Dashboard.getLoanStatusDistribution(),
+]);
 
     res.status(200).json({
       success: true,
@@ -160,7 +160,7 @@ const getLoanChart = async (req, res) => {
   try {
     const chart =
       req.user.is_super_admin || req.user.role === "admin"
-        ? await Dashboard.getLoanChart()
+        ? await Dashboard.getAdminLoanChart()
         : await Dashboard.getMemberLoanChart(req.user.id);
 
     res.status(200).json({
@@ -186,7 +186,7 @@ const getSavingsChart = async (req, res) => {
   try {
     const chart =
       req.user.is_super_admin || req.user.role === "admin"
-        ? await Dashboard.getSavingsChart()
+        ? await Dashboard.getAdminSavingsChart()
         : await Dashboard.getMemberSavingsChart(req.user.id);
 
     res.status(200).json({

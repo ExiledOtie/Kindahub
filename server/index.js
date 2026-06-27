@@ -82,7 +82,7 @@ app.use("/api/reports", reportRoutes);
 app.use("/api/communications", communicationRoutes);
 app.use("/api/announcements", announcementRoutes);
 app.use("/api/notifications", notificationRoutes);
-app.use("/api/dashboards", dashboardRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 app.get("/", (req, res) => {
   res.send("Kindahub API Running");
