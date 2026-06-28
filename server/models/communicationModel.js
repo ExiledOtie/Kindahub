@@ -4,24 +4,66 @@ const CommunicationModel = {
   // ==========================
   // Conversations
   // ==========================
-  async getUserConversations(userId) {
-    const query = `
-      SELECT
-        c.id,
-        c.type,
-        c.group_id,
-        c.created_at
-      FROM conversations c
-      INNER JOIN conversation_participants cp
-        ON c.id = cp.conversation_id
-      WHERE cp.user_id = $1
-      ORDER BY c.created_at DESC
-    `;
+async getUserConversations(userId) {
+  const query = `
+    SELECT
+      c.id,
+      c.type,
+      c.group_id,
 
-    const { rows } = await pool.query(query, [userId]);
+      (
+        SELECT m.message
+        FROM messages m
+        WHERE m.conversation_id = c.id
+          AND m.is_deleted = FALSE
+        ORDER BY m.created_at DESC
+        LIMIT 1
+      ) AS last_message,
 
-    return rows;
-  },
+      (
+        SELECT m.created_at
+        FROM messages m
+        WHERE m.conversation_id = c.id
+          AND m.is_deleted = FALSE
+        ORDER BY m.created_at DESC
+        LIMIT 1
+      ) AS last_time,
+
+      (
+        SELECT COUNT(*)
+        FROM messages m
+        WHERE m.conversation_id = c.id
+          AND m.sender_id <> $1
+          AND m.read_at IS NULL
+          AND m.is_deleted = FALSE
+      ) AS unread
+
+    FROM conversations c
+    INNER JOIN conversation_participants cp
+      ON cp.conversation_id = c.id
+
+    WHERE cp.user_id = $1
+
+    ORDER BY last_time DESC NULLS LAST;
+  `;
+
+  const { rows } = await pool.query(query, [userId]);
+
+  return rows;
+},
+
+async markConversationAsRead(conversationId, userId) {
+  const query = `
+    UPDATE messages
+    SET read_at = NOW()
+    WHERE conversation_id = $1
+      AND sender_id <> $2
+      AND read_at IS NULL
+      AND is_deleted = FALSE
+  `;
+
+  await pool.query(query, [conversationId, userId]);
+},
 
   async getConversationById(conversationId) {
     const query = `

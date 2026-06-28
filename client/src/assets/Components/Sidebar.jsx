@@ -1,6 +1,7 @@
 // Components/Sidebar.jsx
 
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
+import api from "../Utils/axios";
 import { NavLink } from "react-router-dom";
 
 import {
@@ -30,6 +31,10 @@ const Sidebar = ({ role = "admin" }) => {
 
   const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
 
+  const [communicationBadges, setCommunicationBadges] = useState({
+    private: 0,
+    group: 0,
+  });
   const adminLinks = [
     { name: "Dashboard", icon: <FaTachometerAlt />, path: "/dashboard" },
     { name: "Members", icon: <FaUsers />, path: "/dashboard/members" },
@@ -59,13 +64,13 @@ const Sidebar = ({ role = "admin" }) => {
           name: "Group Chats",
           icon: <FaComments />,
           path: "/dashboard/communication/groups",
-          badge: 3,
+          badge: communicationBadges.group,
         },
         {
           name: "Private Messages",
           icon: <FaEnvelope />,
           path: "/dashboard/communication/private",
-          badge: 5,
+          badge: communicationBadges.private,
         },
       ],
     },
@@ -117,7 +122,7 @@ const Sidebar = ({ role = "admin" }) => {
           name: "Group Chats",
           icon: <FaComments />,
           path: "/user-dashboard/communication/groups",
-          badge: 2,
+          badge: communicationBadges.group,
         },
         {
           name: "Private Messages",
@@ -133,11 +138,41 @@ const Sidebar = ({ role = "admin" }) => {
       icon: <NotificationBell />,
       path: "/user-dashboard/notifications",
     },
-    
+
     { name: "Settings", icon: <FaCog />, path: "/user-dashboard/settings" },
   ];
 
   const links = role === "admin" ? adminLinks : userLinks;
+
+  useEffect(() => {
+    fetchCommunicationBadges();
+  }, []);
+
+  const fetchCommunicationBadges = async () => {
+    try {
+      const res = await api.get("/communications");
+
+      let privateUnread = 0;
+      let groupUnread = 0;
+
+      res.data.data.forEach((conversation) => {
+        if (conversation.type === "private") {
+          privateUnread += Number(conversation.unread || 0);
+        }
+
+        if (conversation.type === "group") {
+          groupUnread += Number(conversation.unread || 0);
+        }
+      });
+
+      setCommunicationBadges({
+        private: privateUnread,
+        group: groupUnread,
+      });
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
   return (
     <>

@@ -30,6 +30,11 @@ exports.getMessages = async (req, res) => {
   try {
     const { conversationId } = req.params;
 
+    await CommunicationModel.markConversationAsRead(
+      conversationId,
+      req.user.id,
+    );
+
     const messages = await CommunicationModel.getMessages(conversationId);
 
     res.status(200).json({
@@ -37,7 +42,7 @@ exports.getMessages = async (req, res) => {
       data: messages,
     });
   } catch (error) {
-    console.error("Get messages error:", error);
+    console.error(error);
 
     res.status(500).json({
       success: false,
