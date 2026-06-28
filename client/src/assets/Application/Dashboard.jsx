@@ -60,7 +60,7 @@ const Dashboard = () => {
 
         <div className="lg:col-span-2">
           <SavingsChart
-            data={dashboard.savingsChart}
+            data={dashboard.groupContributionChart}
           />
         </div>
 

@@ -23,10 +23,9 @@ const PENALTY_RATE = 5; // 5% monthly penalty for overdue
 */
 
 const calculateLoanBalance = async (loanId) => {
-  const loanRes = await pool.query(
-    `SELECT * FROM loans WHERE id = $1`,
-    [loanId]
-  );
+  const loanRes = await pool.query(`SELECT * FROM loans WHERE id = $1`, [
+    loanId,
+  ]);
 
   if (!loanRes.rows[0]) {
     throw new Error("Loan not found");
@@ -58,11 +57,9 @@ const calculateLoanBalance = async (loanId) => {
     (now.getFullYear() - startDate.getFullYear()) * 12 +
     (now.getMonth() - startDate.getMonth());
 
-  const expectedMonthlyPayment =
-    totalPayable / duration;
+  const expectedMonthlyPayment = totalPayable / duration;
 
-  const expectedPaidTillNow =
-    expectedMonthlyPayment * monthsPassed;
+  const expectedPaidTillNow = expectedMonthlyPayment * monthsPassed;
 
   let overdue = expectedPaidTillNow - totalPaid;
 
@@ -87,7 +84,6 @@ const calculateLoanBalance = async (loanId) => {
   };
 };
 
-
 /*
 |--------------------------------------------------------------------------
 | GET ALL LOAN PAYMENTS
@@ -108,7 +104,6 @@ const getAllLoanPayments = async (req, res) => {
   }
 };
 
-
 /*
 |--------------------------------------------------------------------------
 | CREATE LOAN PAYMENT
@@ -117,12 +112,7 @@ const getAllLoanPayments = async (req, res) => {
 
 const createLoanPayment = async (req, res) => {
   try {
-    const {
-      loan_id,
-      amount,
-      payment_method,
-      mpesa_code,
-    } = req.body;
+    const { loan_id, amount, payment_method, mpesa_code } = req.body;
 
     const paymentAmount = Number(amount || 0);
 
@@ -144,7 +134,7 @@ const createLoanPayment = async (req, res) => {
       FROM loans
       WHERE id = $1
       `,
-      [loan_id]
+      [loan_id],
     );
 
     const loan = loanRes.rows[0];
@@ -165,8 +155,7 @@ const createLoanPayment = async (req, res) => {
 
     const principal = Number(loan.amount);
 
-    const totalInterest =
-      (principal * Number(loan.interest_rate)) / 100;
+    const totalInterest = (principal * Number(loan.interest_rate)) / 100;
 
     /*
     |--------------------------------------------------------------------------
@@ -174,24 +163,15 @@ const createLoanPayment = async (req, res) => {
     |--------------------------------------------------------------------------
     */
 
-    const breakdown =
-      await getPaymentBreakdownModel(loan_id);
+    const breakdown = await getPaymentBreakdownModel(loan_id);
 
-    const principalAlreadyPaid =
-      Number(breakdown.principal_paid);
+    const principalAlreadyPaid = Number(breakdown.principal_paid);
 
-    const interestAlreadyPaid =
-      Number(breakdown.interest_paid);
+    const interestAlreadyPaid = Number(breakdown.interest_paid);
 
-    const remainingPrincipal = Math.max(
-      principal - principalAlreadyPaid,
-      0
-    );
+    const remainingPrincipal = Math.max(principal - principalAlreadyPaid, 0);
 
-    const remainingInterest = Math.max(
-      totalInterest - interestAlreadyPaid,
-      0
-    );
+    const remainingInterest = Math.max(totalInterest - interestAlreadyPaid, 0);
 
     let remaining = paymentAmount;
 
@@ -201,10 +181,7 @@ const createLoanPayment = async (req, res) => {
     |--------------------------------------------------------------------------
     */
 
-    const interestPaid = Math.min(
-      remaining,
-      remainingInterest
-    );
+    const interestPaid = Math.min(remaining, remainingInterest);
 
     remaining -= interestPaid;
 
@@ -214,10 +191,7 @@ const createLoanPayment = async (req, res) => {
     |--------------------------------------------------------------------------
     */
 
-    const principalPaid = Math.min(
-      remaining,
-      remainingPrincipal
-    );
+    const principalPaid = Math.min(remaining, remainingPrincipal);
 
     remaining -= principalPaid;
 
@@ -227,10 +201,7 @@ const createLoanPayment = async (req, res) => {
     |--------------------------------------------------------------------------
     */
 
-    const newBalance = Math.max(
-      balanceData.balance - paymentAmount,
-      0
-    );
+    const newBalance = Math.max(balanceData.balance - paymentAmount, 0);
 
     /*
     |--------------------------------------------------------------------------
@@ -245,7 +216,7 @@ const createLoanPayment = async (req, res) => {
       interestPaid,
       newBalance,
       payment_method,
-      mpesa_code || null
+      mpesa_code || null,
     );
 
     /*
@@ -260,7 +231,7 @@ const createLoanPayment = async (req, res) => {
       SET balance = $1
       WHERE id = $2
       `,
-      [newBalance, loan_id]
+      [newBalance, loan_id],
     );
 
     /*
@@ -278,7 +249,7 @@ const createLoanPayment = async (req, res) => {
           balance = 0
         WHERE id = $1
         `,
-        [loan_id]
+        [loan_id],
       );
     }
 
@@ -287,7 +258,6 @@ const createLoanPayment = async (req, res) => {
       payment,
       balance: newBalance,
     });
-
   } catch (error) {
     console.log("LOAN PAYMENT ERROR:", error);
 
@@ -305,12 +275,9 @@ const createLoanPayment = async (req, res) => {
 
 const getLoanPayments = async (req, res) => {
   try {
-    const payments = await getLoanPaymentsModel(
-      req.params.loanId
-    );
+    const payments = await getLoanPaymentsModel(req.params.loanId);
 
     res.status(200).json(payments);
-
   } catch (error) {
     res.status(500).json({
       message: "Server error",
@@ -318,30 +285,19 @@ const getLoanPayments = async (req, res) => {
   }
 };
 
-const getMyLoanPayments =
-  async (req, res) => {
-    try {
+const getMyLoanPayments = async (req, res) => {
+  try {
+    const payments = await getMyLoanPaymentsModel(req.user.id);
 
-      const payments =
-        await getMyLoanPaymentsModel(
-          req.user.id
-        );
+    res.status(200).json(payments);
+  } catch (error) {
+    console.log(error);
 
-      res.status(200).json(
-        payments
-      );
-
-    } catch (error) {
-
-      console.log(error);
-
-      res.status(500).json({
-        message:
-          "Server error",
-      });
-
-    }
-  };
+    res.status(500).json({
+      message: "Server error",
+    });
+  }
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -351,12 +307,9 @@ const getMyLoanPayments =
 
 const getLoanBalance = async (req, res) => {
   try {
-    const balance = await calculateLoanBalance(
-      req.params.loanId
-    );
+    const balance = await calculateLoanBalance(req.params.loanId);
 
     res.json(balance);
-
   } catch (error) {
     console.log(error);
     res.status(500).json({

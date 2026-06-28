@@ -7,7 +7,7 @@ const Dashboard = require("../models/dashboardModel");
  */
 const getAdminDashboard = async (req, res) => {
   try {
- const [
+const [
   summary,
   recentActivities,
   loanChart,
@@ -16,30 +16,33 @@ const getAdminDashboard = async (req, res) => {
   recentContributions,
   overdueLoans,
   loanStatusData,
+  groupContributionChart,
 ] = await Promise.all([
   Dashboard.getAdminSummary(),
   Dashboard.getRecentActivities(),
-  Dashboard.getAdminLoanChart(),
-  Dashboard.getAdminSavingsChart(),
+  Dashboard.getLoanChart(),
+  Dashboard.getSavingsChart(),
   Dashboard.getRecentLoanRequests(),
   Dashboard.getRecentContributions(),
   Dashboard.getOverdueLoans(),
   Dashboard.getLoanStatusDistribution(),
+  Dashboard.getGroupContributionChart(),
 ]);
 
     res.status(200).json({
-      success: true,
-      data: {
-        ...summary,
-        recentActivities,
-        loanChart,
-        savingsChart,
-        recentLoanRequests,
-        recentContributions,
-        overdueLoans,
-        loanStatusData,
-      },
-    });
+  success: true,
+  data: {
+    ...summary,
+    recentActivities,
+    loanChart,
+    savingsChart,
+    recentLoanRequests,
+    recentContributions,
+    overdueLoans,
+    loanStatusData,
+    groupContributionChart,
+  },
+});
   } catch (error) {
     console.error("Admin Dashboard Error:", error);
 

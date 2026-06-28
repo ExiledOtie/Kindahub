@@ -618,6 +618,64 @@ const getMemberLoanStatusDistribution = async (userId) => {
   }));
 };
 
+/*
+|--------------------------------------------------------------------------
+| GROUP CONTRIBUTIONS CHART (JAN - DEC)
+|--------------------------------------------------------------------------
+*/
+
+const getGroupContributionChart = async (year = new Date().getFullYear()) => {
+  const query = `
+    WITH months AS (
+      SELECT generate_series(1,12) AS month_no
+    )
+
+    SELECT
+      TO_CHAR(
+        TO_DATE(months.month_no::text,'MM'),
+        'Mon'
+      ) AS month,
+
+      COALESCE((
+        SELECT SUM(c.amount)
+        FROM contributions c
+        JOIN user_groups ug
+          ON ug.user_id = c.user_id
+        JOIN groups g
+          ON g.id = ug.group_id
+        WHERE
+          LOWER(g.name) = 'kinda family'
+          AND EXTRACT(MONTH FROM c.created_at) = months.month_no
+          AND EXTRACT(YEAR FROM c.created_at) = $1
+      ),0) AS "kindaFamily",
+
+      COALESCE((
+        SELECT SUM(c.amount)
+        FROM contributions c
+        JOIN user_groups ug
+          ON ug.user_id = c.user_id
+        JOIN groups g
+          ON g.id = ug.group_id
+        WHERE
+          LOWER(g.name) = '13 amigos'
+          AND EXTRACT(MONTH FROM c.created_at) = months.month_no
+          AND EXTRACT(YEAR FROM c.created_at) = $1
+      ),0) AS amigos
+
+    FROM months
+
+    ORDER BY months.month_no;
+  `;
+
+  const { rows } = await db.query(query, [year]);
+
+  return rows.map((row) => ({
+    month: row.month,
+    kindaFamily: Number(row.kindaFamily),
+    amigos: Number(row.amigos),
+  }));
+};
+
 module.exports = {
   getAdminSummary,
   getMemberSummary,
@@ -631,6 +689,7 @@ module.exports = {
   getSavingsChart,
   getRecentLoanRequests,
   getMemberRecentLoanRequests,
+  getGroupContributionChart,
   getRecentContributions,
   getMemberRecentContributions,
   getOverdueLoans,

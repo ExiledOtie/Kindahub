@@ -1,80 +1,82 @@
-//Application/Components/SavingsChart.jsx
-
 import React from "react";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+} from "recharts";
 
 const SavingsChart = ({ data = [] }) => {
-
-  const maxAmount =
-    data.length > 0
-      ? Math.max(...data.map((item) => Number(item.amount)))
-      : 0;
-
   return (
-    <div className="lg:col-span-2 bg-white rounded-lg p-3 border border-gray-100 shadow-sm">
+    <div className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm h-[350px]">
 
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex justify-between items-center mb-4">
 
-        <h2 className="text-[11px] font-semibold text-gray-700">
-          Contributions Overview
+        <h2 className="text-sm font-semibold text-gray-700">
+          Group Contributions (Jan - Dec)
         </h2>
 
-        <select className="text-[10px] border rounded px-2 py-1 outline-none">
-
-          <option>Monthly</option>
-
+        <select className="border rounded px-2 py-1 text-xs">
+          <option>2026</option>
+          <option>2025</option>
+          <option>2024</option>
         </select>
 
       </div>
 
-      <div className="h-[180px] flex items-end gap-2">
+      <ResponsiveContainer width="100%" height="85%">
+        <BarChart
+          data={data}
+          margin={{
+            top: 10,
+            right: 10,
+            left: 10,
+            bottom: 5,
+          }}
+        >
+          <CartesianGrid strokeDasharray="3 3" />
 
-        {data.length === 0 ? (
+          <XAxis dataKey="month" />
 
-          <div className="flex items-center justify-center w-full text-gray-400 text-sm">
+          <YAxis
+            yAxisId="left"
+            orientation="left"
+          />
 
-            No contribution data available
+          <YAxis
+            yAxisId="right"
+            orientation="right"
+          />
 
-          </div>
+          <Tooltip
+            formatter={(value) =>
+              `KES ${Number(value).toLocaleString()}`
+            }
+          />
 
-        ) : (
+          <Legend />
 
-          data.map((item, index) => {
+          <Bar
+            yAxisId="left"
+            dataKey="kindaFamily"
+            name="Kinda Family"
+            fill="#4f46e5"
+            radius={[4, 4, 0, 0]}
+          />
 
-            const height =
-              maxAmount === 0
-                ? 10
-                : (Number(item.amount) / maxAmount) * 160;
-
-            return (
-
-              <div
-                key={index}
-                className="flex-1 bg-indigo-500 hover:bg-indigo-600 rounded-t transition-all"
-                style={{
-                  height: `${height}px`,
-                }}
-                title={`KES ${Number(item.amount).toLocaleString()}`}
-              />
-
-            );
-
-          })
-
-        )}
-
-      </div>
-
-      <div className="flex justify-between mt-3 text-[10px] text-gray-500">
-
-        {data.map((item, index) => (
-
-          <span key={index}>
-            {item.month}
-          </span>
-
-        ))}
-
-      </div>
+          <Bar
+            yAxisId="right"
+            dataKey="amigos"
+            name="13 Amigos"
+            fill="#10b981"
+            radius={[4, 4, 0, 0]}
+          />
+        </BarChart>
+      </ResponsiveContainer>
 
     </div>
   );
