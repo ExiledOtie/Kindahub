@@ -1,51 +1,116 @@
-//Application/Components/LoanStatusChart.jsx
+// Application/Components/LoanStatusChart.jsx
 
-import React from "react";
+import { useState } from "react";
 import {
-  ResponsiveContainer,
   PieChart,
   Pie,
+  Sector,
   Cell,
+  ResponsiveContainer,
 } from "recharts";
 
 const COLORS = [
-  "#4f46e5",
-  "#f59e0b",
-  "#ef4444",
-  "#10b981",
-  "#06b6d4",
-  "#8b5cf6",
+  "#4F46E5",
+  "#10B981",
+  "#F59E0B",
+  "#EF4444",
+  "#06B6D4",
+  "#8B5CF6",
 ];
 
-const LoanStatusChart = ({ data = [] }) => {
+const renderActiveShape = (props) => {
+  const {
+    cx,
+    cy,
+    innerRadius,
+    outerRadius,
+    startAngle,
+    endAngle,
+    fill,
+    payload,
+    value,
+  } = props;
+
   return (
-    <div className="bg-white rounded-lg p-3 border border-gray-100 shadow-sm">
+    <g>
+      <text
+        x={cx}
+        y={cy - 10}
+        textAnchor="middle"
+        fill="#374151"
+        fontSize={12}
+        fontWeight="600"
+      >
+        {payload.name}
+      </text>
 
-      <div className="flex items-center justify-between mb-4">
+      <text
+        x={cx}
+        y={cy + 10}
+        textAnchor="middle"
+        fill={fill}
+        fontSize={18}
+        fontWeight="700"
+      >
+        {value}
+      </text>
 
-        <h2 className="text-[11px] font-semibold text-gray-700">
-          Loan Status Distribution
-        </h2>
+      <Sector
+        cx={cx}
+        cy={cy}
+        innerRadius={innerRadius}
+        outerRadius={outerRadius}
+        startAngle={startAngle}
+        endAngle={endAngle}
+        fill={fill}
+      />
 
-      </div>
+      <Sector
+        cx={cx}
+        cy={cy}
+        startAngle={startAngle}
+        endAngle={endAngle}
+        innerRadius={outerRadius + 4}
+        outerRadius={outerRadius + 10}
+        fill={fill}
+      />
+    </g>
+  );
+};
 
-      <div className="h-[180px]">
+const LoanStatusChart = ({ data = [] }) => {
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  return (
+    <div className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm">
+
+      <h2 className="text-[11px] font-semibold text-gray-700 mb-4">
+        Loan Status Distribution
+      </h2>
+
+      <div className="h-[230px]">
 
         {data.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-gray-400 text-sm">
+          <div className="flex items-center justify-center h-full text-sm text-gray-400">
             No loan statistics available
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
+
               <Pie
+                activeIndex={activeIndex}
+                activeShape={renderActiveShape}
                 data={data}
+                dataKey="value"
+                nameKey="name"
                 cx="50%"
                 cy="50%"
-                innerRadius={40}
-                outerRadius={60}
-                paddingAngle={2}
-                dataKey="value"
+                innerRadius={45}
+                outerRadius={70}
+                onMouseEnter={(_, index) =>
+                  setActiveIndex(index)
+                }
               >
                 {data.map((entry, index) => (
                   <Cell
@@ -57,40 +122,49 @@ const LoanStatusChart = ({ data = [] }) => {
                   />
                 ))}
               </Pie>
+
             </PieChart>
           </ResponsiveContainer>
         )}
 
       </div>
 
-      <div className="space-y-2 mt-2">
+      {data.length > 0 && (
+        <div className="mt-4 space-y-2">
 
-        {data.map((item, index) => (
-          <div
-            key={index}
-            className="flex justify-between items-center text-[10px]"
-          >
-            <div className="flex items-center gap-2">
+          {data.map((item, index) => (
 
-              <span
-                className="w-2 h-2 rounded-full"
-                style={{
-                  backgroundColor:
-                    item.color ||
-                    COLORS[index % COLORS.length],
-                }}
-              />
+            <div
+              key={index}
+              className="flex items-center justify-between text-[11px]"
+            >
+              <div className="flex items-center gap-2">
 
-              <span>{item.name}</span>
+                <span
+                  className="w-3 h-3 rounded-full"
+                  style={{
+                    background:
+                      item.color ||
+                      COLORS[index % COLORS.length],
+                  }}
+                />
+
+                <span className="text-gray-600">
+                  {item.name}
+                </span>
+
+              </div>
+
+              <span className="font-semibold text-gray-800">
+                {item.value}
+              </span>
 
             </div>
 
-            <span>{item.value}</span>
+          ))}
 
-          </div>
-        ))}
-
-      </div>
+        </div>
+      )}
 
     </div>
   );

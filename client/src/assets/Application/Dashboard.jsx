@@ -65,7 +65,7 @@ const Dashboard = () => {
         </div>
 
         <LoanStatusChart
-          data={dashboard.loanChart}
+          data={dashboard.loanStatusData}
         />
 
         <RecentLoanRequests

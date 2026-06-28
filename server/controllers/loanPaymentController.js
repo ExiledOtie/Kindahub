@@ -7,6 +7,7 @@ const {
   getAllLoanPaymentsModel,
   getPaymentBreakdownModel,
   getMyLoanPaymentsModel,
+  updateLoanBalanceModel,
 } = require("../models/loanPaymentModel");
 
 /*
@@ -104,12 +105,6 @@ const getAllLoanPayments = async (req, res) => {
   }
 };
 
-/*
-|--------------------------------------------------------------------------
-| CREATE LOAN PAYMENT
-|--------------------------------------------------------------------------
-*/
-
 const createLoanPayment = async (req, res) => {
   try {
     const { loan_id, amount, payment_method, mpesa_code } = req.body;
@@ -122,12 +117,6 @@ const createLoanPayment = async (req, res) => {
       });
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | GET LOAN
-    |--------------------------------------------------------------------------
-    */
-
     const loanRes = await pool.query(
       `
       SELECT *
@@ -137,31 +126,17 @@ const createLoanPayment = async (req, res) => {
       [loan_id],
     );
 
-    const loan = loanRes.rows[0];
-
-    if (!loan) {
+    if (loanRes.rows.length === 0) {
       return res.status(404).json({
         message: "Loan not found",
       });
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | CALCULATE CURRENT BALANCE
-    |--------------------------------------------------------------------------
-    */
-
-    const balanceData = await calculateLoanBalance(loan_id);
+    const loan = loanRes.rows[0];
 
     const principal = Number(loan.amount);
 
     const totalInterest = (principal * Number(loan.interest_rate)) / 100;
-
-    /*
-    |--------------------------------------------------------------------------
-    | PAYMENT BREAKDOWN
-    |--------------------------------------------------------------------------
-    */
 
     const breakdown = await getPaymentBreakdownModel(loan_id);
 
@@ -175,97 +150,97 @@ const createLoanPayment = async (req, res) => {
 
     let remaining = paymentAmount;
 
-    /*
-    |--------------------------------------------------------------------------
-    | PAY INTEREST FIRST
-    |--------------------------------------------------------------------------
-    */
-
     const interestPaid = Math.min(remaining, remainingInterest);
 
     remaining -= interestPaid;
-
-    /*
-    |--------------------------------------------------------------------------
-    | THEN PRINCIPAL
-    |--------------------------------------------------------------------------
-    */
 
     const principalPaid = Math.min(remaining, remainingPrincipal);
 
     remaining -= principalPaid;
 
-    /*
-    |--------------------------------------------------------------------------
-    | NEW BALANCE
-    |--------------------------------------------------------------------------
-    */
+    const currentBalance = Number(loan.balance);
 
-    const newBalance = Math.max(balanceData.balance - paymentAmount, 0);
+    const newBalance = Math.max(currentBalance - paymentAmount, 0);
 
     /*
-    |--------------------------------------------------------------------------
-    | SAVE PAYMENT
-    |--------------------------------------------------------------------------
-    */
+|--------------------------------------------------------------------------
+| SAVE PAYMENT
+|--------------------------------------------------------------------------
+*/
 
-    const payment = await createLoanPaymentModel(
-      loan_id,
-      paymentAmount,
-      principalPaid,
-      interestPaid,
-      newBalance,
-      payment_method,
-      mpesa_code || null,
-    );
+const payment = await createLoanPaymentModel(
+  loan_id,
+  paymentAmount,
+  principalPaid,
+  interestPaid,
+  newBalance,
+  payment_method,
+  mpesa_code || null
+);
 
-    /*
-    |--------------------------------------------------------------------------
-    | UPDATE LOAN BALANCE
-    |--------------------------------------------------------------------------
-    */
+/*
+|--------------------------------------------------------------------------
+| RECALCULATE LOAN
+|--------------------------------------------------------------------------
+*/
 
-    await pool.query(
-      `
-      UPDATE loans
-      SET balance = $1
-      WHERE id = $2
-      `,
-      [newBalance, loan_id],
-    );
+const updatedBalance = await calculateLoanBalance(loan_id);
 
-    /*
-    |--------------------------------------------------------------------------
-    | MARK LOAN AS REPAID
-    |--------------------------------------------------------------------------
-    */
+/*
+|--------------------------------------------------------------------------
+| UPDATE LOAN TABLE
+|--------------------------------------------------------------------------
+*/
 
-    if (newBalance <= 0) {
-      await pool.query(
-        `
-        UPDATE loans
-        SET
-          status = 'repaid',
-          balance = 0
-        WHERE id = $1
-        `,
-        [loan_id],
-      );
-    }
+const updatedLoan = await updateLoanBalanceModel(
+  loan_id,
+  updatedBalance.totalPayable,
+  updatedBalance.balance
+);
 
-    return res.status(201).json({
-      message: "Payment recorded successfully",
-      payment,
-      balance: newBalance,
-    });
+/*
+|--------------------------------------------------------------------------
+| MARK LOAN AS REPAID
+|--------------------------------------------------------------------------
+*/
+
+if (updatedLoan.balance <= 0) {
+  await pool.query(
+    `
+    UPDATE loans
+    SET
+      status = 'repaid',
+      balance = 0
+    WHERE id = $1
+    `,
+    [loan_id]
+  );
+
+  updatedLoan.status = "repaid";
+  updatedLoan.balance = 0;
+}
+
+/*
+|--------------------------------------------------------------------------
+| RESPONSE
+|--------------------------------------------------------------------------
+*/
+
+return res.status(201).json({
+  message: "Payment recorded successfully",
+  payment,
+  loan: updatedLoan,
+  balance: updatedLoan.balance,
+});
   } catch (error) {
-    console.log("LOAN PAYMENT ERROR:", error);
+    console.error(error);
 
     return res.status(500).json({
-      message: error.message || "Server error",
+      message: "Server error",
     });
   }
-};
+}
+
 
 /*
 |--------------------------------------------------------------------------

@@ -162,6 +162,25 @@ const getMyLoanPaymentsModel = async (
 
   return result.rows;
 };
+const updateLoanBalanceModel = async (
+  loanId,
+  totalPayable,
+  balance
+) => {
+  const result = await pool.query(
+    `
+    UPDATE loans
+    SET
+      total_payable = $2,
+      balance = $3
+    WHERE id = $1
+    RETURNING *
+    `,
+    [loanId, totalPayable, balance]
+  );
+
+  return result.rows[0];
+};
 
 module.exports = {
   createLoanPaymentModel,
@@ -170,4 +189,5 @@ module.exports = {
   getAllLoanPaymentsModel,
   getPaymentBreakdownModel,
   getMyLoanPaymentsModel,
+  updateLoanBalanceModel,
 };

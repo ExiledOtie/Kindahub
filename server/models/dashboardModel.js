@@ -479,23 +479,27 @@ const getRecentLoanRequests = async (limit = 5) => {
   return rows;
 };
 
-const getRecentContributions = async (limit = 5) => {
+const getRecentContributions = async () => {
   const query = `
     SELECT
       c.id,
-      u.fullname,
+      u.fullname AS "memberName",
+      INITCAP(c.payment_method) AS type,
       c.amount,
-      c.status,
-      c.created_at,
-      'Monthly' AS type
+      c.created_at AS date,
+      INITCAP(c.status) AS status
+
     FROM contributions c
-    JOIN users u
+
+    INNER JOIN users u
       ON u.id = c.user_id
+
     ORDER BY c.created_at DESC
-    LIMIT $1;
+
+    LIMIT 8;
   `;
 
-  const { rows } = await db.query(query, [limit]);
+  const { rows } = await db.query(query);
 
   return rows;
 };
@@ -504,17 +508,34 @@ const getOverdueLoans = async (limit = 5) => {
   const query = `
     SELECT
       l.id,
-      u.fullname,
-      l.amount,
-      l.balance,
-      l.approved_at
+      u.fullname AS "memberName",
+      l.amount AS "loanAmount",
+
+      (
+        l.amount +
+        ((l.amount * l.interest_rate) / 100)
+        -
+        COALESCE(
+          (
+            SELECT SUM(lp.amount)
+            FROM loan_payments lp
+            WHERE lp.loan_id = l.id
+          ),
+          0
+        )
+      ) AS balance,
+
+      l.approved_at AS "overdueSince"
+
     FROM loans l
-    JOIN users u
+
+    INNER JOIN users u
       ON u.id = l.user_id
-    WHERE
-      LOWER(l.status)='approved'
-      AND l.balance > 0
+
+    WHERE LOWER(l.status) = 'approved'
+
     ORDER BY l.approved_at ASC
+
     LIMIT $1;
   `;
 
@@ -547,6 +568,8 @@ const getLoanStatusDistribution = async () => {
     color: colors[item.status] || "#94a3b8",
   }));
 };
+
+
 const getMemberRecentLoanRequests = async (userId, limit = 5) => {
   const query = `
     SELECT
