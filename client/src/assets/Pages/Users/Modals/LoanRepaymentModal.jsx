@@ -72,7 +72,7 @@ const LoanRepaymentModal = ({
         text: "Loan repayment recorded successfully",
       });
 
-      onSuccess();
+      onSuccess?.();
       onClose();
 
     } catch (error) {
