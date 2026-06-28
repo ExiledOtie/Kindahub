@@ -9,46 +9,113 @@ const db = require("../config/db");
  */
 const getAdminSummary = async () => {
   const query = `
-    SELECT
-      (SELECT COUNT(*) FROM users WHERE role='member')::INT AS members,
+  SELECT
 
-      (SELECT COUNT(*) FROM groups)::INT AS groups,
+    /* ============================
+       BASIC COUNTS
+    ============================ */
 
-      (SELECT COUNT(*) FROM loans
-        WHERE LOWER(status)='pending')::INT AS "pendingLoans",
+    (
+      SELECT COUNT(*)
+      FROM users
+      WHERE role='member'
+    )::INT AS members,
 
-      (SELECT COUNT(*) FROM loans
-        WHERE LOWER(status)='approved')::INT AS "approvedLoans",
+    (
+      SELECT COUNT(*)
+      FROM groups
+    )::INT AS groups,
 
-      (
-        SELECT COALESCE(SUM(amount),0)
-        FROM savings
-        WHERE DATE_TRUNC('month',created_at)
-            = DATE_TRUNC('month',CURRENT_DATE)
-      ) AS "monthlySavings",
+    (
+      SELECT COUNT(*)
+      FROM loans
+      WHERE LOWER(status)='pending'
+    )::INT AS "pendingLoans",
 
-      (
-        SELECT COALESCE(SUM(amount),0)
-        FROM contributions
-        WHERE DATE_TRUNC('month',created_at)
-            = DATE_TRUNC('month',CURRENT_DATE)
-      ) AS "monthlyContributions",
+    (
+      SELECT COUNT(*)
+      FROM loans
+      WHERE LOWER(status)='approved'
+    )::INT AS "approvedLoans",
 
-      (
-        SELECT COALESCE(
-          SUM(total_payable - amount),
-          0
-        )
-        FROM loans
-        WHERE LOWER(status)='approved'
-      ) AS "chamaWallet",
+    /* ============================
+       SAVINGS
+    ============================ */
 
-      (
-        SELECT COUNT(*)
-        FROM notifications
-        WHERE is_read=false
-      )::INT AS notifications;
-  `;
+    (
+      SELECT COALESCE(SUM(amount),0)
+      FROM savings
+    ) AS "totalSavings",
+
+    (
+      SELECT COALESCE(SUM(amount),0)
+      FROM savings
+      WHERE DATE_TRUNC('month',created_at)
+          = DATE_TRUNC('month',CURRENT_DATE)
+    ) AS "monthlySavings",
+
+    /* ============================
+       CONTRIBUTIONS
+    ============================ */
+
+    (
+      SELECT COALESCE(SUM(amount),0)
+      FROM contributions
+      WHERE DATE_TRUNC('month',created_at)
+          = DATE_TRUNC('month',CURRENT_DATE)
+    ) AS "monthlyContributions",
+
+    (
+      SELECT COALESCE(SUM(c.amount),0)
+      FROM contributions c
+      JOIN user_groups ug
+        ON ug.user_id = c.user_id
+      JOIN groups g
+        ON g.id = ug.group_id
+      WHERE LOWER(g.name) = 'kinda family'
+    ) AS "kindaFamilyContributions",
+
+    (
+      SELECT COALESCE(SUM(c.amount),0)
+      FROM contributions c
+      JOIN user_groups ug
+        ON ug.user_id = c.user_id
+      JOIN groups g
+        ON g.id = ug.group_id
+      WHERE LOWER(g.name) = '13 amigos'
+    ) AS "amigosContributions",
+
+    /* ============================
+       LOANS
+    ============================ */
+
+    (
+      SELECT COALESCE(SUM(balance),0)
+      FROM loans
+      WHERE LOWER(status)='approved'
+        AND balance > 0
+    ) AS "activeLoans",
+
+    /* ============================
+       CHAMA WALLET
+       (Total Interest Collected)
+    ============================ */
+
+    (
+      SELECT COALESCE(SUM(interest_paid),0)
+      FROM loan_payments
+    ) AS "chamaWallet",
+
+    /* ============================
+       NOTIFICATIONS
+    ============================ */
+
+    (
+      SELECT COUNT(*)
+      FROM notifications
+      WHERE is_read = false
+    )::INT AS notifications;
+`;
 
   const { rows } = await db.query(query);
 
@@ -90,11 +157,11 @@ const getMemberSummary = async (userId) => {
       )::INT AS "pendingLoans",
 
       (
-        SELECT COUNT(*)
-        FROM loans
-        WHERE user_id=$1
-        AND LOWER(status)='approved'
-      )::INT AS "approvedLoans",
+    SELECT COALESCE(SUM(balance),0)
+    FROM loans
+    WHERE LOWER(status)='approved'
+      AND balance > 0
+) AS "activeLoans",
 
       (
         SELECT COUNT(*)
@@ -475,17 +542,12 @@ const getLoanStatusDistribution = async () => {
   };
 
   return rows.map((item) => ({
-    name:
-      item.status.charAt(0).toUpperCase() +
-      item.status.slice(1),
+    name: item.status.charAt(0).toUpperCase() + item.status.slice(1),
     value: Number(item.value),
     color: colors[item.status] || "#94a3b8",
   }));
 };
-const getMemberRecentLoanRequests = async (
-  userId,
-  limit = 5
-) => {
+const getMemberRecentLoanRequests = async (userId, limit = 5) => {
   const query = `
     SELECT
       l.id,
@@ -501,15 +563,12 @@ const getMemberRecentLoanRequests = async (
     LIMIT $2;
   `;
 
-  const { rows } = await db.query(query,[userId,limit]);
+  const { rows } = await db.query(query, [userId, limit]);
 
   return rows;
 };
 
-const getMemberRecentContributions = async (
-  userId,
-  limit = 5
-) => {
+const getMemberRecentContributions = async (userId, limit = 5) => {
   const query = `
     SELECT
       c.id,
@@ -526,15 +585,12 @@ const getMemberRecentContributions = async (
     LIMIT $2;
   `;
 
-  const { rows } = await db.query(query,[userId,limit]);
+  const { rows } = await db.query(query, [userId, limit]);
 
   return rows;
 };
 
-const getMemberLoanStatusDistribution = async (
-  userId
-) => {
-
+const getMemberLoanStatusDistribution = async (userId) => {
   const query = `
       SELECT
         status,
@@ -544,27 +600,22 @@ const getMemberLoanStatusDistribution = async (
       GROUP BY status;
   `;
 
-  const { rows } = await db.query(query,[userId]);
+  const { rows } = await db.query(query, [userId]);
 
   const colors = {
-      approved:"#4f46e5",
-      pending:"#f59e0b",
-      rejected:"#ef4444",
-      repaid:"#10b981"
+    approved: "#4f46e5",
+    pending: "#f59e0b",
+    rejected: "#ef4444",
+    repaid: "#10b981",
   };
 
-  return rows.map(item=>({
+  return rows.map((item) => ({
+    name: item.status.charAt(0).toUpperCase() + item.status.slice(1),
 
-      name:
-      item.status.charAt(0).toUpperCase()+
-      item.status.slice(1),
+    value: Number(item.value),
 
-      value:Number(item.value),
-
-      color:colors[item.status] || "#94a3b8"
-
+    color: colors[item.status] || "#94a3b8",
   }));
-
 };
 
 module.exports = {

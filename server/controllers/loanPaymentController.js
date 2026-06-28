@@ -117,69 +117,126 @@ const getAllLoanPayments = async (req, res) => {
 
 const createLoanPayment = async (req, res) => {
   try {
-    const { loan_id, amount, payment_method, mpesa_code } = req.body;
-
-    const balanceData = await calculateLoanBalance(loan_id);
+    const {
+      loan_id,
+      amount,
+      payment_method,
+      mpesa_code,
+    } = req.body;
 
     const paymentAmount = Number(amount || 0);
-
 
     if (paymentAmount <= 0) {
       return res.status(400).json({
         message: "Invalid payment amount",
       });
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | GET LOAN
+    |--------------------------------------------------------------------------
+    */
+
     const loanRes = await pool.query(
-  `SELECT * FROM loans WHERE id = $1`,
-  [loan_id]
-);
+      `
+      SELECT *
+      FROM loans
+      WHERE id = $1
+      `,
+      [loan_id]
+    );
 
-const loan = loanRes.rows[0];
+    const loan = loanRes.rows[0];
 
-const principal = Number(loan.amount);
+    if (!loan) {
+      return res.status(404).json({
+        message: "Loan not found",
+      });
+    }
 
-const totalInterest =
-  (principal * Number(loan.interest_rate)) / 100;
+    /*
+    |--------------------------------------------------------------------------
+    | CALCULATE CURRENT BALANCE
+    |--------------------------------------------------------------------------
+    */
 
-const breakdown =
-  await getPaymentBreakdownModel(loan_id);
+    const balanceData = await calculateLoanBalance(loan_id);
 
-const principalAlreadyPaid =
-  Number(breakdown.principal_paid);
+    const principal = Number(loan.amount);
 
-const interestAlreadyPaid =
-  Number(breakdown.interest_paid);
+    const totalInterest =
+      (principal * Number(loan.interest_rate)) / 100;
 
-const remainingPrincipal =
-  principal - principalAlreadyPaid;
+    /*
+    |--------------------------------------------------------------------------
+    | PAYMENT BREAKDOWN
+    |--------------------------------------------------------------------------
+    */
 
-const remainingInterest =
-  totalInterest - interestAlreadyPaid;
+    const breakdown =
+      await getPaymentBreakdownModel(loan_id);
 
-let remaining = paymentAmount;
+    const principalAlreadyPaid =
+      Number(breakdown.principal_paid);
 
-/*
-|--------------------------------------------------------------------------
-| INTEREST FIRST
-|--------------------------------------------------------------------------
-*/
+    const interestAlreadyPaid =
+      Number(breakdown.interest_paid);
 
-const interestPaid = Math.min(
-  remaining,
-  Math.max(remainingInterest, 0)
-);
+    const remainingPrincipal = Math.max(
+      principal - principalAlreadyPaid,
+      0
+    );
 
-remaining -= interestPaid;
+    const remainingInterest = Math.max(
+      totalInterest - interestAlreadyPaid,
+      0
+    );
 
-const principalPaid = Math.min(
-  remaining,
-  Math.max(remainingPrincipal, 0)
-);
+    let remaining = paymentAmount;
 
-remaining -= principalPaid;
+    /*
+    |--------------------------------------------------------------------------
+    | PAY INTEREST FIRST
+    |--------------------------------------------------------------------------
+    */
 
-const newBalance =
-  Math.max(balanceData.balance - paymentAmount, 0);
+    const interestPaid = Math.min(
+      remaining,
+      remainingInterest
+    );
+
+    remaining -= interestPaid;
+
+    /*
+    |--------------------------------------------------------------------------
+    | THEN PRINCIPAL
+    |--------------------------------------------------------------------------
+    */
+
+    const principalPaid = Math.min(
+      remaining,
+      remainingPrincipal
+    );
+
+    remaining -= principalPaid;
+
+    /*
+    |--------------------------------------------------------------------------
+    | NEW BALANCE
+    |--------------------------------------------------------------------------
+    */
+
+    const newBalance = Math.max(
+      balanceData.balance - paymentAmount,
+      0
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | SAVE PAYMENT
+    |--------------------------------------------------------------------------
+    */
 
     const payment = await createLoanPaymentModel(
       loan_id,
@@ -191,6 +248,40 @@ const newBalance =
       mpesa_code || null
     );
 
+    /*
+    |--------------------------------------------------------------------------
+    | UPDATE LOAN BALANCE
+    |--------------------------------------------------------------------------
+    */
+
+    await pool.query(
+      `
+      UPDATE loans
+      SET balance = $1
+      WHERE id = $2
+      `,
+      [newBalance, loan_id]
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | MARK LOAN AS REPAID
+    |--------------------------------------------------------------------------
+    */
+
+    if (newBalance <= 0) {
+      await pool.query(
+        `
+        UPDATE loans
+        SET
+          status = 'repaid',
+          balance = 0
+        WHERE id = $1
+        `,
+        [loan_id]
+      );
+    }
+
     return res.status(201).json({
       message: "Payment recorded successfully",
       payment,
@@ -199,6 +290,7 @@ const newBalance =
 
   } catch (error) {
     console.log("LOAN PAYMENT ERROR:", error);
+
     return res.status(500).json({
       message: error.message || "Server error",
     });
