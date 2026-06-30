@@ -7,42 +7,42 @@ const Dashboard = require("../models/dashboardModel");
  */
 const getAdminDashboard = async (req, res) => {
   try {
-const [
-  summary,
-  recentActivities,
-  loanChart,
-  savingsChart,
-  recentLoanRequests,
-  recentContributions,
-  overdueLoans,
-  loanStatusData,
-  groupContributionChart,
-] = await Promise.all([
-  Dashboard.getAdminSummary(),
-  Dashboard.getRecentActivities(),
-  Dashboard.getLoanChart(),
-  Dashboard.getSavingsChart(),
-  Dashboard.getRecentLoanRequests(),
-  Dashboard.getRecentContributions(),
-  Dashboard.getOverdueLoans(),
-  Dashboard.getLoanStatusDistribution(),
-  Dashboard.getGroupContributionChart(),
-]);
+    const [
+      summary,
+      recentActivities,
+      loanChart,
+      savingsChart,
+      recentLoanRequests,
+      recentContributions,
+      overdueLoans,
+      loanStatusData,
+      groupContributionChart,
+    ] = await Promise.all([
+      Dashboard.getAdminSummary(),
+      Dashboard.getRecentActivities(),
+      Dashboard.getLoanChart(),
+      Dashboard.getSavingsChart(),
+      Dashboard.getRecentLoanRequests(),
+      Dashboard.getRecentContributions(),
+      Dashboard.getOverdueLoans(),
+      Dashboard.getLoanStatusDistribution(),
+      Dashboard.getGroupContributionChart(),
+    ]);
 
     res.status(200).json({
-  success: true,
-  data: {
-    ...summary,
-    recentActivities,
-    loanChart,
-    savingsChart,
-    recentLoanRequests,
-    recentContributions,
-    overdueLoans,
-    loanStatusData,
-    groupContributionChart,
-  },
-});
+      success: true,
+      data: {
+        ...summary,
+        recentActivities,
+        loanChart,
+        savingsChart,
+        recentLoanRequests,
+        recentContributions,
+        overdueLoans,
+        loanStatusData,
+        groupContributionChart,
+      },
+    });
   } catch (error) {
     console.error("Admin Dashboard Error:", error);
 
@@ -70,6 +70,7 @@ const getMemberDashboard = async (req, res) => {
       recentLoanRequests,
       recentContributions,
       loanStatusData,
+      loanProgress,
     ] = await Promise.all([
       Dashboard.getMemberSummary(userId),
       Dashboard.getMemberRecentActivities(userId),
@@ -78,6 +79,7 @@ const getMemberDashboard = async (req, res) => {
       Dashboard.getMemberRecentLoanRequests(userId),
       Dashboard.getMemberRecentContributions(userId),
       Dashboard.getMemberLoanStatusDistribution(userId),
+      Dashboard.getMemberLoanProgress(userId),
     ]);
 
     res.status(200).json({
@@ -90,6 +92,7 @@ const getMemberDashboard = async (req, res) => {
         recentLoanRequests,
         recentContributions,
         loanStatusData,
+        loanProgress,
       },
     });
   } catch (error) {

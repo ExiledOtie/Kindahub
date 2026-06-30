@@ -1,11 +1,5 @@
 import { useState } from "react";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Sector,
-  ResponsiveContainer,
-} from "recharts";
+import { PieChart, Pie, Cell, Sector, ResponsiveContainer } from "recharts";
 
 const COLORS = [
   "#10b981", // Paid
@@ -85,25 +79,31 @@ const UserLoanRepaymentProgress = ({
 }) => {
   const [activeIndex, setActiveIndex] = useState(0);
 
-  const data = [
-    {
-      name: "Paid",
-      value: Number(totalPaid),
-    },
-    {
-      name: "Balance",
-      value: Number(balance),
-    },
-  ];
+  const hasLoan = Number(totalPayable) > 0;
+
+  const data = hasLoan
+    ? [
+        {
+          name: "Paid",
+          value: Number(totalPaid),
+        },
+        {
+          name: "Balance",
+          value: Number(balance),
+        },
+      ]
+    : [
+        {
+          name: "No Active Loan",
+          value: 1,
+        },
+      ];
 
   return (
     <div className="bg-white rounded-xl border shadow-sm p-4">
-
       <div className="flex justify-between items-center mb-4">
         <div>
-          <h2 className="text-sm font-semibold">
-            Loan Repayment
-          </h2>
+          <h2 className="text-sm font-semibold">Loan Repayment</h2>
 
           <p className="text-[11px] text-gray-500">
             Progress towards completing your loan
@@ -111,9 +111,7 @@ const UserLoanRepaymentProgress = ({
         </div>
 
         <div className="text-right">
-          <p className="text-[10px] text-gray-500">
-            Total Loan
-          </p>
+          <p className="text-[10px] text-gray-500">Total Loan</p>
 
           <h3 className="text-sm font-bold text-emerald-600">
             KES {Number(totalPayable).toLocaleString()}
@@ -121,41 +119,36 @@ const UserLoanRepaymentProgress = ({
         </div>
       </div>
 
-      <ResponsiveContainer
-        width="100%"
-        height={280}
-      >
-        <PieChart>
-          <Pie
-            activeIndex={activeIndex}
-            activeShape={renderActiveShape}
-            data={data}
-            dataKey="value"
-            cx="50%"
-            cy="50%"
-            innerRadius={60}
-            outerRadius={90}
-            paddingAngle={3}
-            onMouseEnter={(_, index) =>
-              setActiveIndex(index)
-            }
-          >
-            {data.map((entry, index) => (
-              <Cell
-                key={index}
-                fill={COLORS[index]}
-              />
-            ))}
-          </Pie>
-        </PieChart>
-      </ResponsiveContainer>
+      {!hasLoan ? (
+        <div className="h-[280px] flex items-center justify-center text-gray-500 text-sm">
+          No active loan found
+        </div>
+      ) : (
+        <ResponsiveContainer width="100%" height={280}>
+          <PieChart>
+            <Pie
+              activeIndex={activeIndex}
+              activeShape={renderActiveShape}
+              data={data}
+              dataKey="value"
+              cx="50%"
+              cy="50%"
+              innerRadius={60}
+              outerRadius={90}
+              paddingAngle={3}
+              onMouseEnter={(_, index) => setActiveIndex(index)}
+            >
+              {data.map((entry, index) => (
+                <Cell key={index} fill={COLORS[index]} />
+              ))}
+            </Pie>
+          </PieChart>
+        </ResponsiveContainer>
+      )}
 
       <div className="grid grid-cols-3 gap-3 mt-4">
-
         <div className="bg-gray-50 rounded-lg p-3 text-center">
-          <p className="text-[10px] text-gray-500">
-            Total Loan
-          </p>
+          <p className="text-[10px] text-gray-500">Total Loan</p>
 
           <h4 className="text-xs font-bold text-blue-600">
             KES {Number(totalPayable).toLocaleString()}
@@ -163,9 +156,7 @@ const UserLoanRepaymentProgress = ({
         </div>
 
         <div className="bg-gray-50 rounded-lg p-3 text-center">
-          <p className="text-[10px] text-gray-500">
-            Paid
-          </p>
+          <p className="text-[10px] text-gray-500">Paid</p>
 
           <h4 className="text-xs font-bold text-emerald-600">
             KES {Number(totalPaid).toLocaleString()}
@@ -173,15 +164,12 @@ const UserLoanRepaymentProgress = ({
         </div>
 
         <div className="bg-gray-50 rounded-lg p-3 text-center">
-          <p className="text-[10px] text-gray-500">
-            Balance
-          </p>
+          <p className="text-[10px] text-gray-500">Balance</p>
 
           <h4 className="text-xs font-bold text-orange-600">
             KES {Number(balance).toLocaleString()}
           </h4>
         </div>
-
       </div>
     </div>
   );

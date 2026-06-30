@@ -27,11 +27,7 @@ const UserDashboard = () => {
     } catch (error) {
       console.error(error);
 
-      Swal.fire(
-        "Error",
-        "Unable to load dashboard.",
-        "error"
-      );
+      Swal.fire("Error", "Unable to load dashboard.", "error");
     } finally {
       setLoading(false);
     }
@@ -53,34 +49,26 @@ const UserDashboard = () => {
 
   return (
     <div className="p-4 space-y-4">
-
       {/* Top Cards */}
       <UserStatsCards dashboard={dashboard} />
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-
         <div className="lg:col-span-2">
-          <UserSavingsChart
-            data={dashboard.savingsChart}
-          />
+          <UserSavingsChart data={dashboard.savingsChart} />
         </div>
 
         <UserLoanRepaymentProgress
-          loan={dashboard.loanProgress}
+          totalPayable={dashboard.loanProgress?.totalPayable}
+          totalPaid={dashboard.loanProgress?.totalPaid}
+          balance={dashboard.loanProgress?.balance}
         />
 
-        <Announcement
-          announcements={dashboard.announcements}
-        />
-
+        <Announcement announcements={dashboard.announcements} />
       </div>
 
       {/* Recent Contributions */}
-      <UserRecentContributions
-        contributions={dashboard.recentContributions}
-      />
-
+      <UserRecentContributions contributions={dashboard.recentContributions} />
     </div>
   );
 };

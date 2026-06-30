@@ -699,6 +699,69 @@ const getGroupContributionChart = async (year = new Date().getFullYear()) => {
   }));
 };
 
+/*
+|--------------------------------------------------------------------------
+| MEMBER LOAN REPAYMENT PROGRESS
+|--------------------------------------------------------------------------
+*/
+
+const getMemberLoanProgress = async (userId) => {
+  const query = `
+    SELECT
+      l.id,
+
+      l.amount AS principal,
+
+      l.interest_rate,
+
+      (
+        l.amount +
+        ((l.amount * l.interest_rate) / 100)
+      ) AS "totalPayable",
+
+      COALESCE(
+        SUM(lp.principal_paid + lp.interest_paid),
+        0
+      ) AS "totalPaid",
+
+      COALESCE(
+        MIN(lp.balance_after),
+        (
+          l.amount +
+          ((l.amount * l.interest_rate) / 100)
+        )
+      ) AS balance
+
+    FROM loans l
+
+    LEFT JOIN loan_payments lp
+      ON lp.loan_id = l.id
+
+    WHERE l.user_id = $1
+      AND LOWER(l.status) = 'approved'
+
+    GROUP BY
+      l.id,
+      l.amount,
+      l.interest_rate,
+      l.approved_at
+
+    ORDER BY l.approved_at DESC
+
+    LIMIT 1;
+  `;
+
+  const { rows } = await db.query(query, [userId]);
+
+  return (
+    rows[0] || {
+      totalPayable: 0,
+      totalPaid: 0,
+      balance: 0,
+    }
+  );
+};
+
 module.exports = {
   getAdminSummary,
   getMemberSummary,
@@ -718,4 +781,5 @@ module.exports = {
   getOverdueLoans,
   getLoanStatusDistribution,
   getMemberLoanStatusDistribution,
+  getMemberLoanProgress,
 };
