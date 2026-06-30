@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 
-import { getUserDashboard } from "../Pages/Services/dashboardService";
+import { getMemberDashboard } from "../Pages/Services/dashboardService";
 
 import DashboardLoader from "../Application/Components/DashboardLoader";
 
@@ -21,7 +21,7 @@ const UserDashboard = () => {
     try {
       if (showLoader) setLoading(true);
 
-      const data = await getUserDashboard();
+      const data = await getMemberDashboard();
 
       setDashboard(data);
     } catch (error) {

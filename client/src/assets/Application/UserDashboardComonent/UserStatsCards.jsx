@@ -6,38 +6,38 @@ import {
 } from "react-icons/fa";
 
 const UserStatsCards = ({ dashboard }) => {
-  const cards = [
-    {
-      title: "Savings",
-      value: `KES ${Number(
-        dashboard?.summary?.totalSavings || 0
-      ).toLocaleString()}`,
-      icon: <FaPiggyBank />,
-      color: "bg-green-500",
-    },
-    {
-      title: "Total Contributions",
-      value: `KES ${Number(
-        dashboard?.summary?.totalContributions || 0
-      ).toLocaleString()}`,
-      icon: <FaWallet />,
-      color: "bg-blue-500",
-    },
-    {
-      title: "Loan Balance",
-      value: `KES ${Number(
-        dashboard?.summary?.loanBalance || 0
-      ).toLocaleString()}`,
-      icon: <FaMoneyBillWave />,
-      color: "bg-orange-500",
-    },
-    {
-      title: "Pending Requests",
-      value: dashboard?.summary?.pendingRequests || 0,
-      icon: <FaClock />,
-      color: "bg-red-500",
-    },
-  ];
+const cards = [
+  {
+    title: "Savings",
+    value: `KES ${Number(
+      dashboard?.mySavings || 0
+    ).toLocaleString()}`,
+    icon: <FaPiggyBank />,
+    color: "bg-green-500",
+  },
+  {
+    title: "Total Contributions",
+    value: `KES ${Number(
+      dashboard?.myContributions || 0
+    ).toLocaleString()}`,
+    icon: <FaWallet />,
+    color: "bg-blue-500",
+  },
+  {
+    title: "Loan Balance",
+    value: `KES ${Number(
+      dashboard?.activeLoans || 0
+    ).toLocaleString()}`,
+    icon: <FaMoneyBillWave />,
+    color: "bg-orange-500",
+  },
+  {
+    title: "Pending Loans",
+    value: dashboard?.pendingLoans || 0,
+    icon: <FaClock />,
+    color: "bg-red-500",
+  },
+];
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
