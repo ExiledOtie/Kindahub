@@ -46,21 +46,13 @@ const UserSavingsChart = ({ data = [] }) => {
               bottom: 5,
             }}
           >
-            <CartesianGrid
-              strokeDasharray="3 3"
-              vertical={false}
-            />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} />
 
-            <XAxis
-              dataKey="month"
-              tick={{ fontSize: 11 }}
-            />
+            <XAxis dataKey="month" tick={{ fontSize: 11 }} />
 
             <YAxis
               tick={{ fontSize: 11 }}
-              tickFormatter={(value) =>
-                `${value / 1000}K`
-              }
+              tickFormatter={(value) => `${value / 1000}K`}
             />
 
             <Tooltip
@@ -72,17 +64,13 @@ const UserSavingsChart = ({ data = [] }) => {
 
             <Bar
               dataKey="amount"
+              barSize={24}
               radius={[8, 8, 0, 0]}
               animationDuration={1200}
               animationEasing="ease-out"
             >
               {data.map((entry, index) => (
-                <Cell
-                  key={index}
-                  fill={
-                    COLORS[index % COLORS.length]
-                  }
-                />
+                <Cell key={index} fill={COLORS[index % COLORS.length]} />
               ))}
             </Bar>
           </BarChart>
