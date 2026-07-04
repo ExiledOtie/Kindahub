@@ -598,12 +598,12 @@ const getMemberRecentContributions = async (userId, limit = 5) => {
       u.fullname,
       c.amount,
       c.status,
-      c.created_at,
+      c.created_at AS date,
       'Monthly' AS type
     FROM contributions c
     JOIN users u
-      ON u.id=c.user_id
-    WHERE c.user_id=$1
+      ON u.id = c.user_id
+    WHERE c.user_id = $1
     ORDER BY c.created_at DESC
     LIMIT $2;
   `;
