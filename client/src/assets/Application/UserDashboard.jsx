@@ -83,7 +83,7 @@ const UserDashboard = () => {
 
       <div className="xl:col-span-4">
         <Announcement
-          announcements={dashboard.announcements}
+          announcements={dashboard.upcomingAnnouncement}
         />
       </div>
 

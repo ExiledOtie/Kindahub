@@ -762,6 +762,38 @@ const getMemberLoanProgress = async (userId) => {
   );
 };
 
+const getMemberUpcomingAnnouncement = async (userId) => {
+  const query = `
+    SELECT
+      a.id,
+      a.title,
+      a.description,
+      a.announcement_date,
+      a.meeting_time,
+      a.venue,
+      a.host,
+      a.type,
+      a.status
+
+    FROM announcements a
+
+    INNER JOIN user_groups ug
+      ON ug.group_id = a.group_id
+
+    WHERE ug.user_id = $1
+      AND a.status = 'scheduled'
+      AND a.announcement_date >= CURRENT_DATE
+
+    ORDER BY a.announcement_date ASC
+
+    LIMIT 1;
+  `;
+
+  const { rows } = await db.query(query, [userId]);
+
+  return rows[0] || null;
+};
+
 module.exports = {
   getAdminSummary,
   getMemberSummary,
@@ -782,4 +814,5 @@ module.exports = {
   getLoanStatusDistribution,
   getMemberLoanStatusDistribution,
   getMemberLoanProgress,
+  getMemberUpcomingAnnouncement,
 };

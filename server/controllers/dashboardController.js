@@ -17,6 +17,7 @@ const getAdminDashboard = async (req, res) => {
       overdueLoans,
       loanStatusData,
       groupContributionChart,
+      upcomingAnnouncement,
     ] = await Promise.all([
       Dashboard.getAdminSummary(),
       Dashboard.getRecentActivities(),
@@ -27,6 +28,7 @@ const getAdminDashboard = async (req, res) => {
       Dashboard.getOverdueLoans(),
       Dashboard.getLoanStatusDistribution(),
       Dashboard.getGroupContributionChart(),
+      Dashboard.getMemberUpcomingAnnouncement(req.user.id),
     ]);
 
     res.status(200).json({
@@ -41,6 +43,7 @@ const getAdminDashboard = async (req, res) => {
         overdueLoans,
         loanStatusData,
         groupContributionChart,
+        upcomingAnnouncement,
       },
     });
   } catch (error) {
