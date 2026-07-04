@@ -121,15 +121,15 @@ const Announcements = () => {
               <tr>
                 <th className="text-left py-3 px-3">Date</th>
 
-                  <th className="text-left py-3 px-3">Title</th>
+                <th className="text-left py-3 px-3">Title</th>
 
-                  <th className="text-left py-3 px-3">Group</th>
+                <th className="text-left py-3 px-3">Group</th>
 
-                  <th className="text-left py-3 px-3">Venue</th>
+                <th className="text-left py-3 px-3">Venue</th>
 
-                  <th className="text-left py-3 px-3">Time</th>
+                <th className="text-left py-3 px-3">Time</th>
 
-                  <th className="text-center py-3 px-3">Status</th>
+                <th className="text-center py-3 px-3">Status</th>
               </tr>
             </thead>
 
@@ -210,8 +210,6 @@ const Announcements = () => {
 
                   <th className="text-left py-3 px-3">Venue</th>
 
-                  <th className="text-left py-3 px-3">Time</th>
-
                   <th className="text-center py-3 px-3">Status</th>
                 </tr>
               </thead>
@@ -219,7 +217,7 @@ const Announcements = () => {
               <tbody>
                 {historyAnnouncements.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="py-8 text-center text-gray-500">
+                    <td colSpan={5} className="py-8 text-center text-gray-500">
                       No completed meetings.
                     </td>
                   </tr>
@@ -234,6 +232,10 @@ const Announcements = () => {
 
                       <td className="py-3 px-3 font-medium">
                         {announcement.title}
+                      </td>
+
+                      <td className="py-3 px-3">
+                        {announcement.group_name || "-"}
                       </td>
 
                       <td className="py-3 px-3">{announcement.venue}</td>
