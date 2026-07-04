@@ -64,40 +64,41 @@ const getAdminDashboard = async (req, res) => {
 const getMemberDashboard = async (req, res) => {
   try {
     const userId = req.user.id;
-
-    const [
-      summary,
-      recentActivities,
-      loanChart,
-      savingsChart,
-      recentLoanRequests,
-      recentContributions,
-      loanStatusData,
-      loanProgress,
-    ] = await Promise.all([
-      Dashboard.getMemberSummary(userId),
-      Dashboard.getMemberRecentActivities(userId),
-      Dashboard.getMemberLoanChart(userId),
-      Dashboard.getMemberSavingsChart(userId),
-      Dashboard.getMemberRecentLoanRequests(userId),
-      Dashboard.getMemberRecentContributions(userId),
-      Dashboard.getMemberLoanStatusDistribution(userId),
-      Dashboard.getMemberLoanProgress(userId),
-    ]);
-
-    res.status(200).json({
-      success: true,
-      data: {
-        ...summary,
-        recentActivities,
-        loanChart,
-        savingsChart,
-        recentLoanRequests,
-        recentContributions,
-        loanStatusData,
-        loanProgress,
-      },
-    });
+const [
+  summary,
+  recentActivities,
+  loanChart,
+  savingsChart,
+  recentLoanRequests,
+  recentContributions,
+  loanStatusData,
+  loanProgress,
+  upcomingAnnouncement,
+] = await Promise.all([
+  Dashboard.getMemberSummary(userId),
+  Dashboard.getMemberRecentActivities(userId),
+  Dashboard.getMemberLoanChart(userId),
+  Dashboard.getMemberSavingsChart(userId),
+  Dashboard.getMemberRecentLoanRequests(userId),
+  Dashboard.getMemberRecentContributions(userId),
+  Dashboard.getMemberLoanStatusDistribution(userId),
+  Dashboard.getMemberLoanProgress(userId),
+  Dashboard.getMemberUpcomingAnnouncement(userId),
+]);
+res.status(200).json({
+  success: true,
+  data: {
+    ...summary,
+    recentActivities,
+    loanChart,
+    savingsChart,
+    recentLoanRequests,
+    recentContributions,
+    loanStatusData,
+    loanProgress,
+    upcomingAnnouncement,
+  },
+});
   } catch (error) {
     console.error("Member Dashboard Error:", error);
 

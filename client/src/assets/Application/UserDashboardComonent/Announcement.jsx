@@ -1,47 +1,11 @@
-import { useEffect, useState } from "react";
-import axios from "../../Utils/axios";
+
 import { ClipLoader } from "react-spinners";
 
-const Announcement = () => {
-  const [announcements, setAnnouncements] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  const fetchAnnouncements = async (showLoader = false) => {
-    try {
-      if (showLoader) setLoading(true);
-
-      const res = await axios.get("/announcements");
-
-      setAnnouncements(res.data || []);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchAnnouncements(true);
-
-    const interval = setInterval(() => {
-      fetchAnnouncements(false);
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="bg-white rounded-xl shadow-sm border p-6 flex justify-center">
-        <ClipLoader size={25} color="#059669" />
-      </div>
-    );
-  }
-
+const Announcement = ({ announcements = [] }) => {
   return (
-    <div className="bg-white rounded-xl shadow-sm border">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 h-full">
       {/* Header */}
-      <div className="px-4 py-3 border-b">
+      <div className="px-4 py-3 border-b border-gray-100">
         <h2 className="text-sm font-semibold text-gray-800">
           Upcoming Announcements
         </h2>
@@ -56,19 +20,19 @@ const Announcement = () => {
         <table className="w-full text-[11px]">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-4 py-3 text-left font-medium">
+              <th className="px-4 py-3 text-left font-medium text-gray-600">
                 Date
               </th>
 
-              <th className="px-4 py-3 text-left font-medium">
+              <th className="px-4 py-3 text-left font-medium text-gray-600">
                 Type
               </th>
 
-              <th className="px-4 py-3 text-left font-medium">
+              <th className="px-4 py-3 text-left font-medium text-gray-600">
                 Venue
               </th>
 
-              <th className="px-4 py-3 text-left font-medium">
+              <th className="px-4 py-3 text-left font-medium text-gray-600">
                 Time
               </th>
             </tr>
@@ -79,26 +43,26 @@ const Announcement = () => {
               announcements.map((announcement) => (
                 <tr
                   key={announcement.id}
-                  className="border-t hover:bg-gray-50"
+                  className="border-t border-gray-100 hover:bg-gray-50"
                 >
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 whitespace-nowrap">
                     {new Date(
-                      announcement.date
+                      announcement.announcement_date
                     ).toLocaleDateString()}
                   </td>
 
                   <td className="px-4 py-3">
-                    <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-700 text-[10px] font-medium">
+                    <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-700 text-[10px] font-medium capitalize">
                       {announcement.type}
                     </span>
                   </td>
 
                   <td className="px-4 py-3">
-                    {announcement.venue}
+                    {announcement.venue || "-"}
                   </td>
 
                   <td className="px-4 py-3">
-                    {announcement.time}
+                    {announcement.meeting_time || "-"}
                   </td>
                 </tr>
               ))
@@ -106,7 +70,7 @@ const Announcement = () => {
               <tr>
                 <td
                   colSpan="4"
-                  className="text-center py-8 text-gray-500"
+                  className="py-10 text-center text-gray-500"
                 >
                   No announcements available
                 </td>

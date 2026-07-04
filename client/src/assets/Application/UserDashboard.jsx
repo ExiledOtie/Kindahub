@@ -32,6 +32,12 @@ const UserDashboard = () => {
       setLoading(false);
     }
   };
+  useEffect(() => {
+    if (dashboard) {
+      console.log(dashboard);
+      console.log(dashboard.upcomingAnnouncement);
+    }
+  }, [dashboard]);
 
   useEffect(() => {
     fetchDashboard(true);
@@ -48,49 +54,45 @@ const UserDashboard = () => {
   }
 
   return (
-  <div className="p-5 space-y-5">
+    <div className="p-5 space-y-5">
+      {/* Stats */}
+      <UserStatsCards dashboard={dashboard} />
 
-    {/* Stats */}
-    <UserStatsCards dashboard={dashboard} />
+      {/* Charts */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
+        <div className="xl:col-span-8">
+          <UserSavingsChart data={dashboard.savingsChart} />
+        </div>
 
-    {/* Charts */}
-    <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
-
-      <div className="xl:col-span-8">
-        <UserSavingsChart
-          data={dashboard.savingsChart}
-        />
+        <div className="xl:col-span-4">
+          <UserLoanRepaymentProgress
+            totalPayable={dashboard.loanProgress?.totalPayable}
+            totalPaid={dashboard.loanProgress?.totalPaid}
+            balance={dashboard.loanProgress?.balance}
+          />
+        </div>
       </div>
 
-      <div className="xl:col-span-4">
-        <UserLoanRepaymentProgress
-          totalPayable={dashboard.loanProgress?.totalPayable}
-          totalPaid={dashboard.loanProgress?.totalPaid}
-          balance={dashboard.loanProgress?.balance}
-        />
-      </div>
+      {/* Bottom Section */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
+        <div className="xl:col-span-8">
+          <UserRecentContributions
+            contributions={dashboard.recentContributions}
+          />
+        </div>
 
+        <div className="xl:col-span-4">
+          <Announcement
+            announcements={
+              dashboard.upcomingAnnouncement
+                ? [dashboard.upcomingAnnouncement]
+                : []
+            }
+          />
+        </div>
+      </div>
     </div>
-
-    {/* Bottom Section */}
-    <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
-
-      <div className="xl:col-span-8">
-        <UserRecentContributions
-          contributions={dashboard.recentContributions}
-        />
-      </div>
-
-      <div className="xl:col-span-4">
-        <Announcement
-          announcements={dashboard.upcomingAnnouncement}
-        />
-      </div>
-
-    </div>
-
-  </div>
-);
+  );
 };
 
 export default UserDashboard;
