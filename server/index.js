@@ -26,28 +26,38 @@ const app = express();
 
 /*
 |--------------------------------------------------------------------------
-| Create HTTP Server
+| Allowed Origins
 |--------------------------------------------------------------------------
 */
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "https://kindahub-chi.vercel.app",
+];
+
+/*
+|--------------------------------------------------------------------------
+| HTTP Server
+|--------------------------------------------------------------------------
+*/
+
 const server = http.createServer(app);
 
 /*
 |--------------------------------------------------------------------------
-| Initialize Socket.IO
+| Socket.IO
 |--------------------------------------------------------------------------
 */
+
 const io = new Server(server, {
   cors: {
-    origin: "*", // change this in production
+    origin: allowedOrigins,
+    credentials: true,
     methods: ["GET", "POST"],
   },
 });
 
-/*
-|--------------------------------------------------------------------------
-| Make io available in controllers
-|--------------------------------------------------------------------------
-*/
 app.set("io", io);
 
 /*
@@ -55,14 +65,30 @@ app.set("io", io);
 | Middleware
 |--------------------------------------------------------------------------
 */
-app.use(cors());
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
 /*
 |--------------------------------------------------------------------------
-| Seeders
+| Seed Database
 |--------------------------------------------------------------------------
 */
+
 seedSuperAdmin();
 seedGroups();
 
@@ -71,6 +97,7 @@ seedGroups();
 | Routes
 |--------------------------------------------------------------------------
 */
+
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/groups", groupRoutes);
@@ -85,22 +112,21 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 
 app.get("/", (req, res) => {
-  res.send("Kindahub API Running");
+  res.json({
+    success: true,
+    message: "Kindahub API Running 🚀",
+  });
 });
 
 /*
 |--------------------------------------------------------------------------
-| Socket.IO Events
+| Socket Events
 |--------------------------------------------------------------------------
 */
-io.on("connection", (socket) => {
-  console.log(`User connected: ${socket.id}`);
 
-  /*
-  |--------------------------------------------------------------------------
-  | Join conversation room
-  |--------------------------------------------------------------------------
-  */
+io.on("connection", (socket) => {
+  console.log(`✅ User connected: ${socket.id}`);
+
   socket.on("join_conversation", (conversationId) => {
     socket.join(`conversation_${conversationId}`);
 
@@ -109,11 +135,6 @@ io.on("connection", (socket) => {
     );
   });
 
-  /*
-  |--------------------------------------------------------------------------
-  | Leave conversation room
-  |--------------------------------------------------------------------------
-  */
   socket.on("leave_conversation", (conversationId) => {
     socket.leave(`conversation_${conversationId}`);
 
@@ -122,36 +143,28 @@ io.on("connection", (socket) => {
     );
   });
 
-  /*
-  |--------------------------------------------------------------------------
-  | Typing indicators
-  |--------------------------------------------------------------------------
-  */
   socket.on("typing", (data) => {
-    socket
-      .to(`conversation_${data.conversationId}`)
-      .emit("user_typing", {
+    socket.to(`conversation_${data.conversationId}`).emit(
+      "user_typing",
+      {
         userId: data.userId,
         conversationId: data.conversationId,
-      });
+      }
+    );
   });
 
   socket.on("stop_typing", (data) => {
-    socket
-      .to(`conversation_${data.conversationId}`)
-      .emit("user_stopped_typing", {
+    socket.to(`conversation_${data.conversationId}`).emit(
+      "user_stopped_typing",
+      {
         userId: data.userId,
         conversationId: data.conversationId,
-      });
+      }
+    );
   });
 
-  /*
-  |--------------------------------------------------------------------------
-  | Disconnect
-  |--------------------------------------------------------------------------
-  */
   socket.on("disconnect", () => {
-    console.log(`User disconnected: ${socket.id}`);
+    console.log(`❌ User disconnected: ${socket.id}`);
   });
 });
 
@@ -160,8 +173,9 @@ io.on("connection", (socket) => {
 | Start Server
 |--------------------------------------------------------------------------
 */
+
 const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
