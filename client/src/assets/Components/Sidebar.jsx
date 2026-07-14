@@ -145,29 +145,39 @@ const Sidebar = ({ role = "admin" }) => {
 
   const links = role === "admin" ? adminLinks : userLinks;
 
+  // =======================================
+  // Fetch User Group
+  // =======================================
   const fetchUserGroup = async () => {
     try {
       const res = await api.get("/users/profile");
 
-      setGroupName(res.data.group_name || "No Group");
+      // Adjust this depending on your API response
+      const profile = res.data.data || res.data;
+
+      setGroupName(profile.group_name || profile.groupName || "No Group");
     } catch (err) {
-      console.log(err);
+      console.error("Failed to fetch group:", err);
+      setGroupName("No Group");
     }
   };
 
+  // =======================================
+  // Fetch Communication Badges
+  // =======================================
   const fetchCommunicationBadges = async () => {
     try {
       const res = await api.get("/communications");
 
+      const conversations = res.data.data || [];
+
       let privateUnread = 0;
       let groupUnread = 0;
 
-      res.data.data.forEach((conversation) => {
+      conversations.forEach((conversation) => {
         if (conversation.type === "private") {
           privateUnread += Number(conversation.unread || 0);
-        }
-
-        if (conversation.type === "group") {
+        } else if (conversation.type === "group") {
           groupUnread += Number(conversation.unread || 0);
         }
       });
@@ -177,14 +187,17 @@ const Sidebar = ({ role = "admin" }) => {
         group: groupUnread,
       });
     } catch (err) {
-      console.log(err);
+      console.error("Failed to fetch communication badges:", err);
     }
   };
 
+  // =======================================
+  // Initial Load
+  // =======================================
   useEffect(() => {
-  fetchCommunicationBadges();
-  fetchUserGroup();
-}, []);
+    fetchCommunicationBadges();
+    fetchUserGroup();
+  }, []);
 
   return (
     <>
