@@ -16,6 +16,10 @@ const {
   deleteUser,
 } = require("../controllers/userController");
 
+const {
+  getMyGroups,
+} = require("../controllers/userController");
+
 const authMiddleware =
   require("../middleware/authMiddleware");
 
@@ -51,6 +55,18 @@ router.get(
 | MEMBER ROUTES
 |--------------------------------------------------------------------------
 */
+
+/*
+|--------------------------------------------------------------------------
+| GET MY GROUPS
+|--------------------------------------------------------------------------
+*/
+
+router.get(
+  "/my-groups",
+  authMiddleware,
+  getMyGroups,
+);
 
 router.get(
   "/member-summary/:id",
