@@ -25,14 +25,13 @@ import {
 } from "react-icons/fa";
 import { MdSavings } from "react-icons/md";
 import NotificationBell from "../Pages/Notification/Components/NotificationBell";
-const [groupName, setGroupName] = useState("");
 
 const Sidebar = ({ role = "admin" }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [communicationOpen, setCommunicationOpen] = useState(true);
 
   const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-
+  const [groupName, setGroupName] = useState("");
   const [communicationBadges, setCommunicationBadges] = useState({
     private: 0,
     group: 0,
@@ -182,6 +181,11 @@ const Sidebar = ({ role = "admin" }) => {
     }
   };
 
+  useEffect(() => {
+  fetchCommunicationBadges();
+  fetchUserGroup();
+}, []);
+
   return (
     <>
       {/* Mobile Button */}
@@ -229,7 +233,7 @@ const Sidebar = ({ role = "admin" }) => {
             {/* Logo */}
             <div className="flex flex-col items-center">
               <img
-                src={logo}
+                src={Logo}
                 alt="The 13 Amigos"
                 className="w-20 h-20 object-contain"
               />
