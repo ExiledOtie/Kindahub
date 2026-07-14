@@ -243,17 +243,25 @@ const Sidebar = ({ role = "admin" }) => {
               <FaTimes />
             </button>
 
-            {/* Logo */}
-            <div className="flex flex-col items-center">
+            {/* Logo + Title */}
+            <div className="flex items-center gap-3 px-2">
               <img
                 src={Logo}
                 alt="The 13 Amigos"
-                className="w-20 h-20 object-contain"
+                className="w-14 h-14 rounded-full object-cover border-2 border-emerald-500 shadow-sm"
               />
 
-              <h2 className="mt-2 text-sm font-bold tracking-wide text-center">
-                The 13 Amigos
-              </h2>
+              <div className="leading-tight">
+                <h2 className="text-[11px] font-semibold text-white">The 13</h2>
+
+                <h2 className="text-[13px] font-bold text-emerald-400 tracking-wide">
+                  Amigos
+                </h2>
+
+                <p className="text-[9px] text-gray-300">
+                  Chama Management System
+                </p>
+              </div>
             </div>
           </div>
 
