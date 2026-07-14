@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import api from "../Utils/axios";
 import { NavLink } from "react-router-dom";
+import Logo from "../Images/logo-image.png"
 
 import {
   FaTachometerAlt,
