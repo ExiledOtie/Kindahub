@@ -25,6 +25,7 @@ import {
 } from "react-icons/fa";
 import { MdSavings } from "react-icons/md";
 import NotificationBell from "../Pages/Notification/Components/NotificationBell";
+const [groupName, setGroupName] = useState("");
 
 const Sidebar = ({ role = "admin" }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -145,9 +146,15 @@ const Sidebar = ({ role = "admin" }) => {
 
   const links = role === "admin" ? adminLinks : userLinks;
 
-  useEffect(() => {
-    fetchCommunicationBadges();
-  }, []);
+  const fetchUserGroup = async () => {
+    try {
+      const res = await api.get("/users/profile");
+
+      setGroupName(res.data.group_name || "No Group");
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
   const fetchCommunicationBadges = async () => {
     try {
@@ -334,18 +341,26 @@ const Sidebar = ({ role = "admin" }) => {
         </div>
 
         {/* Bottom Profile */}
-        <div className="border-t border-white/10 pt-4 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-emerald-600 flex items-center justify-center text-white font-semibold text-xs">
-            {currentUser?.fullname?.charAt(0)?.toUpperCase() || "U"}
+        <div className="border-t border-white/10 pt-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center text-white font-semibold">
+              {currentUser?.fullname?.charAt(0)?.toUpperCase() || "U"}
+            </div>
+
+            <div className="flex flex-col overflow-hidden">
+              <span className="text-[11px] font-semibold truncate">
+                {currentUser?.fullname || "User"}
+              </span>
+
+              <span className="text-[10px] text-gray-300 capitalize">
+                {currentUser?.role || "Member"}
+              </span>
+
+              <span className="text-[10px] text-emerald-300 truncate">
+                {groupName}
+              </span>
+            </div>
           </div>
-
-          <h3 className="text-[11px] font-semibold truncate max-w-[130px]">
-            {currentUser?.fullname || "User"}
-          </h3>
-
-          <p className="text-[10px] text-gray-300 capitalize">
-            {currentUser?.role || "member"}
-          </p>
         </div>
       </div>
     </>
