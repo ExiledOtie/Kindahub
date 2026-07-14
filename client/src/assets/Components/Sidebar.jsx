@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import api from "../Utils/axios";
 import { NavLink } from "react-router-dom";
-import Logo from "../Images/logo-image.png"
+import Logo from "../Images/logo-image.png";
 
 import {
   FaTachometerAlt,
@@ -210,12 +210,27 @@ const Sidebar = ({ role = "admin" }) => {
       >
         <div>
           {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-lg font-bold">ChamaPro</h1>
-
-            <button onClick={() => setIsOpen(false)} className="lg:hidden">
+          <div className="relative mb-6">
+            {/* Close button */}
+            <button
+              onClick={() => setIsOpen(false)}
+              className="absolute right-0 top-0 lg:hidden"
+            >
               <FaTimes />
             </button>
+
+            {/* Logo */}
+            <div className="flex flex-col items-center">
+              <img
+                src={logo}
+                alt="The 13 Amigos"
+                className="w-20 h-20 object-contain"
+              />
+
+              <h2 className="mt-2 text-sm font-bold tracking-wide text-center">
+                The 13 Amigos
+              </h2>
+            </div>
           </div>
 
           {/* Links */}
