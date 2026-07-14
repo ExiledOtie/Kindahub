@@ -493,12 +493,32 @@ const getMemberSummaryModel = async (userId) => {
   };
 };
 
+const getUserGroups = async (userId) => {
+  const query = `
+    SELECT
+      g.id,
+      g.name
+    FROM user_groups ug
+    INNER JOIN groups g
+      ON g.id = ug.group_id
+    WHERE ug.user_id = $1
+    ORDER BY g.name;
+  `;
+
+  const { rows } = await db.query(query, [userId]);
+
+  return rows;
+};
+
+
 module.exports = {
   createUserModel,
   assignUserToGroupModel,
   getUserGroupsModel,
   getMemberProfileModel,
   getMemberSummaryModel,
+  getUserGroups,
+  resetPasswordModel,
   getAllUsersModel,
   getSingleUserModel,
   findUserByEmailModel,

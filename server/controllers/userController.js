@@ -14,6 +14,7 @@ const {
   updateUserModel,
   resetPasswordModel,
   deleteUserModel,
+  getUserGroups,
 } = require("../models/userModel");
 
 /*
@@ -426,12 +427,32 @@ const deleteUser = async (req, res) => {
   }
 };
 
+const getMyGroups = async (req, res) => {
+  try {
+    const groups = await User.getUserGroups(req.user.id);
+
+    res.status(200).json({
+      success: true,
+      data: groups,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch user groups",
+    });
+  }
+};
+
+
 module.exports = {
   createUser,
   getAllUsers,
   getUserStats,
   getSingleUser,
   getMyProfile,
+  getMyGroups,
   getMemberProfile,
   getMemberSummary,
   updateUser,

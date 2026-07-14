@@ -150,14 +150,20 @@ const Sidebar = ({ role = "admin" }) => {
   // =======================================
   const fetchUserGroup = async () => {
     try {
-      const res = await api.get("/users/profile");
+      const res = await api.get("/users/my-groups");
 
-      // Adjust this depending on your API response
-      const profile = res.data.data || res.data;
+      const groups = res.data.data || [];
 
-      setGroupName(profile.group_name || profile.groupName || "No Group");
+      if (groups.length === 0) {
+        setGroupName("No Group");
+        return;
+      }
+
+      // If a user belongs to multiple groups,
+      // display them separated by commas.
+      setGroupName(groups.map((g) => g.name).join(", "));
     } catch (err) {
-      console.error("Failed to fetch group:", err);
+      console.error(err);
       setGroupName("No Group");
     }
   };

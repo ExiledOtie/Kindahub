@@ -6,6 +6,9 @@ const {
   createGroup,
   getGroups,
 } = require("../controllers/groupController");
+const {
+  getMyGroups,
+} = require("../controllers/userController");
 
 const authMiddleware = require("../middleware/authMiddleware");
 const authorizeRoles = require("../middleware/roleMiddleware");
@@ -19,7 +22,8 @@ const authorizeRoles = require("../middleware/roleMiddleware");
 router.get(
   "/",
   authMiddleware,
-  getGroups
+  getGroups,
+  getMyGroups
 );
 
 /*
