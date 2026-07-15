@@ -429,7 +429,7 @@ const deleteUser = async (req, res) => {
 
 const getMyGroups = async (req, res) => {
   try {
-    const groups = await User.getUserGroups(req.user.id);
+    const groups = await getUserGroups(req.user.id);
 
     res.status(200).json({
       success: true,

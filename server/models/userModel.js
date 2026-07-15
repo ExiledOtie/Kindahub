@@ -505,7 +505,7 @@ const getUserGroups = async (userId) => {
     ORDER BY g.name;
   `;
 
-  const { rows } = await db.query(query, [userId]);
+  const { rows } = await pool.query(query, [userId]);
 
   return rows;
 };
