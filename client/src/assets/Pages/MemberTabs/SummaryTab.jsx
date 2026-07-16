@@ -24,7 +24,7 @@ const SummaryTab = ({ memberId }) => {
   const [password, setPassword] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
 
-  const currentUser = JSON.parse(localStorage.getItem("user"));
+  const currentUser = JSON.parse(sessionStorage.getItem("user"));
 
   useEffect(() => {
     fetchSummary();

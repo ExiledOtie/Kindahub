@@ -22,49 +22,32 @@ export const AuthProvider = ({ children }) => {
   |--------------------------------------------------------------------------
   */
 
-const login = async (formData) => {
-  const res = await api.post(
-    "/auth/login",
-    formData
-  );
+  const login = async (formData) => {
+    const res = await api.post("/auth/login", formData);
 
-  const user = res.data.user;
+    const user = res.data.user;
 
-  localStorage.setItem(
-    "token",
-    res.data.token
-  );
+    sessionStorage.setItem("token", res.data.token);
 
-  localStorage.setItem(
-    "user",
-    JSON.stringify(user)
-  );
+    sessionStorage.setItem("user", JSON.stringify(user));
 
-  setUser(user);
+    setUser(user);
 
-  // Super Admin
-  if (
-    user.role === "super_admin" ||
-    user.is_super_admin
-  ) {
-    navigate("/dashboard");
-  }
-  // Members
-  else {
-    navigate("/user-dashboard");
-  }
-};
+    if (user.role === "super_admin" || user.is_super_admin) {
+      navigate("/dashboard");
+    } else {
+      navigate("/user-dashboard");
+    }
+  };
 
   /*
   |--------------------------------------------------------------------------
   | LOGOUT
   |--------------------------------------------------------------------------
   */
-
   const logout = () => {
-    localStorage.removeItem("token");
-
-    localStorage.removeItem("user");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("user");
 
     setUser(null);
 
@@ -78,7 +61,7 @@ const login = async (formData) => {
   */
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
+    const storedUser = sessionStorage.getItem("user");
 
     if (storedUser) {
       setUser(JSON.parse(storedUser));

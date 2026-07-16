@@ -30,7 +30,7 @@ const Sidebar = ({ role = "admin" }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [communicationOpen, setCommunicationOpen] = useState(true);
 
-  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const currentUser = JSON.parse(sessionStorage.getItem("user") || "{}");
   const [groupName, setGroupName] = useState("");
   const [communicationBadges, setCommunicationBadges] = useState({
     private: 0,

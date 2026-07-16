@@ -18,7 +18,7 @@ const GroupChats = () => {
 
   const [conversationId, setConversationId] = useState(null);
 
-  const currentUser = JSON.parse(localStorage.getItem("user"));
+  const currentUser = JSON.parse(sessionStorage.getItem("user"));
 
   useEffect(() => {
     fetchGroups();

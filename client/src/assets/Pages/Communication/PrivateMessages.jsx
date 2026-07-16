@@ -8,7 +8,7 @@ import MessageInput from "./Components/MessageInput";
 const PrivateMessages = () => {
   const messagesEndRef = useRef(null);
 
-  const currentUser = JSON.parse(localStorage.getItem("user"));
+  const currentUser = JSON.parse(sessionStorage.getItem("user"));
 
   const [contacts, setContacts] = useState([]);
   const [messages, setMessages] = useState([]);

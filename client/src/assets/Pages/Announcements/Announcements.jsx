@@ -18,7 +18,7 @@ const Announcements = () => {
   const [openModal, setOpenModal] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
 
-  const user = JSON.parse(localStorage.getItem("user"));
+  const user = JSON.parse(sessionStorage.getItem("user"));
 
   useEffect(() => {
     fetchAnnouncements();

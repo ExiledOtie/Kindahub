@@ -16,7 +16,7 @@ const UserPrivateMessages = () => {
   const messagesEndRef = useRef(null);
 
   const currentUser = JSON.parse(
-    localStorage.getItem("user")
+    sessionStorage.getItem("user")
   );
 
   const [contacts, setContacts] = useState([]);
