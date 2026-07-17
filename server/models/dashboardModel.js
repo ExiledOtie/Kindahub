@@ -131,43 +131,52 @@ const getMemberSummary = async (userId) => {
   const query = `
     SELECT
 
+      -- Total Savings
       (
         SELECT COALESCE(SUM(amount),0)
         FROM savings
-        WHERE user_id=$1
+        WHERE user_id = $1
       ) AS "mySavings",
 
+      -- Total Contributions
       (
         SELECT COALESCE(SUM(amount),0)
         FROM contributions
-        WHERE user_id=$1
+        WHERE user_id = $1
       ) AS "myContributions",
 
+      -- Active Loan Amount (Approved Loans Only)
       (
-        SELECT COUNT(*)
+        SELECT COALESCE(SUM(amount),0)
         FROM loans
-        WHERE user_id=$1
-      )::INT AS "myLoans",
+        WHERE user_id = $1
+          AND LOWER(status) = 'approved'
+      ) AS "activeLoanAmount",
 
+      -- Remaining Loan Balance
       (
-        SELECT COUNT(*)
+        SELECT COALESCE(SUM(balance),0)
         FROM loans
-        WHERE user_id=$1
-        AND LOWER(status)='pending'
-      )::INT AS "pendingLoans",
+        WHERE user_id = $1
+          AND LOWER(status) = 'approved'
+          AND balance > 0
+      ) AS "loanBalanceRemaining",
 
+      -- Total Interest Paid
       (
-    SELECT COALESCE(SUM(balance),0)
-    FROM loans
-    WHERE LOWER(status)='approved'
-      AND balance > 0
-) AS "activeLoans",
+        SELECT COALESCE(SUM(interest_paid),0)
+        FROM loan_payments lp
+        INNER JOIN loans l
+          ON l.id = lp.loan_id
+        WHERE l.user_id = $1
+      ) AS "totalInterestPaid",
 
+      -- Unread Notifications
       (
         SELECT COUNT(*)
         FROM notifications
-        WHERE user_id=$1
-        AND is_read=false
+        WHERE user_id = $1
+          AND is_read = false
       )::INT AS notifications;
   `;
 
