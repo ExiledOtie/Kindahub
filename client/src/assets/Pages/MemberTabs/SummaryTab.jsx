@@ -77,7 +77,7 @@ const SummaryTab = ({ memberId }) => {
     );
   }
 
-  const member = data?.member;
+  const member = data?.user;
   const stats = data?.stats || {};
   const activities = data?.activities || [];
 
