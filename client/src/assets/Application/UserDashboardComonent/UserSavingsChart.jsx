@@ -20,13 +20,13 @@ const COLORS = [
 
 const UserSavingsChart = ({ data = [] }) => {
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 h-[360px]">
+    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 h-[300px]">
       <div className="mb-4">
         <h2 className="text-sm font-semibold text-gray-800">
           Savings Overview
         </h2>
 
-        <p className="text-[11px] text-gray-500">
+        <p className="text-[10px] text-gray-500">
           Monthly savings contribution
         </p>
       </div>
@@ -40,18 +40,18 @@ const UserSavingsChart = ({ data = [] }) => {
           <BarChart
             data={data}
             margin={{
-              top: 10,
-              right: 20,
-              left: 0,
+              top: 5,
+              right: 5,
+              left: -20,
               bottom: 5,
             }}
           >
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
 
-            <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+            <XAxis dataKey="month" tick={{ fontSize: 9 }} />
 
             <YAxis
-              tick={{ fontSize: 11 }}
+              tick={{ fontSize: 9 }}
               tickFormatter={(value) => `${value / 1000}K`}
             />
 
@@ -64,8 +64,8 @@ const UserSavingsChart = ({ data = [] }) => {
 
             <Bar
               dataKey="amount"
-              barSize={24}
-              radius={[8, 8, 0, 0]}
+              barSize={18}
+              radius={[5, 5, 0, 0]}
               animationDuration={1200}
               animationEasing="ease-out"
             >

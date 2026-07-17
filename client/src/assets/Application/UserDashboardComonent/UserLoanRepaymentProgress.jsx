@@ -35,7 +35,7 @@ const renderActiveShape = (props) => {
         x={cx}
         y={cy + 8}
         textAnchor="middle"
-        className="fill-emerald-600 text-sm font-bold"
+        className="fill-emerald-600 text-[10px] font-bold"
       >
         KES {Number(value).toLocaleString()}
       </text>
@@ -44,7 +44,7 @@ const renderActiveShape = (props) => {
         cx={cx}
         cy={cy}
         innerRadius={innerRadius}
-        outerRadius={outerRadius + 8}
+        outerRadius={outerRadius + 4}
         startAngle={startAngle}
         endAngle={endAngle}
         fill={fill}
@@ -53,7 +53,7 @@ const renderActiveShape = (props) => {
       <Sector
         cx={cx}
         cy={cy}
-        innerRadius={outerRadius + 10}
+        innerRadius={outerRadius + 8}
         outerRadius={outerRadius + 15}
         startAngle={startAngle}
         endAngle={endAngle}
@@ -103,7 +103,7 @@ const UserLoanRepaymentProgress = ({
     <div className="bg-white rounded-xl border shadow-sm p-4">
       <div className="flex justify-between items-center mb-4">
         <div>
-          <h2 className="text-sm font-semibold">Loan Repayment</h2>
+          <h2 className="text-[12px] font-semibold">Loan Repayment</h2>
 
           <p className="text-[11px] text-gray-500">
             Progress towards completing your loan
@@ -113,18 +113,18 @@ const UserLoanRepaymentProgress = ({
         <div className="text-right">
           <p className="text-[10px] text-gray-500">Total Loan</p>
 
-          <h3 className="text-sm font-bold text-emerald-600">
+          <h3 className="text-[10px] font-bold text-emerald-600">
             KES {Number(totalPayable).toLocaleString()}
           </h3>
         </div>
       </div>
 
       {!hasLoan ? (
-        <div className="h-[280px] flex items-center justify-center text-gray-500 text-sm">
+        <div className="h-[280px] flex items-center justify-center text-gray-500 text-[10px]">
           No active loan found
         </div>
       ) : (
-        <ResponsiveContainer width="100%" height={280}>
+        <ResponsiveContainer width="100%" height={230}>
           <PieChart>
             <Pie
               activeIndex={activeIndex}
@@ -133,8 +133,8 @@ const UserLoanRepaymentProgress = ({
               dataKey="value"
               cx="50%"
               cy="50%"
-              innerRadius={60}
-              outerRadius={90}
+              innerRadius={53}
+              outerRadius={70}
               paddingAngle={3}
               onMouseEnter={(_, index) => setActiveIndex(index)}
             >
@@ -150,7 +150,7 @@ const UserLoanRepaymentProgress = ({
         <div className="bg-gray-50 rounded-lg p-3 text-center">
           <p className="text-[10px] text-gray-500">Total Loan</p>
 
-          <h4 className="text-xs font-bold text-blue-600">
+          <h4 className="text-[10px] font-bold text-blue-600">
             KES {Number(totalPayable).toLocaleString()}
           </h4>
         </div>
@@ -158,7 +158,7 @@ const UserLoanRepaymentProgress = ({
         <div className="bg-gray-50 rounded-lg p-3 text-center">
           <p className="text-[10px] text-gray-500">Paid</p>
 
-          <h4 className="text-xs font-bold text-emerald-600">
+          <h4 className="text-[10px] font-bold text-emerald-600">
             KES {Number(totalPaid).toLocaleString()}
           </h4>
         </div>
@@ -166,7 +166,7 @@ const UserLoanRepaymentProgress = ({
         <div className="bg-gray-50 rounded-lg p-3 text-center">
           <p className="text-[10px] text-gray-500">Balance</p>
 
-          <h4 className="text-xs font-bold text-orange-600">
+          <h4 className="text-[10px] font-bold text-orange-600">
             KES {Number(balance).toLocaleString()}
           </h4>
         </div>
