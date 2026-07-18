@@ -14,6 +14,7 @@ const {
   createMyLoan,
   getMyLoans,
   deleteLoan,
+  updateLoanInterest,
 } = require("../controllers/loanController");
 
 /*
@@ -78,6 +79,22 @@ router.patch("/:id/approve", authMiddleware, approveLoan);
 */
 
 router.patch("/:id/reject", authMiddleware, rejectLoan);
+
+/*
+|--------------------------------------------------------------------------
+| UPDATE INTEREST RATE
+|--------------------------------------------------------------------------
+*/
+
+router.patch("/:id/interest", authMiddleware, updateLoanInterest);
+
+/*
+|--------------------------------------------------------------------------
+| APPROVE LOAN WITH OPTIONAL INTEREST
+|--------------------------------------------------------------------------
+*/
+
+router.patch("/:id/approve", authMiddleware, approveLoan);
 
 /*
 |--------------------------------------------------------------------------

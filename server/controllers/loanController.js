@@ -8,6 +8,7 @@ const {
   getLoanStatsModel,
   deleteLoanModel,
   getActiveLoanModel,
+  updateLoanInterestModel,
 } = require("../models/loanModel");
 const Notification = require("../models/notificationModel");
 
@@ -193,6 +194,71 @@ const createMyLoan = async (req, res) => {
     });
   }
 };
+
+/*
+|--------------------------------------------------------------------------
+| UPDATE INTEREST RATE
+|--------------------------------------------------------------------------
+*/
+
+const updateLoanInterest = async (req, res) => {
+  try {
+    const { interest_rate } = req.body;
+
+    if (interest_rate == null || Number(interest_rate) < 0) {
+      return res.status(400).json({
+        message: "Invalid interest rate",
+      });
+    }
+
+    const loan = await updateLoanInterestModel(req.params.id, interest_rate);
+
+    if (!loan) {
+      return res.status(404).json({
+        message: "Loan not found",
+      });
+    }
+
+    /*
+    --------------------------------------------------------
+    If already approved,
+    recalculate balance immediately
+    --------------------------------------------------------
+    */
+
+    if (loan.status === "approved") {
+      const totalInterest =
+        (Number(loan.amount) * Number(loan.interest_rate)) / 100;
+
+      const totalPayable = Number(loan.amount) + totalInterest;
+
+      await pool.query(
+        `
+        UPDATE loans
+
+        SET
+          total_payable=$2,
+          balance=$2
+
+        WHERE id=$1
+        `,
+        [loan.id, totalPayable],
+      );
+    }
+
+    res.json({
+      message: "Interest rate updated successfully",
+      loan,
+    });
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      message: "Server error",
+    });
+  }
+};
+
 /*
 |--------------------------------------------------------------------------
 | GET ALL LOANS
@@ -275,7 +341,7 @@ const approveLoan = async (req, res) => {
       });
     }
 
-    const updatedLoan = await approveLoanModel(req.params.id, req.user.id);
+    const updatedLoan = await approveLoanModel(req.params.id, req.user.id, req.body.interest_rate);
     await Notification.createNotification({
       user_id: updatedLoan.user_id,
       title: "Loan Approved",
@@ -434,4 +500,5 @@ module.exports = {
   getLoanStats,
   deleteLoan,
   getMyActiveLoan,
+  updateLoanInterest,
 };

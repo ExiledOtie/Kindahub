@@ -12,7 +12,7 @@ const createLoanModel = async (
   amount,
   purpose,
   interestRate,
-  durationMonths
+  durationMonths,
 ) => {
   const result = await pool.query(
     `
@@ -30,14 +30,7 @@ const createLoanModel = async (
 
     RETURNING *
     `,
-    [
-      userId,
-      groupId,
-      amount,
-      purpose,
-      interestRate,
-      durationMonths,
-    ]
+    [userId, groupId, amount, purpose, interestRate, durationMonths],
   );
 
   return result.rows[0];
@@ -72,7 +65,7 @@ const getAllLoansModel = async () => {
       ON approver.id = l.approved_by
 
     ORDER BY l.created_at DESC
-    `
+    `,
   );
 
   return result.rows;
@@ -84,9 +77,7 @@ const getAllLoansModel = async () => {
 |--------------------------------------------------------------------------
 */
 
-const getUserLoansModel = async (
-  userId
-) => {
+const getUserLoansModel = async (userId) => {
   const result = await pool.query(
     `
     SELECT
@@ -107,7 +98,7 @@ const getUserLoansModel = async (
 
     ORDER BY l.created_at DESC
     `,
-    [userId]
+    [userId],
   );
 
   return result.rows;
@@ -119,12 +110,9 @@ const getUserLoansModel = async (
 |--------------------------------------------------------------------------
 */
 
-const getActiveLoanModel =
-  async (userId) => {
-
-    const result =
-      await pool.query(
-        `
+const getActiveLoanModel = async (userId) => {
+  const result = await pool.query(
+    `
         SELECT *
         FROM loans
 
@@ -135,10 +123,10 @@ const getActiveLoanModel =
         ORDER BY created_at DESC
         LIMIT 1
         `,
-        [userId]
-      );
+    [userId],
+  );
 
-    return result.rows[0];
+  return result.rows[0];
 };
 
 /*
@@ -147,9 +135,7 @@ const getActiveLoanModel =
 |--------------------------------------------------------------------------
 */
 
-const getSingleLoanModel = async (
-  id
-) => {
+const getSingleLoanModel = async (id) => {
   const result = await pool.query(
     `
     SELECT
@@ -168,7 +154,7 @@ const getSingleLoanModel = async (
 
     WHERE l.id = $1
     `,
-    [id]
+    [id],
   );
 
   return result.rows[0];
@@ -180,55 +166,45 @@ const getSingleLoanModel = async (
 |--------------------------------------------------------------------------
 */
 
-const approveLoanModel = async (
-  loanId,
-  approvedBy
-) => {
+const approveLoanModel = async (loanId, approvedBy, interestRate = null) => {
+  const loanResult = await pool.query(
+    `
+    SELECT *
+    FROM loans
+    WHERE id=$1
+    `,
+    [loanId],
+  );
 
-  const loanResult =
-    await pool.query(
-      `
-      SELECT *
-      FROM loans
-      WHERE id = $1
-      `,
-      [loanId]
-    );
-
-  const loan =
-    loanResult.rows[0];
+  const loan = loanResult.rows[0];
 
   if (!loan) return null;
 
-  const totalPayable =
-    Number(loan.amount) +
-    (
-      Number(loan.amount) *
-      Number(loan.interest_rate)
-    ) / 100;
+  const rate =
+    interestRate !== null ? Number(interestRate) : Number(loan.interest_rate);
 
-  const result =
-    await pool.query(
-      `
-      UPDATE loans
+  const totalInterest = (Number(loan.amount) * rate) / 100;
 
-      SET
-        status = 'approved',
-        approved_by = $2,
-        approved_at = CURRENT_TIMESTAMP,
-        total_payable = $3,
-        balance = $3
+  const totalPayable = Number(loan.amount) + totalInterest;
 
-      WHERE id = $1
+  const result = await pool.query(
+    `
+    UPDATE loans
 
-      RETURNING *
-      `,
-      [
-        loanId,
-        approvedBy,
-        totalPayable,
-      ]
-    );
+    SET
+      status='approved',
+      approved_by=$2,
+      approved_at=NOW(),
+      interest_rate=$3,
+      total_payable=$4,
+      balance=$4
+
+    WHERE id=$1
+
+    RETURNING *
+    `,
+    [loanId, approvedBy, rate, totalPayable],
+  );
 
   return result.rows[0];
 };
@@ -239,20 +215,20 @@ const approveLoanModel = async (
 |--------------------------------------------------------------------------
 */
 
-const rejectLoanModel = async (
-  loanId
-) => {
+const rejectLoanModel = async (loanId) => {
   const result = await pool.query(
     `
     UPDATE loans
 
-    SET status = 'rejected'
+    SET
+      status='rejected',
+      rejected_at=NOW()
 
-    WHERE id = $1
+    WHERE id=$1
 
     RETURNING *
     `,
-    [loanId]
+    [loanId],
   );
 
   return result.rows[0];
@@ -264,11 +240,9 @@ const rejectLoanModel = async (
 |--------------------------------------------------------------------------
 */
 
-const getLoanStatsModel =
-  async () => {
-    const result =
-      await pool.query(
-        `
+const getLoanStatsModel = async () => {
+  const result = await pool.query(
+    `
         SELECT
 
         COUNT(*) AS total_loans,
@@ -291,11 +265,31 @@ const getLoanStatsModel =
         ) AS total_amount
 
         FROM loans
-        `
-      );
+        `,
+  );
 
-    return result.rows[0];
-  };
+  return result.rows[0];
+};
+
+/*
+|--------------------------------------------------------------------------
+| UPDATE INTEREST RATE
+|--------------------------------------------------------------------------
+*/
+
+const updateLoanInterestModel = async (loanId, interestRate) => {
+  const result = await pool.query(
+    `
+    UPDATE loans
+    SET interest_rate = $2
+    WHERE id = $1
+    RETURNING *
+    `,
+    [loanId, interestRate],
+  );
+
+  return result.rows[0];
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -303,15 +297,13 @@ const getLoanStatsModel =
 |--------------------------------------------------------------------------
 */
 
-const deleteLoanModel = async (
-  id
-) => {
+const deleteLoanModel = async (id) => {
   await pool.query(
     `
     DELETE FROM loans
     WHERE id = $1
     `,
-    [id]
+    [id],
   );
 
   return true;
@@ -327,4 +319,5 @@ module.exports = {
   getLoanStatsModel,
   deleteLoanModel,
   getActiveLoanModel,
+  updateLoanInterestModel,
 };
