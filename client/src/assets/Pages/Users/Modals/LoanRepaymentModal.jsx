@@ -41,7 +41,7 @@ const LoanRepaymentModal = ({ open, onClose, loan, onSuccess }) => {
     try {
       setLoading(true);
 
-      await axios.post("/loan-payments", {
+      await axios.post("/loan-payments/my", {
         loan_id: loan.id,
         amount: formData.amount,
         payment_method: formData.payment_method,
@@ -50,8 +50,8 @@ const LoanRepaymentModal = ({ open, onClose, loan, onSuccess }) => {
 
       Swal.fire({
         icon: "success",
-        title: "Success",
-        text: "Loan repayment recorded successfully",
+        title: "Submitted",
+        text: "Your repayment has been submitted and is awaiting approval.",
       });
 
       onSuccess?.();
@@ -271,7 +271,7 @@ const LoanRepaymentModal = ({ open, onClose, loan, onSuccess }) => {
                   disabled={loading}
                   className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-[11px]"
                 >
-                  {loading ? "Processing..." : "Submit Repayment"}
+                  {loading ? "Submitting..." : "Submit for Approval"}
                 </button>
               </div>
             </form>
