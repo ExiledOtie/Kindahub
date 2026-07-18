@@ -14,14 +14,11 @@ const pool = require("../config/db");
 
 /*
 |--------------------------------------------------------------------------
-| CREATE SAVING
+| CREATE SAVING (SUPER ADMIN / ADMIN)
 |--------------------------------------------------------------------------
 */
 
-const createSaving = async (
-  req,
-  res
-) => {
+const createSaving = async (req, res) => {
   try {
     const {
       user_id,
@@ -31,51 +28,53 @@ const createSaving = async (
       mpesa_code,
     } = req.body;
 
-    if (
-      !user_id ||
-      !group_id ||
-      !amount
-    ) {
+    if (!user_id || !group_id || !amount) {
       return res.status(400).json({
-        message:
-          "User, Group and Amount are required",
+        message: "User, Group and Amount are required",
       });
     }
 
-    const saving =
-      await createSavingModel(
-        user_id,
-        group_id,
-        amount,
-        payment_method,
-        mpesa_code || null,
-        req.user.id
-      );
+    // Super Admin/Admin savings are automatically approved
+    const saving = await createSavingModel(
+      user_id,
+      group_id,
+      amount,
+      payment_method,
+      mpesa_code || null,
+      req.user.id,
+      "completed"
+    );
 
-    res.status(201).json({
-      message:
-        "Saving added successfully",
-      saving,
+    await Notification.createNotification({
+      user_id,
+      title: "Saving Received",
+      message: `A saving of KES ${Number(amount).toLocaleString()} has been recorded by the administrator.`,
+      type: "saving",
+      reference_id: saving.id,
     });
 
+    res.status(201).json({
+      message: "Saving recorded successfully",
+      saving,
+    });
   } catch (error) {
-
     console.log(error);
 
     res.status(500).json({
       message: "Server error",
       error: error.message,
     });
-
   }
 };
 
-const createMySaving = async (
-  req,
-  res
-) => {
-  try {
+/*
+|--------------------------------------------------------------------------
+| MEMBER CREATE SAVING
+|--------------------------------------------------------------------------
+*/
 
+const createMySaving = async (req, res) => {
+  try {
     const {
       amount,
       payment_method,
@@ -84,113 +83,94 @@ const createMySaving = async (
 
     const userId = req.user.id;
 
-    const member =
-      await pool.query(
-        `
-        SELECT id, fullname
-        FROM users
-        WHERE id = $1
-        `,
-        [userId]
-      );
+    const member = await pool.query(
+      `
+      SELECT id, fullname
+      FROM users
+      WHERE id = $1
+      `,
+      [userId]
+    );
 
-    const group =
-      await pool.query(
-        `
-        SELECT group_id
-        FROM user_groups
-        WHERE user_id = $1
-        LIMIT 1
-        `,
-        [userId]
-      );
+    const group = await pool.query(
+      `
+      SELECT group_id
+      FROM user_groups
+      WHERE user_id = $1
+      LIMIT 1
+      `,
+      [userId]
+    );
 
-    const groupId =
-      group.rows[0]?.group_id;
+    const groupId = group.rows[0]?.group_id;
 
     if (!groupId) {
       return res.status(400).json({
-        message:
-          "You are not assigned to any group",
+        message: "You are not assigned to any group",
       });
     }
 
-    const saving =
-      await createSavingModel(
-        userId,
-        groupId,
-        amount,
-        payment_method,
-        mpesa_code || null,
-        userId,
-        "pending"
-      );
+    // Member savings require approval
+    const saving = await createSavingModel(
+      userId,
+      groupId,
+      amount,
+      payment_method,
+      mpesa_code || null,
+      userId,
+      "pending"
+    );
 
-    const admins =
-      await pool.query(
-        `
-        SELECT id
-        FROM users
-        WHERE is_super_admin = true
-        `
-      );
+    /*
+    |--------------------------------------------------------------------------
+    | NOTIFY SUPER ADMINS
+    |--------------------------------------------------------------------------
+    */
+
+    const admins = await pool.query(`
+      SELECT id
+      FROM users
+      WHERE is_super_admin = true
+    `);
 
     for (const admin of admins.rows) {
-
       await Notification.createNotification({
         user_id: admin.id,
         title: "New Saving Submitted",
         message: `${member.rows[0].fullname} submitted a saving of KES ${Number(
           amount
-        ).toLocaleString()}`,
+        ).toLocaleString()} via ${payment_method}. Mpesa Code: ${
+          mpesa_code || "N/A"
+        }`,
         type: "saving",
         reference_id: saving.id,
       });
-
     }
 
     res.status(201).json({
-      message:
-        "Saving submitted successfully",
+      message: "Saving submitted successfully. Awaiting approval.",
       saving,
     });
-
   } catch (error) {
-
     console.log(error);
 
     res.status(500).json({
-      message:
-        "Failed to submit saving",
+      message: "Failed to submit saving",
     });
-
   }
 };
 
-
-const getMySavings = async (
-  req,
-  res
-) => {
+const getMySavings = async (req, res) => {
   try {
+    const savings = await getUserSavingsModel(req.user.id);
 
-    const savings =
-      await getUserSavingsModel(
-        req.user.id
-      );
-
-    res.status(200).json(
-      savings
-    );
-
+    res.status(200).json(savings);
   } catch (error) {
-
     console.log(error);
 
     res.status(500).json({
       message: "Server error",
     });
-
   }
 };
 
@@ -200,27 +180,19 @@ const getMySavings = async (
 |--------------------------------------------------------------------------
 */
 
-const getAllSavings =
-  async (req, res) => {
-    try {
+const getAllSavings = async (req, res) => {
+  try {
+    const savings = await getAllSavingsModel();
 
-      const savings =
-        await getAllSavingsModel();
+    res.status(200).json(savings);
+  } catch (error) {
+    console.log(error);
 
-      res.status(200).json(
-        savings
-      );
-
-    } catch (error) {
-
-      console.log(error);
-
-      res.status(500).json({
-        message: "Server error",
-      });
-
-    }
-  };
+    res.status(500).json({
+      message: "Server error",
+    });
+  }
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -228,29 +200,19 @@ const getAllSavings =
 |--------------------------------------------------------------------------
 */
 
-const getUserSavings =
-  async (req, res) => {
-    try {
+const getUserSavings = async (req, res) => {
+  try {
+    const savings = await getUserSavingsModel(req.params.userId);
 
-      const savings =
-        await getUserSavingsModel(
-          req.params.userId
-        );
+    res.status(200).json(savings);
+  } catch (error) {
+    console.log(error);
 
-      res.status(200).json(
-        savings
-      );
-
-    } catch (error) {
-
-      console.log(error);
-
-      res.status(500).json({
-        message: "Server error",
-      });
-
-    }
-  };
+    res.status(500).json({
+      message: "Server error",
+    });
+  }
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -258,36 +220,25 @@ const getUserSavings =
 |--------------------------------------------------------------------------
 */
 
-const getSingleSaving =
-  async (req, res) => {
-    try {
+const getSingleSaving = async (req, res) => {
+  try {
+    const saving = await getSingleSavingModel(req.params.id);
 
-      const saving =
-        await getSingleSavingModel(
-          req.params.id
-        );
-
-      if (!saving) {
-        return res.status(404).json({
-          message:
-            "Saving not found",
-        });
-      }
-
-      res.status(200).json(
-        saving
-      );
-
-    } catch (error) {
-
-      console.log(error);
-
-      res.status(500).json({
-        message: "Server error",
+    if (!saving) {
+      return res.status(404).json({
+        message: "Saving not found",
       });
-
     }
-  };
+
+    res.status(200).json(saving);
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      message: "Server error",
+    });
+  }
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -295,120 +246,79 @@ const getSingleSaving =
 |--------------------------------------------------------------------------
 */
 
-const getSavingsStats =
-  async (req, res) => {
-    try {
-
-      const stats =
-        await getSavingsStatsModel();
-
-      res.status(200).json(
-        stats
-      );
-
-    } catch (error) {
-
-      console.log(error);
-
-      res.status(500).json({
-        message: "Server error",
-      });
-
-    }
-  };
-
-  const approveSaving = async (
-  req,
-  res
-) => {
+const getSavingsStats = async (req, res) => {
   try {
+    const stats = await getSavingsStatsModel();
 
-    const saving =
-      await approveSavingModel(
-        req.params.id
-      );
-
-    if (!saving) {
-      return res.status(404).json({
-        message:
-          "Saving not found",
-      });
-    }
-
-    await Notification.createNotification({
-      user_id:
-        saving.user_id,
-      title:
-        "Saving Approved",
-      message:
-        `Your saving of KES ${saving.amount} has been approved.`,
-      type: "saving",
-      reference_id:
-        saving.id,
-    });
-
-    res.status(200).json({
-      message:
-        "Saving approved successfully",
-      saving,
-    });
-
+    res.status(200).json(stats);
   } catch (error) {
-
     console.log(error);
 
     res.status(500).json({
       message: "Server error",
     });
-
   }
 };
 
-
-const rejectSaving = async (
-  req,
-  res
-) => {
+const approveSaving = async (req, res) => {
   try {
-
-    const saving =
-      await rejectSavingModel(
-        req.params.id
-      );
+    const saving = await approveSavingModel(req.params.id);
 
     if (!saving) {
       return res.status(404).json({
-        message:
-          "Saving not found",
+        message: "Saving not found",
       });
     }
 
     await Notification.createNotification({
-      user_id:
-        saving.user_id,
-      title:
-        "Saving Rejected",
-      message:
-        `Your saving of KES ${saving.amount} was rejected.`,
+      user_id: saving.user_id,
+      title: "Saving Approved",
+      message: `Your saving of KES ${saving.amount} has been approved.`,
       type: "saving",
-      reference_id:
-        saving.id,
+      reference_id: saving.id,
     });
 
     res.status(200).json({
-      message:
-        "Saving rejected successfully",
+      message: "Saving approved successfully",
       saving,
     });
-
   } catch (error) {
-
     console.log(error);
 
     res.status(500).json({
       message: "Server error",
     });
+  }
+};
 
+const rejectSaving = async (req, res) => {
+  try {
+    const saving = await rejectSavingModel(req.params.id);
+
+    if (!saving) {
+      return res.status(404).json({
+        message: "Saving not found",
+      });
+    }
+
+    await Notification.createNotification({
+      user_id: saving.user_id,
+      title: "Saving Rejected",
+      message: `Your saving of KES ${saving.amount} was rejected.`,
+      type: "saving",
+      reference_id: saving.id,
+    });
+
+    res.status(200).json({
+      message: "Saving rejected successfully",
+      saving,
+    });
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      message: "Server error",
+    });
   }
 };
 
@@ -418,41 +328,29 @@ const rejectSaving = async (
 |--------------------------------------------------------------------------
 */
 
-const deleteSaving =
-  async (req, res) => {
-    try {
+const deleteSaving = async (req, res) => {
+  try {
+    const saving = await getSingleSavingModel(req.params.id);
 
-      const saving =
-        await getSingleSavingModel(
-          req.params.id
-        );
-
-      if (!saving) {
-        return res.status(404).json({
-          message:
-            "Saving not found",
-        });
-      }
-
-      await deleteSavingModel(
-        req.params.id
-      );
-
-      res.status(200).json({
-        message:
-          "Saving deleted successfully",
+    if (!saving) {
+      return res.status(404).json({
+        message: "Saving not found",
       });
-
-    } catch (error) {
-
-      console.log(error);
-
-      res.status(500).json({
-        message: "Server error",
-      });
-
     }
-  };
+
+    await deleteSavingModel(req.params.id);
+
+    res.status(200).json({
+      message: "Saving deleted successfully",
+    });
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      message: "Server error",
+    });
+  }
+};
 
 module.exports = {
   createSaving,
