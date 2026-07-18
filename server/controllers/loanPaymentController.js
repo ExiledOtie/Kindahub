@@ -10,6 +10,8 @@ const {
   updateLoanBalanceModel,
 } = require("../models/loanPaymentModel");
 
+const Notification = require("../models/notificationModel");
+
 /*
 |--------------------------------------------------------------------------
 | CONFIG (can later move to DB settings table)
@@ -23,10 +25,13 @@ const PENALTY_RATE = 5; // 5% monthly penalty for overdue
 |--------------------------------------------------------------------------
 */
 
+
+
 const calculateLoanBalance = async (loanId) => {
-  const loanRes = await pool.query(`SELECT * FROM loans WHERE id = $1`, [
-    loanId,
-  ]);
+  const loanRes = await pool.query(
+    `SELECT * FROM loans WHERE id = $1`,
+    [loanId]
+  );
 
   if (!loanRes.rows[0]) {
     throw new Error("Loan not found");
@@ -47,7 +52,7 @@ const calculateLoanBalance = async (loanId) => {
 
   /*
   |--------------------------------------------------------------------------
-  | 🧠 OVERDUE PENALTY ENGINE
+  | OVERDUE PENALTY ENGINE
   |--------------------------------------------------------------------------
   */
 
@@ -105,6 +110,12 @@ const getAllLoanPayments = async (req, res) => {
   }
 };
 
+/*
+|--------------------------------------------------------------------------
+| ADMIN CREATE LOAN PAYMENT (APPROVED IMMEDIATELY)
+|--------------------------------------------------------------------------
+*/
+
 const createLoanPayment = async (req, res) => {
   try {
     const { loan_id, amount, payment_method, mpesa_code } = req.body;
@@ -123,7 +134,7 @@ const createLoanPayment = async (req, res) => {
       FROM loans
       WHERE id = $1
       `,
-      [loan_id],
+      [loan_id]
     );
 
     if (loanRes.rows.length === 0) {
@@ -136,102 +147,124 @@ const createLoanPayment = async (req, res) => {
 
     const principal = Number(loan.amount);
 
-    const totalInterest = (principal * Number(loan.interest_rate)) / 100;
+    const totalInterest =
+      (principal * Number(loan.interest_rate)) / 100;
 
     const breakdown = await getPaymentBreakdownModel(loan_id);
 
-    const principalAlreadyPaid = Number(breakdown.principal_paid);
+    const principalAlreadyPaid = Number(
+      breakdown.principal_paid
+    );
 
-    const interestAlreadyPaid = Number(breakdown.interest_paid);
+    const interestAlreadyPaid = Number(
+      breakdown.interest_paid
+    );
 
-    const remainingPrincipal = Math.max(principal - principalAlreadyPaid, 0);
+    const remainingPrincipal = Math.max(
+      principal - principalAlreadyPaid,
+      0
+    );
 
-    const remainingInterest = Math.max(totalInterest - interestAlreadyPaid, 0);
+    const remainingInterest = Math.max(
+      totalInterest - interestAlreadyPaid,
+      0
+    );
 
     let remaining = paymentAmount;
 
-    const interestPaid = Math.min(remaining, remainingInterest);
+    const interestPaid = Math.min(
+      remaining,
+      remainingInterest
+    );
 
     remaining -= interestPaid;
 
-    const principalPaid = Math.min(remaining, remainingPrincipal);
+    const principalPaid = Math.min(
+      remaining,
+      remainingPrincipal
+    );
 
     remaining -= principalPaid;
 
     const currentBalance = Number(loan.balance);
 
-    const newBalance = Math.max(currentBalance - paymentAmount, 0);
+    const newBalance = Math.max(
+      currentBalance - paymentAmount,
+      0
+    );
 
     /*
-|--------------------------------------------------------------------------
-| SAVE PAYMENT
-|--------------------------------------------------------------------------
-*/
+    |--------------------------------------------------------------------------
+    | SAVE PAYMENT
+    |--------------------------------------------------------------------------
+    */
 
-const payment = await createLoanPaymentModel(
-  loan_id,
-  paymentAmount,
-  principalPaid,
-  interestPaid,
-  newBalance,
-  payment_method,
-  mpesa_code || null
-);
+    const payment = await createLoanPaymentModel(
+      loan_id,
+      paymentAmount,
+      principalPaid,
+      interestPaid,
+      newBalance,
+      payment_method,
+      mpesa_code || null
+    );
 
-/*
-|--------------------------------------------------------------------------
-| RECALCULATE LOAN
-|--------------------------------------------------------------------------
-*/
+    /*
+    |--------------------------------------------------------------------------
+    | RECALCULATE LOAN
+    |--------------------------------------------------------------------------
+    */
 
-const updatedBalance = await calculateLoanBalance(loan_id);
+    const updatedBalance = await calculateLoanBalance(
+      loan_id
+    );
 
-/*
-|--------------------------------------------------------------------------
-| UPDATE LOAN TABLE
-|--------------------------------------------------------------------------
-*/
+    /*
+    |--------------------------------------------------------------------------
+    | UPDATE LOAN TABLE
+    |--------------------------------------------------------------------------
+    */
 
-const updatedLoan = await updateLoanBalanceModel(
-  loan_id,
-  updatedBalance.totalPayable,
-  updatedBalance.balance
-);
+    const updatedLoan = await updateLoanBalanceModel(
+      loan_id,
+      updatedBalance.totalPayable,
+      updatedBalance.balance
+    );
 
-/*
-|--------------------------------------------------------------------------
-| MARK LOAN AS REPAID
-|--------------------------------------------------------------------------
-*/
+    /*
+    |--------------------------------------------------------------------------
+    | MARK LOAN AS REPAID
+    |--------------------------------------------------------------------------
+    */
 
-if (updatedLoan.balance <= 0) {
-  await pool.query(
-    `
-    UPDATE loans
-    SET
-      status = 'repaid',
-      balance = 0
-    WHERE id = $1
-    `,
-    [loan_id]
-  );
+    if (updatedLoan.balance <= 0) {
+      await pool.query(
+        `
+        UPDATE loans
+        SET
+          status = 'repaid',
+          balance = 0
+        WHERE id = $1
+        `,
+        [loan_id]
+      );
 
-  updatedLoan.status = "repaid";
-  updatedLoan.balance = 0;
-}
+      updatedLoan.status = "repaid";
+      updatedLoan.balance = 0;
+    }
 
-/*
-|--------------------------------------------------------------------------
-| RESPONSE
-|--------------------------------------------------------------------------
-*/
+    /*
+    |--------------------------------------------------------------------------
+    | RESPONSE
+    |--------------------------------------------------------------------------
+    */
 
-return res.status(201).json({
-  message: "Payment recorded successfully",
-  payment,
-  loan: updatedLoan,
-  balance: updatedLoan.balance,
-});
+    return res.status(201).json({
+      message: "Payment recorded successfully",
+      payment,
+      loan: updatedLoan,
+      balance: updatedLoan.balance,
+    });
   } catch (error) {
     console.error(error);
 
@@ -239,7 +272,124 @@ return res.status(201).json({
       message: "Server error",
     });
   }
-}
+};
+
+/*
+|--------------------------------------------------------------------------
+| MEMBER CREATE LOAN PAYMENT
+|--------------------------------------------------------------------------
+*/
+
+const createMyLoanPayment = async (req, res) => {
+  try {
+    const {
+      loan_id,
+      amount,
+      payment_method,
+      mpesa_code,
+    } = req.body;
+
+    const paymentAmount = Number(amount || 0);
+
+    if (!loan_id || paymentAmount <= 0) {
+      return res.status(400).json({
+        message: "Loan and valid payment amount are required.",
+      });
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | CHECK LOAN
+    |--------------------------------------------------------------------------
+    */
+
+    const loanRes = await pool.query(
+      `
+      SELECT
+        l.*,
+        u.fullname
+      FROM loans l
+      INNER JOIN users u
+        ON u.id = l.user_id
+      WHERE l.id = $1
+      `,
+      [loan_id]
+    );
+
+    if (loanRes.rows.length === 0) {
+      return res.status(404).json({
+        message: "Loan not found",
+      });
+    }
+
+    const loan = loanRes.rows[0];
+
+    /*
+    |--------------------------------------------------------------------------
+    | ENSURE MEMBER OWNS LOAN
+    |--------------------------------------------------------------------------
+    */
+
+    if (loan.user_id !== req.user.id) {
+      return res.status(403).json({
+        message: "Unauthorized",
+      });
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | SAVE AS PENDING
+    |--------------------------------------------------------------------------
+    */
+
+    const payment = await createLoanPaymentModel(
+      loan_id,
+      paymentAmount,
+      0,
+      0,
+      loan.balance,
+      payment_method,
+      mpesa_code || null,
+      "pending"
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | NOTIFY SUPER ADMINS
+    |--------------------------------------------------------------------------
+    */
+
+    const admins = await pool.query(`
+      SELECT id
+      FROM users
+      WHERE is_super_admin = true
+    `);
+
+    for (const admin of admins.rows) {
+      await Notification.createNotification({
+        user_id: admin.id,
+        title: "Loan Repayment Submitted",
+        message: `${loan.fullname} submitted a loan repayment of KES ${paymentAmount.toLocaleString()} awaiting approval.`,
+        type: "loan_payment",
+        reference_id: payment.id,
+      });
+    }
+
+    return res.status(201).json({
+      message:
+        "Loan repayment submitted successfully. Awaiting approval.",
+      payment,
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Failed to submit loan repayment.",
+    });
+  }
+};
+
 
 
 /*
@@ -250,7 +400,9 @@ return res.status(201).json({
 
 const getLoanPayments = async (req, res) => {
   try {
-    const payments = await getLoanPaymentsModel(req.params.loanId);
+    const payments = await getLoanPaymentsModel(
+      req.params.loanId
+    );
 
     res.status(200).json(payments);
   } catch (error) {
@@ -260,9 +412,17 @@ const getLoanPayments = async (req, res) => {
   }
 };
 
+/*
+|--------------------------------------------------------------------------
+| GET MY LOAN PAYMENTS
+|--------------------------------------------------------------------------
+*/
+
 const getMyLoanPayments = async (req, res) => {
   try {
-    const payments = await getMyLoanPaymentsModel(req.user.id);
+    const payments = await getMyLoanPaymentsModel(
+      req.user.id
+    );
 
     res.status(200).json(payments);
   } catch (error) {
@@ -282,11 +442,14 @@ const getMyLoanPayments = async (req, res) => {
 
 const getLoanBalance = async (req, res) => {
   try {
-    const balance = await calculateLoanBalance(req.params.loanId);
+    const balance = await calculateLoanBalance(
+      req.params.loanId
+    );
 
     res.json(balance);
   } catch (error) {
     console.log(error);
+
     res.status(500).json({
       message: error.message || "Server error",
     });
@@ -295,6 +458,7 @@ const getLoanBalance = async (req, res) => {
 
 module.exports = {
   createLoanPayment,
+  createMyLoanPayment,
   getLoanPayments,
   getLoanBalance,
   getAllLoanPayments,
