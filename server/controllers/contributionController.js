@@ -13,7 +13,7 @@ const pool = require("../config/db");
 
 /*
 |--------------------------------------------------------------------------
-| CREATE
+| CREATE (SUPER ADMIN / ADMIN)
 |--------------------------------------------------------------------------
 */
 
@@ -23,12 +23,12 @@ const createContribution = async (req, res) => {
 
     const group = await pool.query(
       `
-          SELECT group_id
-          FROM user_groups
-          WHERE user_id = $1
-          LIMIT 1
-          `,
-      [user_id],
+      SELECT group_id
+      FROM user_groups
+      WHERE user_id = $1
+      LIMIT 1
+      `,
+      [user_id]
     );
 
     const groupId = group.rows[0]?.group_id;
@@ -39,6 +39,7 @@ const createContribution = async (req, res) => {
       });
     }
 
+    // Super Admin/Admin contributions are automatically approved
     const contribution = await createContributionModel(
       user_id,
       groupId,
@@ -46,10 +47,19 @@ const createContribution = async (req, res) => {
       payment_method,
       mpesa_code || null,
       req.user.id,
+      "completed"
     );
 
+    await Notification.createNotification({
+      user_id,
+      title: "Contribution Received",
+      message: `A contribution of KES ${Number(amount).toLocaleString()} has been recorded by the administrator.`,
+      type: "contribution",
+      reference_id: contribution.id,
+    });
+
     res.status(201).json({
-      message: "Contribution added successfully",
+      message: "Contribution recorded successfully",
       contribution,
     });
   } catch (error) {
@@ -61,6 +71,13 @@ const createContribution = async (req, res) => {
   }
 };
 
+
+/*
+|--------------------------------------------------------------------------
+| MEMBER CREATE CONTRIBUTION
+|--------------------------------------------------------------------------
+*/
+
 const createMyContribution = async (req, res) => {
   try {
     const { amount, payment_method, mpesa_code } = req.body;
@@ -69,21 +86,21 @@ const createMyContribution = async (req, res) => {
 
     const member = await pool.query(
       `
-        SELECT id, fullname
-        FROM users
-        WHERE id = $1
-        `,
-      [userId],
+      SELECT id, fullname
+      FROM users
+      WHERE id = $1
+      `,
+      [userId]
     );
 
     const group = await pool.query(
       `
-        SELECT group_id
-        FROM user_groups
-        WHERE user_id = $1
-        LIMIT 1
-        `,
-      [userId],
+      SELECT group_id
+      FROM user_groups
+      WHERE user_id = $1
+      LIMIT 1
+      `,
+      [userId]
     );
 
     const groupId = group.rows[0]?.group_id;
@@ -94,6 +111,7 @@ const createMyContribution = async (req, res) => {
       });
     }
 
+    // Member submissions require approval
     const contribution = await createContributionModel(
       userId,
       groupId,
@@ -101,21 +119,7 @@ const createMyContribution = async (req, res) => {
       payment_method,
       mpesa_code || null,
       userId,
-    );
-
-    /*
-    |--------------------------------------------------------------------------
-    | SET STATUS TO PENDING
-    |--------------------------------------------------------------------------
-    */
-
-    await pool.query(
-      `
-      UPDATE contributions
-      SET status = 'pending'
-      WHERE id = $1
-      `,
-      [contribution.id],
+      "pending"
     );
 
     /*
@@ -124,30 +128,28 @@ const createMyContribution = async (req, res) => {
     |--------------------------------------------------------------------------
     */
 
-    const admins = await pool.query(
-      `
-        SELECT id
-        FROM users
-        WHERE is_super_admin = true
-        `,
-    );
+    const admins = await pool.query(`
+      SELECT id
+      FROM users
+      WHERE is_super_admin = true
+    `);
 
     for (const admin of admins.rows) {
       await Notification.createNotification({
         user_id: admin.id,
         title: "New Contribution Submitted",
         message: `${member.rows[0].fullname} submitted KES ${Number(
-          amount,
-        ).toLocaleString()}
-        via ${payment_method}.
-        Mpesa Code: ${mpesa_code || "N/A"}`,
+          amount
+        ).toLocaleString()} via ${payment_method}. Mpesa Code: ${
+          mpesa_code || "N/A"
+        }`,
         type: "contribution",
         reference_id: contribution.id,
       });
     }
 
     res.status(201).json({
-      message: "Contribution submitted successfully",
+      message: "Contribution submitted successfully. Awaiting approval.",
       contribution,
     });
   } catch (error) {
@@ -158,6 +160,7 @@ const createMyContribution = async (req, res) => {
     });
   }
 };
+
 
 const getMyContributions = async (req, res) => {
   try {
