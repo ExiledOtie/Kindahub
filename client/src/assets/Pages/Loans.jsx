@@ -232,3 +232,5 @@ const Loans = () => {
     </div>
   );
 };
+
+export default Loans;
