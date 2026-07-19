@@ -278,14 +278,61 @@ const getLoanStatsModel = async () => {
 */
 
 const updateLoanInterestModel = async (loanId, interestRate) => {
+  // Get loan
+  const loanResult = await pool.query(
+    `
+    SELECT *
+    FROM loans
+    WHERE id=$1
+    `,
+    [loanId]
+  );
+
+  const loan = loanResult.rows[0];
+
+  if (!loan) return null;
+
+  // Total amount already paid
+  const paymentResult = await pool.query(
+    `
+    SELECT
+      COALESCE(SUM(amount),0) AS total_paid
+    FROM loan_payments
+    WHERE loan_id=$1
+    `,
+    [loanId]
+  );
+
+  const totalPaid = Number(paymentResult.rows[0].total_paid);
+
+  const totalInterest =
+    (Number(loan.amount) * Number(interestRate)) / 100;
+
+  const totalPayable =
+    Number(loan.amount) + totalInterest;
+
+  const balance =
+    Math.max(totalPayable - totalPaid, 0);
+
   const result = await pool.query(
     `
     UPDATE loans
-    SET interest_rate = $2
-    WHERE id = $1
+
+    SET
+      interest_rate=$2,
+      total_payable=$3,
+      balance=$4
+
+    WHERE id=$1
+
     RETURNING *
     `,
-    [loanId, interestRate],
+    [
+      loanId,
+      interestRate,
+      totalPayable,
+      balance,
+    ]
   );
 
   return result.rows[0];

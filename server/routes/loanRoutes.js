@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+
 const authMiddleware = require("../middleware/authMiddleware");
 
 const {
@@ -27,7 +28,7 @@ router.post("/", authMiddleware, createLoan);
 
 /*
 |--------------------------------------------------------------------------
-| GET ALL LOANS
+| ADMIN LOANS
 |--------------------------------------------------------------------------
 */
 
@@ -43,7 +44,7 @@ router.get("/user/:userId", authMiddleware, getUserLoans);
 
 /*
 |--------------------------------------------------------------------------
-| LOAN STATS
+| LOAN STATISTICS
 |--------------------------------------------------------------------------
 */
 
@@ -51,16 +52,21 @@ router.get("/stats", authMiddleware, getLoanStats);
 
 /*
 |--------------------------------------------------------------------------
-| SINGLE LOAN
+| MEMBER LOANS
 |--------------------------------------------------------------------------
 */
-router.post("/my", authMiddleware, createMyLoan);
 
-router.get("/my/active", authMiddleware, getMyActiveLoan);
+router.post("/my", authMiddleware, createMyLoan);
 
 router.get("/my", authMiddleware, getMyLoans);
 
-router.get("/user/:userId", authMiddleware, getUserLoans);
+router.get("/my/active", authMiddleware, getMyActiveLoan);
+
+/*
+|--------------------------------------------------------------------------
+| SINGLE LOAN
+|--------------------------------------------------------------------------
+*/
 
 router.get("/:id", authMiddleware, getSingleLoan);
 
@@ -87,14 +93,6 @@ router.patch("/:id/reject", authMiddleware, rejectLoan);
 */
 
 router.patch("/:id/interest", authMiddleware, updateLoanInterest);
-
-/*
-|--------------------------------------------------------------------------
-| APPROVE LOAN WITH OPTIONAL INTEREST
-|--------------------------------------------------------------------------
-*/
-
-router.patch("/:id/approve", authMiddleware, approveLoan);
 
 /*
 |--------------------------------------------------------------------------

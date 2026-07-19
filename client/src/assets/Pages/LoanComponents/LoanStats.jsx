@@ -14,30 +14,22 @@ const LoanStats = ({ loans = [] }) => {
     const totalLoans = loans.length;
 
     const pendingLoans = loans.filter(
-      (loan) => loan.status === "pending"
+      (loan) => loan.status === "pending",
     ).length;
 
     const approvedLoans = loans.filter(
-      (loan) => loan.status === "approved"
+      (loan) => loan.status === "approved",
     ).length;
 
-    const repaidLoans = loans.filter(
-      (loan) => loan.status === "repaid"
-    ).length;
+    const repaidLoans = loans.filter((loan) => loan.status === "repaid").length;
 
     const outstandingBalance = loans
       .filter((loan) => loan.status === "approved")
-      .reduce(
-        (sum, loan) => sum + Number(loan.balance || 0),
-        0
-      );
+      .reduce((sum, loan) => sum + Number(loan.balance || 0), 0);
 
     const interestEarned = loans.reduce((sum, loan) => {
       return (
-        sum +
-        Number(loan.amount || 0) *
-          Number(loan.interest_rate || 0) /
-          100
+        sum + (Number(loan.amount || 0) * Number(loan.interest_rate || 0)) / 100
       );
     }, 0);
 
@@ -98,7 +90,6 @@ const LoanStats = ({ loans = [] }) => {
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-
       {cards.map((card) => {
         const Icon = card.icon;
 
@@ -108,15 +99,10 @@ const LoanStats = ({ loans = [] }) => {
             className="bg-white border rounded-xl p-4 hover:shadow-md transition-all"
           >
             <div className="flex items-center justify-between">
-
               <div>
-                <p className="text-[10px] text-gray-500">
-                  {card.title}
-                </p>
+                <p className="text-[10px] text-gray-500">{card.title}</p>
 
-                <h3 className="text-lg font-bold mt-1">
-                  {card.value}
-                </h3>
+                <h3 className="text-lg font-bold mt-1">{card.value}</h3>
               </div>
 
               <div
@@ -124,7 +110,6 @@ const LoanStats = ({ loans = [] }) => {
               >
                 <Icon className={`${card.color} text-lg`} />
               </div>
-
             </div>
           </div>
         );
