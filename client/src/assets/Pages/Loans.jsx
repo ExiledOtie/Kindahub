@@ -28,6 +28,8 @@ const Loans = () => {
   const [interestModal, setInterestModal] = useState(false);
   const [interestRate, setInterestRate] = useState("");
   const [loanToApprove, setLoanToApprove] = useState(null);
+  const [interestAction, setInterestAction] = useState("approve");
+  // approve | update
 
   const fetchLoans = async () => {
     try {
@@ -132,6 +134,42 @@ const Loans = () => {
       setActionLoading(null);
     }
   };
+  const updateInterest = async () => {
+    try {
+      setActionLoading({
+        type: "interest",
+        id: loanToApprove.id,
+      });
+
+      await axios.patch(`/loans/${loanToApprove.id}/interest`, {
+        interest_rate: Number(interestRate),
+      });
+
+      Swal.fire("Success", "Interest rate updated successfully", "success");
+
+      setInterestModal(false);
+      setLoanToApprove(null);
+      setInterestRate("");
+      setInterestAction("approve");
+
+      fetchLoans();
+
+      if (selectedLoan) {
+        setSelectedLoan({
+          ...selectedLoan,
+          interest_rate: Number(interestRate),
+        });
+      }
+    } catch (err) {
+      Swal.fire(
+        "Error",
+        err.response?.data?.message || "Failed to update interest rate",
+        "error",
+      );
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   const rejectLoan = async (loanId) => {
     try {
@@ -186,25 +224,38 @@ const Loans = () => {
 
       {selectedLoan && (
         <LoanDetailsModal
+          open={!!selectedLoan}
           loan={selectedLoan}
+          progress={loanProgress[selectedLoan?.id] || 0}
           onClose={() => setSelectedLoan(null)}
           onApprove={(loan) => {
             setLoanToApprove(loan);
-            setInterestRate(loan.interest_rate || "");
+            setInterestRate(loan.interest_rate);
+            setInterestModal(true);
+          }}
+          onEditInterest={(loan) => {
+            setLoanToApprove(loan);
+            setInterestRate(loan.interest_rate);
             setInterestModal(true);
           }}
           onReject={rejectLoan}
-          actionLoading={actionLoading}
+          onRepayments={(loan) => navigate(`/loan-repayments/${loan.id}`)}
         />
       )}
 
       {interestModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl w-full max-w-sm p-6 space-y-4">
-            <h2 className="text-lg font-semibold">Approve Loan</h2>
+            <h2 className="text-lg font-semibold">
+              {interestAction === "approve"
+                ? "Approve Loan"
+                : "Update Interest Rate"}
+            </h2>
 
             <p className="text-sm text-gray-500">
-              You may adjust the interest rate before approving.
+              {interestAction === "approve"
+                ? "Adjust the interest before approving."
+                : "Change the interest rate for this loan."}
             </p>
 
             <div>
@@ -219,7 +270,7 @@ const Loans = () => {
             </div>
 
             {loanToApprove && (
-              <div className="bg-gray-50 rounded-lg p-3 text-sm">
+              <div className="bg-gray-50 rounded-lg p-3 text-sm space-y-1">
                 <p>
                   <strong>Member:</strong> {loanToApprove.fullname}
                 </p>
@@ -227,6 +278,11 @@ const Loans = () => {
                 <p>
                   <strong>Loan:</strong> KES{" "}
                   {Number(loanToApprove.amount).toLocaleString()}
+                </p>
+
+                <p>
+                  <strong>Current Interest:</strong>{" "}
+                  {loanToApprove.interest_rate}%
                 </p>
               </div>
             )}
@@ -237,6 +293,7 @@ const Loans = () => {
                   setInterestModal(false);
                   setLoanToApprove(null);
                   setInterestRate("");
+                  setInterestAction("approve");
                 }}
                 className="px-4 py-2 border rounded-lg"
               >
@@ -244,15 +301,21 @@ const Loans = () => {
               </button>
 
               <button
-                onClick={approveLoan}
-                disabled={
-                  actionLoading?.type === "approve" || interestRate === ""
-                }
-                className="px-4 py-2 bg-green-600 text-white rounded-lg disabled:opacity-50"
+                disabled={actionLoading || interestRate === ""}
+                onClick={() => {
+                  if (interestAction === "approve") {
+                    approveLoan();
+                  } else {
+                    updateInterest();
+                  }
+                }}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg"
               >
-                {actionLoading?.type === "approve"
-                  ? "Approving..."
-                  : "Approve Loan"}
+                {actionLoading
+                  ? "Saving..."
+                  : interestAction === "approve"
+                    ? "Approve Loan"
+                    : "Update Interest"}
               </button>
             </div>
           </div>

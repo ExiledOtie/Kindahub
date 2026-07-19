@@ -6,8 +6,6 @@ import {
   FaCreditCard,
   FaCalendarAlt,
   FaMoneyBillWave,
-  FaPercentage,
-  FaClock,
   FaUser,
 } from "react-icons/fa";
 
@@ -26,26 +24,27 @@ const LoanDetailsModal = ({
 }) => {
   if (!open || !loan) return null;
 
-  const formatMoney = (value) => `KES ${Number(value || 0).toLocaleString()}`;
+  const money = (value) => `KES ${Number(value || 0).toLocaleString()}`;
 
-  const formatDate = (date) => {
-    if (!date) return "-";
-    return new Date(date).toLocaleString();
+  const date = (value) => {
+    if (!value) return "—";
+    return new Date(value).toLocaleString();
   };
 
-  const monthlyInstallment =
-    Number(loan.total_payable || 0) / Number(loan.duration_months || 1);
+  const monthlyPayment =
+    Number(loan.total_payable || 0) /
+    Math.max(Number(loan.duration_months || 1), 1);
 
   return (
     <div
-      className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-4"
       onClick={onClose}
+      className="fixed inset-0 bg-black/40 z-50 flex justify-center items-center p-4"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-white rounded-xl w-full max-w-4xl shadow-xl overflow-hidden"
+        className="bg-white rounded-xl shadow-xl w-full max-w-5xl overflow-hidden"
       >
-        {/* HEADER */}
+        {/* Header */}
 
         <div className="bg-green-600 text-white px-6 py-4 flex justify-between items-center">
           <div>
@@ -63,141 +62,140 @@ const LoanDetailsModal = ({
         </div>
 
         <div className="p-6 space-y-6">
-          {/* MEMBER */}
+          {/* Top Cards */}
 
           <div className="grid md:grid-cols-2 gap-5">
-            <div className="border rounded-xl p-4">
-              <h3 className="font-semibold mb-3 flex items-center gap-2">
+            {/* Member */}
+
+            <div className="border rounded-xl p-5">
+              <h3 className="font-semibold flex items-center gap-2 mb-4">
                 <FaUser />
-                Member
+                Member Information
               </h3>
 
-              <div className="space-y-2 text-sm">
+              <div className="space-y-3 text-sm">
                 <div>
-                  <span className="text-gray-500">Name</span>
-
+                  <p className="text-gray-500">Full Name</p>
                   <p className="font-medium">{loan.fullname}</p>
                 </div>
 
                 <div>
-                  <span className="text-gray-500">Group</span>
-
-                  <p className="font-medium">{loan.group_name}</p>
+                  <p className="text-gray-500">Username</p>
+                  <p>{loan.username}</p>
                 </div>
 
                 <div>
-                  <span className="text-gray-500">Status</span>
+                  <p className="text-gray-500">Group</p>
+                  <p>{loan.group_name}</p>
+                </div>
 
-                  <div className="mt-1">
-                    <StatusBadge status={loan.status} />
-                  </div>
+                <div>
+                  <p className="text-gray-500 mb-1">Status</p>
+                  <StatusBadge status={loan.status} />
                 </div>
               </div>
             </div>
 
-            {/* LOAN */}
+            {/* Loan */}
 
-            <div className="border rounded-xl p-4">
-              <h3 className="font-semibold mb-3 flex items-center gap-2">
+            <div className="border rounded-xl p-5">
+              <h3 className="font-semibold flex items-center gap-2 mb-4">
                 <FaMoneyBillWave />
                 Loan Information
               </h3>
 
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="text-gray-500">Amount</span>
-
+                  <p className="text-gray-500">Loan Amount</p>
                   <p className="font-semibold text-green-600">
-                    {formatMoney(loan.amount)}
+                    {money(loan.amount)}
                   </p>
                 </div>
 
                 <div>
-                  <span className="text-gray-500">Balance</span>
-
+                  <p className="text-gray-500">Outstanding</p>
                   <p className="font-semibold text-red-600">
-                    {formatMoney(loan.balance)}
+                    {money(loan.balance)}
                   </p>
                 </div>
 
                 <div>
-                  <span className="text-gray-500">Interest</span>
+                  <p className="text-gray-500">Interest Rate</p>
 
-                  <p>{loan.interest_rate}%</p>
+                  <p className="font-semibold text-orange-600">
+                    {loan.interest_rate}%
+                  </p>
                 </div>
 
                 <div>
-                  <span className="text-gray-500">Duration</span>
-
+                  <p className="text-gray-500">Duration</p>
                   <p>{loan.duration_months} Months</p>
                 </div>
 
                 <div>
-                  <span className="text-gray-500">Total Payable</span>
-
-                  <p>{formatMoney(loan.total_payable)}</p>
+                  <p className="text-gray-500">Total Payable</p>
+                  <p>{money(loan.total_payable)}</p>
                 </div>
 
                 <div>
-                  <span className="text-gray-500">Monthly Payment</span>
-
-                  <p>{formatMoney(monthlyInstallment)}</p>
+                  <p className="text-gray-500">Monthly Installment</p>
+                  <p>{money(monthlyPayment)}</p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* PROGRESS */}
+          {/* Progress */}
 
-          <div className="border rounded-xl p-4">
+          <div className="border rounded-xl p-5">
             <div className="flex justify-between mb-3">
               <h3 className="font-semibold">Repayment Progress</h3>
 
-              <span className="text-sm">{progress.toFixed(0)}%</span>
+              <span>{progress.toFixed(1)}%</span>
             </div>
 
             <ProgressBar progress={progress} />
           </div>
 
-          {/* DATES */}
+          {/* Timeline */}
 
-          <div className="border rounded-xl p-4">
-            <h3 className="font-semibold mb-4 flex items-center gap-2">
+          <div className="border rounded-xl p-5">
+            <h3 className="font-semibold flex items-center gap-2 mb-5">
               <FaCalendarAlt />
-              Timeline
+              Loan Timeline
             </h3>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5 text-sm">
               <div>
-                <p className="text-gray-500">Requested</p>
+                <p className="text-gray-500">Requested On</p>
 
-                <p>{formatDate(loan.requested_at || loan.created_at)}</p>
+                <p className="font-medium">{date(loan.created_at)}</p>
               </div>
 
               <div>
-                <p className="text-gray-500">Approved</p>
+                <p className="text-gray-500">Approved On</p>
 
-                <p>{formatDate(loan.approved_at)}</p>
+                <p className="font-medium">{date(loan.approved_at)}</p>
               </div>
 
               <div>
-                <p className="text-gray-500">Rejected</p>
+                <p className="text-gray-500">Rejected On</p>
 
-                <p>{formatDate(loan.rejected_at)}</p>
+                <p className="font-medium">{date(loan.rejected_at)}</p>
               </div>
 
               <div>
-                <p className="text-gray-500">Completed</p>
+                <p className="text-gray-500">Fully Paid On</p>
 
-                <p>{formatDate(loan.completed_at)}</p>
+                <p className="font-medium">{date(loan.completed_at)}</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* FOOTER */}
+        {/* Footer */}
 
-        <div className="border-t px-6 py-4 flex flex-wrap justify-end gap-3">
+        <div className="border-t px-6 py-4 flex justify-end gap-3 flex-wrap">
           <button onClick={onClose} className="px-4 py-2 border rounded-lg">
             Close
           </button>
@@ -205,7 +203,7 @@ const LoanDetailsModal = ({
           {(loan.status === "pending" || loan.status === "approved") && (
             <button
               onClick={() => onEditInterest(loan)}
-              className="px-4 py-2 bg-yellow-500 text-white rounded-lg flex items-center gap-2"
+              className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg flex items-center gap-2"
             >
               <FaEdit />
               Change Interest
@@ -215,10 +213,10 @@ const LoanDetailsModal = ({
           {loan.status === "approved" && (
             <button
               onClick={() => onRepayments(loan)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2"
             >
               <FaCreditCard />
-              Repayments
+              View Repayments
             </button>
           )}
 
@@ -226,7 +224,7 @@ const LoanDetailsModal = ({
             <>
               <button
                 onClick={() => onReject(loan.id)}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg flex items-center gap-2"
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center gap-2"
               >
                 <FaBan />
                 Reject
@@ -235,10 +233,9 @@ const LoanDetailsModal = ({
               <button
                 onClick={() => {
                   onClose();
-
                   onApprove(loan);
                 }}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg flex items-center gap-2"
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-2"
               >
                 <FaCheck />
                 Approve
