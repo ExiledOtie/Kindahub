@@ -25,6 +25,10 @@ const Loans = () => {
 
   const [actionLoading, setActionLoading] = useState(null);
 
+  const [interestModal, setInterestModal] = useState(false);
+  const [interestRate, setInterestRate] = useState("");
+  const [loanToApprove, setLoanToApprove] = useState(null);
+
   const fetchLoans = async () => {
     try {
       setLoading(true);
@@ -99,21 +103,31 @@ const Loans = () => {
     return filteredLoans.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredLoans, page]);
 
-  const approveLoan = async (loanId) => {
+  const approveLoan = async () => {
     try {
       setActionLoading({
         type: "approve",
-        id: loanId,
+        id: loanToApprove.id,
       });
 
-      await axios.patch(`/loans/${loanId}/approve`);
+      await axios.patch(`/loans/${loanToApprove.id}/approve`, {
+        interest_rate: Number(interestRate),
+      });
 
       Swal.fire("Approved", "Loan approved successfully", "success");
 
+      setInterestModal(false);
+      setLoanToApprove(null);
+      setInterestRate("");
+
       fetchLoans();
       setSelectedLoan(null);
-    } catch {
-      Swal.fire("Error", "Failed to approve loan", "error");
+    } catch (err) {
+      Swal.fire(
+        "Error",
+        err.response?.data?.message || "Failed to approve loan",
+        "error",
+      );
     } finally {
       setActionLoading(null);
     }
@@ -174,10 +188,75 @@ const Loans = () => {
         <LoanDetailsModal
           loan={selectedLoan}
           onClose={() => setSelectedLoan(null)}
-          onApprove={approveLoan}
+          onApprove={(loan) => {
+            setLoanToApprove(loan);
+            setInterestRate(loan.interest_rate || "");
+            setInterestModal(true);
+          }}
           onReject={rejectLoan}
           actionLoading={actionLoading}
         />
+      )}
+
+      {interestModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl w-full max-w-sm p-6 space-y-4">
+            <h2 className="text-lg font-semibold">Approve Loan</h2>
+
+            <p className="text-sm text-gray-500">
+              You may adjust the interest rate before approving.
+            </p>
+
+            <div>
+              <label className="block text-sm mb-1">Interest Rate (%)</label>
+
+              <input
+                type="number"
+                value={interestRate}
+                onChange={(e) => setInterestRate(e.target.value)}
+                className="w-full border rounded-lg px-3 py-2"
+              />
+            </div>
+
+            {loanToApprove && (
+              <div className="bg-gray-50 rounded-lg p-3 text-sm">
+                <p>
+                  <strong>Member:</strong> {loanToApprove.fullname}
+                </p>
+
+                <p>
+                  <strong>Loan:</strong> KES{" "}
+                  {Number(loanToApprove.amount).toLocaleString()}
+                </p>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setInterestModal(false);
+                  setLoanToApprove(null);
+                  setInterestRate("");
+                }}
+                className="px-4 py-2 border rounded-lg"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={approveLoan}
+                disabled={
+                  actionLoading?.type === "approve" || interestRate === ""
+                }
+                className="px-4 py-2 bg-green-600 text-white rounded-lg disabled:opacity-50"
+              >
+                {actionLoading?.type === "approve"
+                  ? "Approving..."
+                  : "Approve Loan"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

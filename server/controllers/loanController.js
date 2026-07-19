@@ -341,7 +341,11 @@ const approveLoan = async (req, res) => {
       });
     }
 
-    const updatedLoan = await approveLoanModel(req.params.id, req.user.id, req.body.interest_rate);
+    const updatedLoan = await approveLoanModel(
+      req.params.id,
+      req.user.id,
+      req.body.interest_rate,
+    );
     await Notification.createNotification({
       user_id: updatedLoan.user_id,
       title: "Loan Approved",
@@ -357,10 +361,11 @@ const approveLoan = async (req, res) => {
       loan: updatedLoan,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
 
     res.status(500).json({
-      message: "Server error",
+      message: error.message,
+      stack: error.stack,
     });
   }
 };
