@@ -3,6 +3,7 @@ import axios from "../Utils/axios";
 import Swal from "sweetalert2";
 import { ClipLoader } from "react-spinners";
 import { useNavigate } from "react-router-dom";
+
 import LoanStats from "./LoanComponents/LoanStats";
 import LoanFilters from "./LoanComponents/LoanFilters";
 import LoanTable from "./LoanComponents/LoanTable";
