@@ -8,6 +8,8 @@ import LoanFilters from "./LoanComponents/LoanFilters";
 import LoanTable from "./LoanComponents/LoanTable";
 import LoanPagination from "./LoanComponents/LoanPagination";
 import LoanDetailsModal from "./LoanComponents/LoanDetailsModal";
+import ApproveLoanModal from "./LoanComponents/ApproveLoanModal";
+import EditInterestModal from "./LoanComponents/EditInterestModal";
 
 const ITEMS_PER_PAGE = 8;
 
@@ -21,13 +23,18 @@ const Loans = () => {
   const [page, setPage] = useState(1);
 
   const [loanProgress, setLoanProgress] = useState({});
+
   const [selectedLoan, setSelectedLoan] = useState(null);
 
   const [actionLoading, setActionLoading] = useState(null);
 
-  const [interestModal, setInterestModal] = useState(false);
-  const [interestRate, setInterestRate] = useState("");
+  // Approval Modal
+  const [showApproveModal, setShowApproveModal] = useState(false);
   const [loanToApprove, setLoanToApprove] = useState(null);
+
+  // Edit Interest Modal
+  const [showInterestModal, setShowInterestModal] = useState(false);
+  const [loanToEdit, setLoanToEdit] = useState(null);
 
   const fetchLoans = async () => {
     try {
@@ -60,13 +67,13 @@ const Loans = () => {
 
       const progressMap = {};
 
-      balances.forEach((b) => {
-        progressMap[b.id] = b.progress;
+      balances.forEach((item) => {
+        progressMap[item.id] = item.progress;
       });
 
       setLoanProgress(progressMap);
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       Swal.fire("Error", "Failed to load loans", "error");
     } finally {
@@ -78,20 +85,24 @@ const Loans = () => {
     fetchLoans();
   }, []);
 
+  const groups = useMemo(() => {
+    return [...new Set(loans.map((loan) => loan.group_name).filter(Boolean))];
+  }, [loans]);
+
   const filteredLoans = useMemo(() => {
     return loans.filter((loan) => {
-      const searchMatch =
+      const matchesSearch =
         loan.fullname?.toLowerCase().includes(search.toLowerCase()) ||
         loan.username?.toLowerCase().includes(search.toLowerCase()) ||
         loan.id.toString().includes(search);
 
-      const statusMatch =
+      const matchesStatus =
         statusFilter === "all" || loan.status === statusFilter;
 
-      const groupMatch =
+      const matchesGroup =
         groupFilter === "all" || loan.group_name === groupFilter;
 
-      return searchMatch && statusMatch && groupMatch;
+      return matchesSearch && matchesStatus && matchesGroup;
     });
   }, [loans, search, statusFilter, groupFilter]);
 
@@ -102,36 +113,6 @@ const Loans = () => {
 
     return filteredLoans.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredLoans, page]);
-
-  const approveLoan = async () => {
-    try {
-      setActionLoading({
-        type: "approve",
-        id: loanToApprove.id,
-      });
-
-      await axios.patch(`/loans/${loanToApprove.id}/approve`, {
-        interest_rate: Number(interestRate),
-      });
-
-      Swal.fire("Approved", "Loan approved successfully", "success");
-
-      setInterestModal(false);
-      setLoanToApprove(null);
-      setInterestRate("");
-
-      fetchLoans();
-      setSelectedLoan(null);
-    } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Failed to approve loan",
-        "error",
-      );
-    } finally {
-      setActionLoading(null);
-    }
-  };
 
   const rejectLoan = async (loanId) => {
     try {
@@ -145,12 +126,41 @@ const Loans = () => {
       Swal.fire("Rejected", "Loan rejected successfully", "success");
 
       fetchLoans();
+
       setSelectedLoan(null);
-    } catch {
-      Swal.fire("Error", "Failed to reject loan", "error");
+    } catch (err) {
+      Swal.fire(
+        "Error",
+        err.response?.data?.message || "Failed to reject loan",
+        "error",
+      );
     } finally {
       setActionLoading(null);
     }
+  };
+
+  const openApproveModal = (loan) => {
+    setLoanToApprove(loan);
+    setShowApproveModal(true);
+  };
+
+  const openInterestModal = (loan) => {
+    setLoanToEdit(loan);
+    setShowInterestModal(true);
+  };
+
+  const handleSuccess = () => {
+    fetchLoans();
+
+    setSelectedLoan(null);
+
+    setShowApproveModal(false);
+
+    setShowInterestModal(false);
+
+    setLoanToApprove(null);
+
+    setLoanToEdit(null);
   };
 
   if (loading) {
@@ -160,106 +170,65 @@ const Loans = () => {
       </div>
     );
   }
-
   return (
     <div className="space-y-4">
       <LoanStats loans={loans} />
 
       <LoanFilters
-        loans={loans}
         search={search}
         setSearch={setSearch}
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
         groupFilter={groupFilter}
         setGroupFilter={setGroupFilter}
+        groups={groups}
         setPage={setPage}
       />
 
       <LoanTable
         loans={paginatedLoans}
-        progress={loanProgress}
+        loanProgress={loanProgress}
         onView={(loan) => setSelectedLoan(loan)}
+        onEditInterest={openInterestModal}
+        onRepayments={(loan) => {
+          window.location.href = `/loan-repayments/${loan.id}`;
+        }}
       />
 
       <LoanPagination page={page} totalPages={totalPages} setPage={setPage} />
 
-      {selectedLoan && (
-        <LoanDetailsModal
-          loan={selectedLoan}
-          onClose={() => setSelectedLoan(null)}
-          onApprove={(loan) => {
-            setLoanToApprove(loan);
-            setInterestRate(loan.interest_rate || "");
-            setInterestModal(true);
-          }}
-          onReject={rejectLoan}
-          actionLoading={actionLoading}
-        />
-      )}
+      <LoanDetailsModal
+        open={!!selectedLoan}
+        loan={selectedLoan}
+        progress={selectedLoan ? loanProgress[selectedLoan.id] || 0 : 0}
+        onClose={() => setSelectedLoan(null)}
+        onApprove={openApproveModal}
+        onReject={rejectLoan}
+        onEditInterest={openInterestModal}
+        onRepayments={(loan) => {
+          window.location.href = `/loan-repayments/${loan.id}`;
+        }}
+      />
 
-      {interestModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl w-full max-w-sm p-6 space-y-4">
-            <h2 className="text-lg font-semibold">Approve Loan</h2>
+      <ApproveLoanModal
+        open={showApproveModal}
+        loan={loanToApprove}
+        onClose={() => {
+          setShowApproveModal(false);
+          setLoanToApprove(null);
+        }}
+        onSuccess={handleSuccess}
+      />
 
-            <p className="text-sm text-gray-500">
-              You may adjust the interest rate before approving.
-            </p>
-
-            <div>
-              <label className="block text-sm mb-1">Interest Rate (%)</label>
-
-              <input
-                type="number"
-                value={interestRate}
-                onChange={(e) => setInterestRate(e.target.value)}
-                className="w-full border rounded-lg px-3 py-2"
-              />
-            </div>
-
-            {loanToApprove && (
-              <div className="bg-gray-50 rounded-lg p-3 text-sm">
-                <p>
-                  <strong>Member:</strong> {loanToApprove.fullname}
-                </p>
-
-                <p>
-                  <strong>Loan:</strong> KES{" "}
-                  {Number(loanToApprove.amount).toLocaleString()}
-                </p>
-              </div>
-            )}
-
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => {
-                  setInterestModal(false);
-                  setLoanToApprove(null);
-                  setInterestRate("");
-                }}
-                className="px-4 py-2 border rounded-lg"
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={approveLoan}
-                disabled={
-                  actionLoading?.type === "approve" || interestRate === ""
-                }
-                className="px-4 py-2 bg-green-600 text-white rounded-lg disabled:opacity-50"
-              >
-                {actionLoading?.type === "approve"
-                  ? "Approving..."
-                  : "Approve Loan"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <EditInterestModal
+        open={showInterestModal}
+        loan={loanToEdit}
+        onClose={() => {
+          setShowInterestModal(false);
+          setLoanToEdit(null);
+        }}
+        onSuccess={handleSuccess}
+      />
     </div>
   );
 };
-
-export default Loans;

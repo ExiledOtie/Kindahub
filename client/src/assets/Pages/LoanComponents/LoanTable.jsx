@@ -38,6 +38,8 @@ const LoanTable = ({
 
               <th className="px-4 py-3 text-center">Approved</th>
 
+              <th className="px-4 py-3 text-center">Paid Off</th>
+
               <th className="px-4 py-3 text-center">Status</th>
 
               <th className="px-4 py-3">Progress</th>
@@ -82,6 +84,10 @@ const LoanTable = ({
                   </td>
 
                   <td className="px-4 py-3 text-center">
+                    {formatDate(loan.paid_off_at)}
+                  </td>
+
+                  <td className="px-4 py-3 text-center">
                     <StatusBadge status={loan.status} />
                   </td>
 
@@ -92,7 +98,6 @@ const LoanTable = ({
                   <td className="px-4 py-3">
                     <div className="flex justify-center gap-2">
                       {/* VIEW */}
-
                       <button
                         onClick={() => onView(loan)}
                         className="h-8 w-8 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200"
@@ -101,23 +106,23 @@ const LoanTable = ({
                       </button>
 
                       {/* EDIT INTEREST */}
-
                       {(loan.status === "pending" ||
                         loan.status === "approved") && (
                         <button
                           onClick={() => onEditInterest(loan)}
                           className="h-8 w-8 rounded-lg bg-yellow-100 text-yellow-600 hover:bg-yellow-200"
+                          title="Change Interest"
                         >
                           <FaEdit className="mx-auto" />
                         </button>
                       )}
 
                       {/* REPAYMENTS */}
-
                       {loan.status === "approved" && (
                         <button
                           onClick={() => onRepayments(loan)}
                           className="h-8 w-8 rounded-lg bg-green-100 text-green-600 hover:bg-green-200"
+                          title="View Repayments"
                         >
                           <FaCreditCard className="mx-auto" />
                         </button>
@@ -128,7 +133,7 @@ const LoanTable = ({
               ))
             ) : (
               <tr>
-                <td colSpan={10} className="py-12 text-center text-gray-400">
+                <td colSpan={11} className="py-12 text-center text-gray-400">
                   No loans found.
                 </td>
               </tr>
