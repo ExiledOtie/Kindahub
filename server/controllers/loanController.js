@@ -333,7 +333,14 @@ const getSingleLoan = async (req, res) => {
 
 const approveLoan = async (req, res) => {
   try {
+    console.log("========== APPROVE LOAN ==========");
+    console.log("Loan ID:", req.params.id);
+    console.log("User:", req.user);
+    console.log("Body:", req.body);
+
     const loan = await getSingleLoanModel(req.params.id);
+
+    console.log("Loan found:", loan);
 
     if (!loan) {
       return res.status(404).json({
@@ -344,26 +351,30 @@ const approveLoan = async (req, res) => {
     const updatedLoan = await approveLoanModel(
       req.params.id,
       req.user.id,
-      req.body.interest_rate,
+      req.body.interest_rate
     );
+
+    console.log("Updated Loan:", updatedLoan);
+
     await Notification.createNotification({
       user_id: updatedLoan.user_id,
       title: "Loan Approved",
       message: `Your loan request of KES ${Number(
-        updatedLoan.amount,
+        updatedLoan.amount
       ).toLocaleString()} has been approved.`,
       type: "loan",
       reference_id: updatedLoan.id,
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       message: "Loan approved successfully",
       loan: updatedLoan,
     });
   } catch (error) {
+    console.error("APPROVE ERROR");
     console.error(error);
 
-    res.status(500).json({
+    return res.status(500).json({
       message: error.message,
       stack: error.stack,
     });
