@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import axios from "../Utils/axios";
 import Swal from "sweetalert2";
 import { ClipLoader } from "react-spinners";
-
+import { useNavigate } from "react-router-dom";
 import LoanStats from "./LoanComponents/LoanStats";
 import LoanFilters from "./LoanComponents/LoanFilters";
 import LoanTable from "./LoanComponents/LoanTable";
@@ -30,6 +30,8 @@ const Loans = () => {
   const [loanToApprove, setLoanToApprove] = useState(null);
   const [interestAction, setInterestAction] = useState("approve");
   // approve | update
+
+  const navigate = useNavigate();
 
   const fetchLoans = async () => {
     try {
@@ -216,8 +218,15 @@ const Loans = () => {
 
       <LoanTable
         loans={paginatedLoans}
-        progress={loanProgress}
+        loanProgress={loanProgress}
         onView={(loan) => setSelectedLoan(loan)}
+        onEditInterest={(loan) => {
+          setLoanToApprove(loan);
+          setInterestRate(loan.interest_rate || "");
+          setInterestAction("update");
+          setInterestModal(true);
+        }}
+        onRepayments={(loan) => navigate(`/loan-repayments/${loan.id}`)}
       />
 
       <LoanPagination page={page} totalPages={totalPages} setPage={setPage} />

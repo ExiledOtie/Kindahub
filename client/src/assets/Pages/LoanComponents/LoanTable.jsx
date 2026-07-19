@@ -15,7 +15,11 @@ const LoanTable = ({
   const formatDate = (date) => {
     if (!date) return "-";
 
-    return new Date(date).toLocaleDateString();
+    try {
+      return new Date(date).toLocaleDateString("en-GB");
+    } catch {
+      return "-";
+    }
   };
 
   return (
@@ -92,7 +96,9 @@ const LoanTable = ({
                   </td>
 
                   <td className="px-4 py-3 min-w-[180px]">
-                    <ProgressBar progress={loanProgress[loan.id] || 0} />
+                    <ProgressBar
+                      progress={Number(loanProgress?.[loan.id] || 0)}
+                    />
                   </td>
 
                   <td className="px-4 py-3">

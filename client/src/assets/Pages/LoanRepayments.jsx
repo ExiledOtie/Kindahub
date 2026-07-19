@@ -19,7 +19,14 @@ const LoanRepayments = () => {
     try {
       setLoading(true);
       const res = await axios.get("/loan-payments");
-      setPayments(res.data);
+
+      console.log("Loan Payments:", res.data);
+
+      setPayments(
+        Array.isArray(res.data)
+          ? res.data
+          : res.data.data || res.data.payments || [],
+      );
     } catch (error) {
       console.log(error);
       Swal.fire("Error", "Failed to fetch loan repayments", "error");
@@ -35,25 +42,25 @@ const LoanRepayments = () => {
   // Summary cards
   const totalCollected = useMemo(
     () => payments.reduce((sum, p) => sum + Number(p.amount || 0), 0),
-    [payments]
+    [payments],
   );
 
   const totalPrincipal = useMemo(
     () => payments.reduce((sum, p) => sum + Number(p.principal_paid || 0), 0),
-    [payments]
+    [payments],
   );
 
   const totalInterest = useMemo(
     () => payments.reduce((sum, p) => sum + Number(p.interest_paid || 0), 0),
-    [payments]
+    [payments],
   );
 
   // Filters
   const filteredPayments = useMemo(() => {
     return payments.filter((payment) => {
       const matchesSearch =
-        payment.fullname?.toLowerCase().includes(search.toLowerCase()) ||
-        payment.loan_number?.toString().includes(search);
+        (payment.fullname || "").toLowerCase().includes(search.toLowerCase()) ||
+        String(payment.loan_number || "").includes(search);
 
       const matchesGroup =
         groupFilter === "all" || payment.group_name === groupFilter;
@@ -62,7 +69,10 @@ const LoanRepayments = () => {
     });
   }, [payments, search, groupFilter]);
 
-  const totalPages = Math.ceil(filteredPayments.length / ITEMS_PER_PAGE);
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredPayments.length / ITEMS_PER_PAGE),
+  );
 
   const paginatedPayments = useMemo(() => {
     const start = (page - 1) * ITEMS_PER_PAGE;
@@ -85,18 +95,14 @@ const LoanRepayments = () => {
 
   return (
     <div className="space-y-3 text-[10px]">
-
       {/* HEADER */}
       <div className="bg-white p-3 rounded-xl border flex items-center gap-2">
         <FaMoneyBillWave className="text-green-600 text-sm" />
-        <h2 className="font-semibold text-sm">
-          Loan Repayments Ledger
-        </h2>
+        <h2 className="font-semibold text-sm">Loan Repayments Ledger</h2>
       </div>
 
       {/* SUMMARY */}
       <div className="grid md:grid-cols-3 gap-3">
-
         <div className="bg-white border rounded-xl p-3">
           <p className="text-gray-400 text-[10px]">Total Collected</p>
           <p className="text-base font-semibold text-green-600">
@@ -121,7 +127,6 @@ const LoanRepayments = () => {
 
       {/* FILTERS */}
       <div className="bg-white border rounded-xl p-3 flex flex-wrap gap-2 text-[10px]">
-
         <div className="relative">
           <FaSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
           <input
@@ -151,18 +156,13 @@ const LoanRepayments = () => {
             </option>
           ))}
         </select>
-
       </div>
 
       {/* TABLE */}
       <div className="bg-white border rounded-xl overflow-hidden">
-
         <div className="overflow-x-auto">
-
           <table className="w-full text-[10px]">
-
             <thead className="bg-gray-50 text-[10px]">
-
               <tr>
                 <th className="px-2 py-2 text-left">Date</th>
                 <th className="px-2 py-2 text-left">Member</th>
@@ -174,17 +174,16 @@ const LoanRepayments = () => {
                 <th className="px-2 py-2 text-left">Method</th>
                 <th className="px-2 py-2 text-left">Balance After</th>
               </tr>
-
             </thead>
 
             <tbody>
-
               {paginatedPayments.length > 0 ? (
                 paginatedPayments.map((p) => (
                   <tr key={p.id} className="border-b hover:bg-gray-50">
-
                     <td className="px-2 py-2">
-                      {new Date(p.created_at).toLocaleDateString()}
+                      {p.created_at
+                        ? new Date(p.created_at).toLocaleDateString("en-GB")
+                        : "-"}
                     </td>
 
                     <td className="px-2 py-2">{p.fullname}</td>
@@ -199,18 +198,13 @@ const LoanRepayments = () => {
                       KES {format(p.principal_paid)}
                     </td>
 
-                    <td className="px-2 py-2">
-                      KES {format(p.interest_paid)}
-                    </td>
+                    <td className="px-2 py-2">KES {format(p.interest_paid)}</td>
 
-                    <td className="px-2 py-2 uppercase">
-                      {p.payment_method}
-                    </td>
+                    <td className="px-2 py-2 uppercase">{p.payment_method}</td>
 
                     <td className="px-2 py-2 text-red-600">
                       KES {format(p.balance_after)}
                     </td>
-
                   </tr>
                 ))
               ) : (
@@ -220,16 +214,12 @@ const LoanRepayments = () => {
                   </td>
                 </tr>
               )}
-
             </tbody>
-
           </table>
-
         </div>
 
         {/* PAGINATION */}
         <div className="flex justify-between items-center p-3 border-t text-[10px]">
-
           <button
             disabled={page === 1}
             onClick={() => setPage(page - 1)}
@@ -249,11 +239,8 @@ const LoanRepayments = () => {
           >
             Next
           </button>
-
         </div>
-
       </div>
-
     </div>
   );
 };

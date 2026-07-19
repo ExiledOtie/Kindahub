@@ -27,13 +27,28 @@ const LoanDetailsModal = ({
   const money = (value) => `KES ${Number(value || 0).toLocaleString()}`;
 
   const date = (value) => {
-    if (!value) return "—";
-    return new Date(value).toLocaleString();
+    if (!value) return "-";
+
+    try {
+      return new Date(value).toLocaleString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return "-";
+    }
   };
 
+  const totalPayable = Number(
+    loan.total_payable ??
+      Number(loan.amount || 0) * (1 + Number(loan.interest_rate || 0) / 100),
+  );
+
   const monthlyPayment =
-    Number(loan.total_payable || 0) /
-    Math.max(Number(loan.duration_months || 1), 1);
+    totalPayable / Math.max(Number(loan.duration_months || 1), 1);
 
   return (
     <div
@@ -115,7 +130,12 @@ const LoanDetailsModal = ({
                 <div>
                   <p className="text-gray-500">Outstanding</p>
                   <p className="font-semibold text-red-600">
-                    {money(loan.balance)}
+                    {money(
+                      loan.balance ??
+                        loan.remaining_balance ??
+                        loan.balance_after ??
+                        0,
+                    )}
                   </p>
                 </div>
 
@@ -123,7 +143,7 @@ const LoanDetailsModal = ({
                   <p className="text-gray-500">Interest Rate</p>
 
                   <p className="font-semibold text-orange-600">
-                    {loan.interest_rate}%
+                    {Number(loan.interest_rate || 0).toFixed(2)}%
                   </p>
                 </div>
 
@@ -134,7 +154,13 @@ const LoanDetailsModal = ({
 
                 <div>
                   <p className="text-gray-500">Total Payable</p>
-                  <p>{money(loan.total_payable)}</p>
+                  <p>
+                    {money(
+                      loan.total_payable ??
+                        Number(loan.amount || 0) *
+                          (1 + Number(loan.interest_rate || 0) / 100),
+                    )}
+                  </p>
                 </div>
 
                 <div>
@@ -169,7 +195,9 @@ const LoanDetailsModal = ({
               <div>
                 <p className="text-gray-500">Requested On</p>
 
-                <p className="font-medium">{date(loan.created_at)}</p>
+                <p className="font-medium">
+                  {date(loan.requested_at || loan.created_at)}
+                </p>
               </div>
 
               <div>
@@ -185,9 +213,11 @@ const LoanDetailsModal = ({
               </div>
 
               <div>
-                <p className="text-gray-500">Fully Paid On</p>
+                <p className="text-gray-500">Paid Off On</p>
 
-                <p className="font-medium">{date(loan.completed_at)}</p>
+                <p className="font-medium">
+                  {date(loan.paid_off_at || loan.completed_at)}
+                </p>
               </div>
             </div>
           </div>
