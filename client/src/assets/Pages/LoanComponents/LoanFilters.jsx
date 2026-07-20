@@ -18,18 +18,20 @@ const LoanFilters = ({
   };
 
   return (
-    <div className="bg-white border rounded-xl p-4 shadow-sm">
-      <div className="flex items-center gap-2 mb-4">
-        <FaFilter className="text-green-600 text-sm" />
-
-        <h3 className="font-semibold text-sm">Loan Filters</h3>
+    <div className="bg-white border rounded-lg p-3 shadow-sm">
+      {/* Header */}
+      <div className="flex items-center gap-2 mb-3">
+        <FaFilter className="text-green-600 text-[11px]" />
+        <h3 className="text-xs font-semibold text-gray-700">
+          Loan Filters
+        </h3>
       </div>
 
-      <div className="grid md:grid-cols-4 gap-3">
-        {/* SEARCH */}
-
+      {/* Filters */}
+      <div className="grid md:grid-cols-4 gap-2.5">
+        {/* Search */}
         <div className="relative">
-          <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
+          <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]" />
 
           <input
             type="text"
@@ -39,19 +41,18 @@ const LoanFilters = ({
               setSearch(e.target.value);
               setPage(1);
             }}
-            className="w-full border rounded-lg pl-9 pr-3 py-2 text-[11px] focus:ring-2 focus:ring-green-500 focus:outline-none"
+            className="w-full h-9 border rounded-md pl-8 pr-3 text-[10px] focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
           />
         </div>
 
-        {/* STATUS */}
-
+        {/* Status */}
         <select
           value={statusFilter}
           onChange={(e) => {
             setStatusFilter(e.target.value);
             setPage(1);
           }}
-          className="border rounded-lg px-3 py-2 text-[11px] focus:ring-2 focus:ring-green-500"
+          className="h-9 border rounded-md px-2 text-[10px] focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
         >
           <option value="all">All Status</option>
           <option value="pending">Pending</option>
@@ -60,15 +61,14 @@ const LoanFilters = ({
           <option value="repaid">Repaid</option>
         </select>
 
-        {/* GROUP */}
-
+        {/* Group */}
         <select
           value={groupFilter}
           onChange={(e) => {
             setGroupFilter(e.target.value);
             setPage(1);
           }}
-          className="border rounded-lg px-3 py-2 text-[11px] focus:ring-2 focus:ring-green-500"
+          className="h-9 border rounded-md px-2 text-[10px] focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
         >
           <option value="all">All Groups</option>
 
@@ -79,13 +79,12 @@ const LoanFilters = ({
           ))}
         </select>
 
-        {/* CLEAR */}
-
+        {/* Clear */}
         <button
           onClick={clearFilters}
-          className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-[11px] font-medium"
+          className="h-9 flex items-center justify-center gap-1.5 rounded-md border bg-gray-50 hover:bg-gray-100 text-[10px] font-medium transition"
         >
-          <FaSyncAlt />
+          <FaSyncAlt className="text-[10px]" />
           Clear Filters
         </button>
       </div>

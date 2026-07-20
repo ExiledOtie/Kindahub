@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-
 import {
   FaMoneyBillWave,
   FaClock,
@@ -14,14 +13,16 @@ const LoanStats = ({ loans = [] }) => {
     const totalLoans = loans.length;
 
     const pendingLoans = loans.filter(
-      (loan) => loan.status === "pending",
+      (loan) => loan.status === "pending"
     ).length;
 
     const approvedLoans = loans.filter(
-      (loan) => loan.status === "approved",
+      (loan) => loan.status === "approved"
     ).length;
 
-    const repaidLoans = loans.filter((loan) => loan.status === "repaid").length;
+    const repaidLoans = loans.filter(
+      (loan) => loan.status === "repaid"
+    ).length;
 
     const outstandingBalance = loans
       .filter((loan) => loan.status === "approved")
@@ -29,7 +30,8 @@ const LoanStats = ({ loans = [] }) => {
 
     const interestEarned = loans.reduce((sum, loan) => {
       return (
-        sum + (Number(loan.amount || 0) * Number(loan.interest_rate || 0)) / 100
+        sum +
+        (Number(loan.amount || 0) * Number(loan.interest_rate || 0)) / 100
       );
     }, 0);
 
@@ -89,26 +91,30 @@ const LoanStats = ({ loans = [] }) => {
   ];
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
       {cards.map((card) => {
         const Icon = card.icon;
 
         return (
           <div
             key={card.title}
-            className="bg-white border rounded-xl p-4 hover:shadow-md transition-all"
+            className="bg-white border rounded-lg p-3 shadow-sm hover:shadow-md transition"
           >
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[10px] text-gray-500">{card.title}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-[9px] text-gray-500 truncate">
+                  {card.title}
+                </p>
 
-                <h3 className="text-lg font-bold mt-1">{card.value}</h3>
+                <h3 className="text-sm font-bold text-gray-800 mt-1 break-words">
+                  {card.value}
+                </h3>
               </div>
 
               <div
-                className={`h-12 w-12 rounded-full flex items-center justify-center ${card.bg}`}
+                className={`ml-2 h-8 w-8 rounded-full flex items-center justify-center ${card.bg}`}
               >
-                <Icon className={`${card.color} text-lg`} />
+                <Icon className={`${card.color} text-sm`} />
               </div>
             </div>
           </div>

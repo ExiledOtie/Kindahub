@@ -23,32 +23,22 @@ const LoanTable = ({
   };
 
   return (
-    <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+    <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full text-[11px]">
-          <thead className="bg-gray-50">
-            <tr className="text-gray-600">
-              <th className="px-4 py-3 text-left">Member</th>
-
-              <th className="px-4 py-3 text-left">Group</th>
-
-              <th className="px-4 py-3 text-right">Amount</th>
-
-              <th className="px-4 py-3 text-center">Interest</th>
-
-              <th className="px-4 py-3 text-right">Balance</th>
-
-              <th className="px-4 py-3 text-center">Requested</th>
-
-              <th className="px-4 py-3 text-center">Approved</th>
-
-              <th className="px-4 py-3 text-center">Paid Off</th>
-
-              <th className="px-4 py-3 text-center">Status</th>
-
-              <th className="px-4 py-3">Progress</th>
-
-              <th className="px-4 py-3 text-center">Actions</th>
+        <table className="w-full text-[10px]">
+          <thead className="bg-gray-50 border-b">
+            <tr className="text-gray-600 font-semibold">
+              <th className="px-3 py-2 text-left whitespace-nowrap">Member</th>
+              <th className="px-3 py-2 text-left whitespace-nowrap">Group</th>
+              <th className="px-3 py-2 text-right whitespace-nowrap">Amount</th>
+              <th className="px-3 py-2 text-center whitespace-nowrap">Interest</th>
+              <th className="px-3 py-2 text-right whitespace-nowrap">Balance</th>
+              <th className="px-3 py-2 text-center whitespace-nowrap">Requested</th>
+              <th className="px-3 py-2 text-center whitespace-nowrap">Approved</th>
+              <th className="px-3 py-2 text-center whitespace-nowrap">Paid Off</th>
+              <th className="px-3 py-2 text-center whitespace-nowrap">Status</th>
+              <th className="px-3 py-2 text-center whitespace-nowrap">Progress</th>
+              <th className="px-3 py-2 text-center whitespace-nowrap">Actions</th>
             </tr>
           </thead>
 
@@ -57,80 +47,95 @@ const LoanTable = ({
               loans.map((loan) => (
                 <tr
                   key={loan.id}
-                  className="border-t hover:bg-gray-50 transition"
+                  className="border-t hover:bg-gray-50 transition-colors"
                 >
-                  <td className="px-4 py-3">
-                    <div className="font-medium">{loan.fullname}</div>
+                  {/* Member */}
+                  <td className="px-3 py-2">
+                    <div className="font-medium text-[10px]">
+                      {loan.fullname}
+                    </div>
 
-                    <div className="text-[10px] text-gray-500">#{loan.id}</div>
+                    <div className="text-[9px] text-gray-500">
+                      #{loan.id}
+                    </div>
                   </td>
 
-                  <td className="px-4 py-3">{loan.group_name}</td>
+                  {/* Group */}
+                  <td className="px-3 py-2 whitespace-nowrap">
+                    {loan.group_name}
+                  </td>
 
-                  <td className="px-4 py-3 text-right font-semibold text-green-600">
+                  {/* Amount */}
+                  <td className="px-3 py-2 text-right font-semibold text-green-600 whitespace-nowrap">
                     KES {formatMoney(loan.amount)}
                   </td>
 
-                  <td className="px-4 py-3 text-center">
-                    {loan.interest_rate}%
+                  {/* Interest */}
+                  <td className="px-3 py-2 text-center whitespace-nowrap">
+                    {Number(loan.interest_rate || 0).toFixed(2)}%
                   </td>
 
-                  <td className="px-4 py-3 text-right text-red-600">
+                  {/* Balance */}
+                  <td className="px-3 py-2 text-right font-semibold text-red-600 whitespace-nowrap">
                     KES {formatMoney(loan.balance)}
                   </td>
 
-                  <td className="px-4 py-3 text-center">
+                  {/* Requested */}
+                  <td className="px-3 py-2 text-center whitespace-nowrap">
                     {formatDate(loan.requested_at || loan.created_at)}
                   </td>
 
-                  <td className="px-4 py-3 text-center">
+                  {/* Approved */}
+                  <td className="px-3 py-2 text-center whitespace-nowrap">
                     {formatDate(loan.approved_at)}
                   </td>
 
-                  <td className="px-4 py-3 text-center">
+                  {/* Paid Off */}
+                  <td className="px-3 py-2 text-center whitespace-nowrap">
                     {formatDate(loan.paid_off_at)}
                   </td>
 
-                  <td className="px-4 py-3 text-center">
+                  {/* Status */}
+                  <td className="px-3 py-2 text-center">
                     <StatusBadge status={loan.status} />
                   </td>
 
-                  <td className="px-4 py-3 min-w-[180px]">
+                  {/* Progress */}
+                  <td className="px-3 py-2 min-w-[140px]">
                     <ProgressBar
                       progress={Number(loanProgress?.[loan.id] || 0)}
                     />
                   </td>
 
-                  <td className="px-4 py-3">
-                    <div className="flex justify-center gap-2">
-                      {/* VIEW */}
+                  {/* Actions */}
+                  <td className="px-3 py-2">
+                    <div className="flex items-center justify-center gap-1.5">
                       <button
                         onClick={() => onView(loan)}
-                        className="h-8 w-8 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200"
+                        className="h-7 w-7 rounded-md bg-blue-100 text-blue-600 hover:bg-blue-200 transition"
+                        title="View"
                       >
-                        <FaEye className="mx-auto" />
+                        <FaEye className="mx-auto text-[10px]" />
                       </button>
 
-                      {/* EDIT INTEREST */}
                       {(loan.status === "pending" ||
                         loan.status === "approved") && (
                         <button
                           onClick={() => onEditInterest(loan)}
-                          className="h-8 w-8 rounded-lg bg-yellow-100 text-yellow-600 hover:bg-yellow-200"
+                          className="h-7 w-7 rounded-md bg-yellow-100 text-yellow-600 hover:bg-yellow-200 transition"
                           title="Change Interest"
                         >
-                          <FaEdit className="mx-auto" />
+                          <FaEdit className="mx-auto text-[10px]" />
                         </button>
                       )}
 
-                      {/* REPAYMENTS */}
                       {loan.status === "approved" && (
                         <button
                           onClick={() => onRepayments(loan)}
-                          className="h-8 w-8 rounded-lg bg-green-100 text-green-600 hover:bg-green-200"
+                          className="h-7 w-7 rounded-md bg-green-100 text-green-600 hover:bg-green-200 transition"
                           title="View Repayments"
                         >
-                          <FaCreditCard className="mx-auto" />
+                          <FaCreditCard className="mx-auto text-[10px]" />
                         </button>
                       )}
                     </div>
@@ -139,7 +144,10 @@ const LoanTable = ({
               ))
             ) : (
               <tr>
-                <td colSpan={11} className="py-12 text-center text-gray-400">
+                <td
+                  colSpan={11}
+                  className="py-8 text-center text-[10px] text-gray-400"
+                >
                   No loans found.
                 </td>
               </tr>
