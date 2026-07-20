@@ -18,14 +18,13 @@ const LoanRepayments = () => {
   const fetchPayments = async () => {
     try {
       setLoading(true);
-      const res = await axios.get("/loan-payments");
 
-      console.log("Loan Payments:", res.data);
+      const res = await axios.get("/loan-payments");
 
       setPayments(
         Array.isArray(res.data)
           ? res.data
-          : res.data.data || res.data.payments || [],
+          : res.data.data || res.data.payments || []
       );
     } catch (error) {
       console.log(error);
@@ -39,27 +38,31 @@ const LoanRepayments = () => {
     fetchPayments();
   }, []);
 
-  // Summary cards
+  /* ================= SUMMARY ================= */
+
   const totalCollected = useMemo(
     () => payments.reduce((sum, p) => sum + Number(p.amount || 0), 0),
-    [payments],
+    [payments]
   );
 
   const totalPrincipal = useMemo(
     () => payments.reduce((sum, p) => sum + Number(p.principal_paid || 0), 0),
-    [payments],
+    [payments]
   );
 
   const totalInterest = useMemo(
     () => payments.reduce((sum, p) => sum + Number(p.interest_paid || 0), 0),
-    [payments],
+    [payments]
   );
 
-  // Filters
+  /* ================= FILTERS ================= */
+
   const filteredPayments = useMemo(() => {
     return payments.filter((payment) => {
       const matchesSearch =
-        (payment.fullname || "").toLowerCase().includes(search.toLowerCase()) ||
+        (payment.fullname || "")
+          .toLowerCase()
+          .includes(search.toLowerCase()) ||
         String(payment.loan_number || "").includes(search);
 
       const matchesGroup =
@@ -71,11 +74,12 @@ const LoanRepayments = () => {
 
   const totalPages = Math.max(
     1,
-    Math.ceil(filteredPayments.length / ITEMS_PER_PAGE),
+    Math.ceil(filteredPayments.length / ITEMS_PER_PAGE)
   );
 
   const paginatedPayments = useMemo(() => {
     const start = (page - 1) * ITEMS_PER_PAGE;
+
     return filteredPayments.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredPayments, page]);
 
@@ -83,134 +87,224 @@ const LoanRepayments = () => {
     ...new Set(payments.map((p) => p.group_name).filter(Boolean)),
   ];
 
-  const format = (v) => Number(v || 0).toLocaleString();
+  const format = (value) => Number(value || 0).toLocaleString();
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-[70vh]">
-        <ClipLoader size={35} color="#16a34a" />
+      <div className="flex justify-center items-center h-[65vh]">
+        <ClipLoader size={28} color="#16a34a" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-3 text-[10px]">
-      {/* HEADER */}
-      <div className="bg-white p-3 rounded-xl border flex items-center gap-2">
-        <FaMoneyBillWave className="text-green-600 text-sm" />
-        <h2 className="font-semibold text-sm">Loan Repayments Ledger</h2>
+    <div className="space-y-2.5 text-[9px]">
+
+      {/* ================= HEADER ================= */}
+
+      <div className="bg-white border rounded-lg shadow-sm px-3 py-2 flex items-center gap-2">
+        <div className="h-7 w-7 rounded-full bg-green-100 flex items-center justify-center">
+          <FaMoneyBillWave className="text-[11px] text-green-600" />
+        </div>
+
+        <div>
+          <h2 className="text-[11px] font-semibold text-gray-800">
+            Loan Repayments Ledger
+          </h2>
+
+          <p className="text-[9px] text-gray-400">
+            Repayment transactions overview
+          </p>
+        </div>
       </div>
 
-      {/* SUMMARY */}
-      <div className="grid md:grid-cols-3 gap-3">
-        <div className="bg-white border rounded-xl p-3">
-          <p className="text-gray-400 text-[10px]">Total Collected</p>
-          <p className="text-base font-semibold text-green-600">
+      {/* ================= SUMMARY CARDS ================= */}
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+
+        <div className="bg-white border rounded-md p-2 shadow-sm">
+          <p className="text-[8px] uppercase tracking-wide text-gray-400">
+            Total Collected
+          </p>
+
+          <p className="mt-1 text-[11px] font-bold text-green-600">
             KES {format(totalCollected)}
           </p>
         </div>
 
-        <div className="bg-white border rounded-xl p-3">
-          <p className="text-gray-400 text-[10px]">Principal Recovered</p>
-          <p className="text-base font-semibold text-blue-600">
+        <div className="bg-white border rounded-md p-2 shadow-sm">
+          <p className="text-[8px] uppercase tracking-wide text-gray-400">
+            Principal
+          </p>
+
+          <p className="mt-1 text-[11px] font-bold text-blue-600">
             KES {format(totalPrincipal)}
           </p>
         </div>
 
-        <div className="bg-white border rounded-xl p-3">
-          <p className="text-gray-400 text-[10px]">Interest Earned</p>
-          <p className="text-base font-semibold text-orange-600">
+        <div className="bg-white border rounded-md p-2 shadow-sm">
+          <p className="text-[8px] uppercase tracking-wide text-gray-400">
+            Interest Earned
+          </p>
+
+          <p className="mt-1 text-[11px] font-bold text-orange-600">
             KES {format(totalInterest)}
           </p>
         </div>
+
       </div>
 
-      {/* FILTERS */}
-      <div className="bg-white border rounded-xl p-3 flex flex-wrap gap-2 text-[10px]">
-        <div className="relative">
-          <FaSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
-          <input
-            type="text"
-            placeholder="Search member / loan ID..."
-            value={search}
+      {/* ================= FILTERS ================= */}
+
+      <div className="bg-white border rounded-lg shadow-sm p-2.5">
+
+        <div className="flex flex-wrap items-center gap-2">
+
+          <div className="relative flex-1 min-w-[220px]">
+            <FaSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9px] text-gray-400" />
+
+            <input
+              type="text"
+              placeholder="Search member or loan..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+              className="w-full h-8 rounded-md border pl-7 pr-2 text-[9px] focus:ring-2 focus:ring-green-500 focus:outline-none"
+            />
+          </div>
+
+          <select
+            value={groupFilter}
             onChange={(e) => {
-              setSearch(e.target.value);
+              setGroupFilter(e.target.value);
               setPage(1);
             }}
-            className="border rounded-lg pl-8 pr-2 py-1 text-[10px]"
-          />
-        </div>
+            className="h-8 min-w-[150px] rounded-md border px-2 text-[9px] focus:ring-2 focus:ring-green-500 focus:outline-none"
+          >
+            <option value="all">All Groups</option>
 
-        <select
-          value={groupFilter}
-          onChange={(e) => {
-            setGroupFilter(e.target.value);
-            setPage(1);
-          }}
-          className="border rounded-lg px-2 py-1 text-[10px]"
-        >
-          <option value="all">All Groups</option>
-          {groups.map((g) => (
-            <option key={g} value={g}>
-              {g}
-            </option>
-          ))}
-        </select>
+            {groups.map((group) => (
+              <option key={group} value={group}>
+                {group}
+              </option>
+            ))}
+          </select>
+
+        </div>
       </div>
 
-      {/* TABLE */}
-      <div className="bg-white border rounded-xl overflow-hidden">
+      {/* ================= TABLE ================= */}
+
+       {/* ================= TABLE ================= */}
+
+      <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-[10px]">
-            <thead className="bg-gray-50 text-[10px]">
-              <tr>
-                <th className="px-2 py-2 text-left">Date</th>
-                <th className="px-2 py-2 text-left">Member</th>
-                <th className="px-2 py-2 text-left">Group</th>
-                <th className="px-2 py-2 text-left">Loan #</th>
-                <th className="px-2 py-2 text-left">Amount</th>
-                <th className="px-2 py-2 text-left">Principal</th>
-                <th className="px-2 py-2 text-left">Interest</th>
-                <th className="px-2 py-2 text-left">Method</th>
-                <th className="px-2 py-2 text-left">Balance After</th>
+          <table className="w-full text-[9px]">
+            <thead className="bg-gray-50 border-b">
+              <tr className="text-gray-600 font-semibold">
+                <th className="px-2 py-1.5 text-left whitespace-nowrap">
+                  Date
+                </th>
+
+                <th className="px-2 py-1.5 text-left whitespace-nowrap">
+                  Member
+                </th>
+
+                <th className="px-2 py-1.5 text-left whitespace-nowrap">
+                  Group
+                </th>
+
+                <th className="px-2 py-1.5 text-left whitespace-nowrap">
+                  Loan #
+                </th>
+
+                <th className="px-2 py-1.5 text-right whitespace-nowrap">
+                  Amount
+                </th>
+
+                <th className="px-2 py-1.5 text-right whitespace-nowrap">
+                  Principal
+                </th>
+
+                <th className="px-2 py-1.5 text-right whitespace-nowrap">
+                  Interest
+                </th>
+
+                <th className="px-2 py-1.5 text-center whitespace-nowrap">
+                  Method
+                </th>
+
+                <th className="px-2 py-1.5 text-right whitespace-nowrap">
+                  Balance
+                </th>
               </tr>
             </thead>
 
             <tbody>
               {paginatedPayments.length > 0 ? (
-                paginatedPayments.map((p) => (
-                  <tr key={p.id} className="border-b hover:bg-gray-50">
-                    <td className="px-2 py-2">
-                      {p.created_at
-                        ? new Date(p.created_at).toLocaleDateString("en-GB")
+                paginatedPayments.map((payment) => (
+                  <tr
+                    key={payment.id}
+                    className="border-b hover:bg-gray-50 transition-colors"
+                  >
+                    <td className="px-2 py-1.5 whitespace-nowrap text-gray-600">
+                      {payment.created_at
+                        ? new Date(payment.created_at).toLocaleDateString(
+                            "en-GB"
+                          )
                         : "-"}
                     </td>
 
-                    <td className="px-2 py-2">{p.fullname}</td>
-                    <td className="px-2 py-2">{p.group_name}</td>
-                    <td className="px-2 py-2">#{p.loan_number}</td>
+                    <td className="px-2 py-1.5">
+                      <div className="font-medium text-[9px]">
+                        {payment.fullname}
+                      </div>
 
-                    <td className="px-2 py-2 font-semibold text-green-600">
-                      KES {format(p.amount)}
+                      <div className="text-[8px] text-gray-400">
+                        #{payment.loan_number}
+                      </div>
                     </td>
 
-                    <td className="px-2 py-2">
-                      KES {format(p.principal_paid)}
+                    <td className="px-2 py-1.5 whitespace-nowrap">
+                      {payment.group_name}
                     </td>
 
-                    <td className="px-2 py-2">KES {format(p.interest_paid)}</td>
+                    <td className="px-2 py-1.5 text-center">
+                      #{payment.loan_number}
+                    </td>
 
-                    <td className="px-2 py-2 uppercase">{p.payment_method}</td>
+                    <td className="px-2 py-1.5 text-right font-semibold text-green-600 whitespace-nowrap">
+                      KES {format(payment.amount)}
+                    </td>
 
-                    <td className="px-2 py-2 text-red-600">
-                      KES {format(p.balance_after)}
+                    <td className="px-2 py-1.5 text-right whitespace-nowrap">
+                      KES {format(payment.principal_paid)}
+                    </td>
+
+                    <td className="px-2 py-1.5 text-right whitespace-nowrap text-orange-600">
+                      KES {format(payment.interest_paid)}
+                    </td>
+
+                    <td className="px-2 py-1.5 text-center uppercase whitespace-nowrap">
+                      <span className="inline-flex px-2 py-0.5 rounded-full bg-gray-100 text-[8px] font-medium">
+                        {payment.payment_method}
+                      </span>
+                    </td>
+
+                    <td className="px-2 py-1.5 text-right font-semibold text-red-600 whitespace-nowrap">
+                      KES {format(payment.balance_after)}
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="9" className="text-center py-5 text-gray-400">
-                    No repayments found
+                  <td
+                    colSpan={9}
+                    className="py-8 text-center text-[9px] text-gray-400"
+                  >
+                    No repayments found.
                   </td>
                 </tr>
               )}
@@ -218,24 +312,25 @@ const LoanRepayments = () => {
           </table>
         </div>
 
-        {/* PAGINATION */}
-        <div className="flex justify-between items-center p-3 border-t text-[10px]">
+        {/* ================= PAGINATION ================= */}
+
+        <div className="border-t bg-gray-50 px-3 py-2 flex items-center justify-between text-[9px]">
           <button
             disabled={page === 1}
-            onClick={() => setPage(page - 1)}
-            className="px-2 py-1 border rounded disabled:opacity-50"
+            onClick={() => setPage((p) => p - 1)}
+            className="h-7 px-3 border rounded-md bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             Previous
           </button>
 
-          <span>
-            Page {page} of {totalPages || 1}
+          <span className="font-medium text-gray-600">
+            Page {page} of {totalPages}
           </span>
 
           <button
-            disabled={page === totalPages || totalPages === 0}
-            onClick={() => setPage(page + 1)}
-            className="px-2 py-1 border rounded disabled:opacity-50"
+            disabled={page >= totalPages}
+            onClick={() => setPage((p) => p + 1)}
+            className="h-7 px-3 border rounded-md bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             Next
           </button>
