@@ -4,11 +4,7 @@ import axios from "../Utils/axios";
 import Swal from "sweetalert2";
 import { ClipLoader } from "react-spinners";
 
-import {
-  FaMoneyBillWave,
-  FaMobileAlt,
-  FaHistory,
-} from "react-icons/fa";
+import { FaMoneyBillWave, FaMobileAlt, FaHistory } from "react-icons/fa";
 
 const LoanRepaymentDetails = () => {
   const { loanId } = useParams();
@@ -101,7 +97,7 @@ const LoanRepaymentDetails = () => {
       Swal.fire(
         "Error",
         error.response?.data?.message || "Payment failed",
-        "error"
+        "error",
       );
     } finally {
       setSaving(false);
@@ -128,16 +124,15 @@ const LoanRepaymentDetails = () => {
 
   return (
     <div className="space-y-3 text-[10px]">
-
       {/* HEADER */}
-      <div className="bg-white border rounded-xl p-3 shadow-sm">
+      <div className="bg-white border rounded-md px-3 py-2 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+          <div className="h-7 w-7 rounded-full bg-green-100 flex items-center justify-center text-green-600">
             <FaMoneyBillWave />
           </div>
 
           <div>
-            <h2 className="text-[11px] font-semibold">
+            <h2 className="text-[10px] font-semibold">
               Loan Repayment Details
             </h2>
             <p className="text-[9px] text-gray-400">
@@ -149,34 +144,32 @@ const LoanRepaymentDetails = () => {
 
       {/* LOAN INFO */}
       {loan && (
-        <div className="bg-white border rounded-xl p-3">
-          <h3 className="font-semibold mb-2 text-[11px]">
-            Loan Information
-          </h3>
+        <div className="bg-white border rounded-md p-2.5 shadow-sm">
+          <h3 className="text-[10px] font-semibold mb-1.5">Loan Information</h3>
 
-          <div className="grid md:grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[10px]">
             <div>
-              <p className="text-gray-400">Member</p>
+              <p className="text-[9px] text-gray-400">Member</p>
               <p>{loan.fullname}</p>
             </div>
 
             <div>
-              <p className="text-gray-400">Loan Amount</p>
+              <p className="text-[9px] text-gray-400">Loan Amount</p>
               <p>KES {format(loan.amount)}</p>
             </div>
 
             <div>
-              <p className="text-gray-400">Interest Rate</p>
+              <p className="text-[9px] text-gray-400">Interest Rate</p>
               <p>{loan.interest_rate}%</p>
             </div>
 
             <div>
-              <p className="text-gray-400">Duration</p>
+              <p className="text-[9px] text-gray-400">Duration</p>
               <p>{loan.duration_months} Months</p>
             </div>
 
             <div>
-              <p className="text-gray-400">Status</p>
+              <p className="text-[9px] text-gray-400">Status</p>
               <p className="capitalize">{loan.status}</p>
             </div>
           </div>
@@ -184,25 +177,36 @@ const LoanRepaymentDetails = () => {
       )}
 
       {/* BALANCE */}
-      <div className="grid md:grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-2">
+        {/* Total Payable */}
+        <div className="bg-white border rounded-md p-2 shadow-sm">
+          <p className="text-[9px] text-gray-400 uppercase tracking-wide">
+            Total Payable
+          </p>
 
-        <div className="bg-white border rounded-lg p-2">
-          <p className="text-gray-400">Total Payable</p>
-          <p className="font-semibold text-green-600">
+          <p className="mt-0.5 text-[11px] font-semibold text-green-600 truncate">
             KES {format(balance.totalPayable)}
           </p>
         </div>
 
-        <div className="bg-white border rounded-lg p-2">
-          <p className="text-gray-400">Total Paid</p>
-          <p className="font-semibold text-blue-600">
+        {/* Total Paid */}
+        <div className="bg-white border rounded-md p-2 shadow-sm">
+          <p className="text-[9px] text-gray-400 uppercase tracking-wide">
+            Total Paid
+          </p>
+
+          <p className="mt-0.5 text-[11px] font-semibold text-blue-600 truncate">
             KES {format(balance.totalPaid)}
           </p>
         </div>
 
-        <div className="bg-white border rounded-lg p-2">
-          <p className="text-gray-400">Outstanding</p>
-          <p className="font-semibold text-red-600">
+        {/* Outstanding */}
+        <div className="bg-white border rounded-md p-2 shadow-sm">
+          <p className="text-[9px] text-gray-400 uppercase tracking-wide">
+            Outstanding
+          </p>
+
+          <p className="mt-0.5 text-[11px] font-semibold text-red-600 truncate">
             KES {format(balance.balance)}
           </p>
         </div>
@@ -230,24 +234,18 @@ const LoanRepaymentDetails = () => {
         className="bg-green-600 disabled:bg-gray-400 text-white px-3 py-2 rounded-lg flex items-center gap-2 text-[10px]"
       >
         <FaMobileAlt />
-        {balance.balance <= 0
-          ? "Loan Fully Paid"
-          : "Record Payment"}
+        {balance.balance <= 0 ? "Loan Fully Paid" : "Record Payment"}
       </button>
 
       {/* PAYMENT HISTORY */}
       <div className="bg-white border rounded-xl overflow-hidden">
-
         <div className="p-2 border-b flex items-center gap-2">
           <FaHistory />
-          <span className="font-semibold text-[11px]">
-            Payment History
-          </span>
+          <span className="font-semibold text-[11px]">Payment History</span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-[10px]">
-
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-2 py-2 text-left">Amount</th>
@@ -263,9 +261,15 @@ const LoanRepaymentDetails = () => {
                 payments.map((payment) => (
                   <tr key={payment.id} className="border-b">
                     <td className="px-2 py-2">KES {format(payment.amount)}</td>
-                    <td className="px-2 py-2">KES {format(payment.principal_paid)}</td>
-                    <td className="px-2 py-2">KES {format(payment.interest_paid)}</td>
-                    <td className="px-2 py-2 uppercase">{payment.payment_method}</td>
+                    <td className="px-2 py-2">
+                      KES {format(payment.principal_paid)}
+                    </td>
+                    <td className="px-2 py-2">
+                      KES {format(payment.interest_paid)}
+                    </td>
+                    <td className="px-2 py-2 uppercase">
+                      {payment.payment_method}
+                    </td>
                     <td className="px-2 py-2">
                       {new Date(payment.created_at).toLocaleDateString()}
                     </td>
@@ -279,7 +283,6 @@ const LoanRepaymentDetails = () => {
                 </tr>
               )}
             </tbody>
-
           </table>
         </div>
       </div>
@@ -287,12 +290,8 @@ const LoanRepaymentDetails = () => {
       {/* MODAL */}
       {showModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-
           <div className="bg-white rounded-xl p-4 w-full max-w-md space-y-3 text-[10px]">
-
-            <h2 className="font-semibold text-[11px]">
-              Record Loan Payment
-            </h2>
+            <h2 className="font-semibold text-[11px]">Record Loan Payment</h2>
 
             <input
               type="number"
@@ -337,7 +336,6 @@ const LoanRepaymentDetails = () => {
                 {saving ? "Saving..." : "Save Payment"}
               </button>
             </div>
-
           </div>
         </div>
       )}
