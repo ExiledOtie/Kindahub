@@ -113,21 +113,25 @@ const Reports = () => {
           {activeTab === "interest" ? "Interest Report" : "Reports"}
         </h2>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        {[
-          ["Total Contributions", summary.total_contributions],
-          ["Loans Issued", summary.total_loans_issued],
-          ["Repayments", summary.total_loan_repayments],
-          ["Outstanding", summary.outstanding_balances],
-          ["Savings", summary.total_savings],
-          ["Interest", summary.total_interest],
-        ].map(([label, value]) => (
-          <div key={label} className="bg-white border rounded-xl p-3">
-            <p className="text-[10px] text-gray-500">{label}</p>
-            <p className="font-semibold">KES {formatCurrency(value)}</p>
-          </div>
-        ))}
-      </div>
+
+      {activeTab !== "interest" && (
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          {[
+            ["Total Contributions", summary.total_contributions],
+            ["Loans Issued", summary.total_loans_issued],
+            ["Repayments", summary.total_loan_repayments],
+            ["Outstanding", summary.outstanding_balances],
+            ["Savings", summary.total_savings],
+            ["Interest", summary.total_interest],
+          ].map(([label, value]) => (
+            <div key={label} className="bg-white border rounded-xl p-3">
+              <p className="text-[10px] text-gray-500">{label}</p>
+
+              <p className="font-semibold">KES {formatCurrency(value)}</p>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-2">
         {TABS.map((tab) => (
@@ -143,61 +147,107 @@ const Reports = () => {
         ))}
       </div>
 
-      <div className="bg-white border rounded-xl p-3 flex flex-wrap gap-2">
-        <input
-          type="text"
-          placeholder={
-            activeTab === "interest"
-              ? "Search member or loan reference..."
-              : "Search..."
-          }
-          className="border rounded px-3 py-2"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      {activeTab === "interest" ? (
+        <div className="bg-white rounded-xl border">
+          <div className="border-b px-5 py-4">
+            <h3 className="font-semibold text-[14px]">Interest Report</h3>
 
-        <select
-          value={groupFilter}
-          onChange={(e) => setGroupFilter(e.target.value)}
-          className="border rounded px-3 py-2"
-        >
-          <option value="all">All Groups</option>
+            <p className="text-[10px] text-gray-500">
+              View all interest collected from loan repayments.
+            </p>
+          </div>
 
-          {groups.map((group) => (
-            <option key={group} value={group}>
-              {group}
-            </option>
-          ))}
-        </select>
+          <div className="flex flex-wrap gap-3 p-4">
+            <input
+              type="text"
+              placeholder="Search member..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="border rounded-lg px-3 py-2 w-60"
+            />
 
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="border rounded px-3 py-2"
-        >
-          <option value="all">All Status</option>
+            <select
+              value={groupFilter}
+              onChange={(e) => setGroupFilter(e.target.value)}
+              className="border rounded-lg px-3 py-2"
+            >
+              <option value="all">All Groups</option>
 
-          {statuses.map((status) => (
-            <option key={status} value={status}>
-              {status}
-            </option>
-          ))}
-        </select>
+              {groups.map((group) => (
+                <option key={group} value={group}>
+                  {group}
+                </option>
+              ))}
+            </select>
 
-        <button
-          onClick={exportCSV}
-          className="px-3 py-2 bg-blue-600 text-white rounded"
-        >
-          Export CSV
-        </button>
+            <button
+              onClick={exportCSV}
+              className="ml-auto bg-blue-600 text-white rounded-lg px-4 py-2"
+            >
+              CSV
+            </button>
 
-        <button
-          onClick={exportExcel}
-          className="px-3 py-2 bg-green-600 text-white rounded"
-        >
-          Export Excel
-        </button>
-      </div>
+            <button
+              onClick={exportExcel}
+              className="bg-green-600 text-white rounded-lg px-4 py-2"
+            >
+              Excel
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white border rounded-xl p-3 flex flex-wrap gap-2">
+          <input
+            type="text"
+            placeholder="Search..."
+            className="border rounded px-3 py-2"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+
+          <select
+            value={groupFilter}
+            onChange={(e) => setGroupFilter(e.target.value)}
+            className="border rounded px-3 py-2"
+          >
+            <option value="all">All Groups</option>
+
+            {groups.map((group) => (
+              <option key={group} value={group}>
+                {group}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="border rounded px-3 py-2"
+          >
+            <option value="all">All Status</option>
+
+            {statuses.map((status) => (
+              <option key={status} value={status}>
+                {status}
+              </option>
+            ))}
+          </select>
+
+          <button
+            onClick={exportCSV}
+            className="px-3 py-2 bg-blue-600 text-white rounded"
+          >
+            Export CSV
+          </button>
+
+          <button
+            onClick={exportExcel}
+            className="px-3 py-2 bg-green-600 text-white rounded"
+          >
+            Export Excel
+          </button>
+        </div>
+      )}
 
       <div className="bg-white border rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
