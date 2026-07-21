@@ -44,8 +44,7 @@ const LoanDetailsModal = ({
 
   const totalPayable = Number(
     loan.total_payable ??
-      Number(loan.amount || 0) *
-        (1 + Number(loan.interest_rate || 0) / 100)
+      Number(loan.amount || 0) * (1 + Number(loan.interest_rate || 0) / 100),
   );
 
   const monthlyPayment =
@@ -126,12 +125,29 @@ const LoanDetailsModal = ({
 
                 <div>
                   <p className="text-[10px] text-gray-500">Outstanding</p>
+                  <div>
+                    <p className="text-[10px] text-gray-500">
+                      Current Principal
+                    </p>
+
+                    <p className="font-semibold text-blue-600">
+                      {money(loan.current_principal)}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-[10px] text-gray-500">Interest Earned</p>
+
+                    <p className="font-semibold text-orange-600">
+                      {money(loan.interest_accrued)}
+                    </p>
+                  </div>
                   <p className="font-semibold text-red-600">
                     {money(
                       loan.balance ??
                         loan.remaining_balance ??
                         loan.balance_after ??
-                        0
+                        0,
                     )}
                   </p>
                 </div>
@@ -166,9 +182,7 @@ const LoanDetailsModal = ({
           {/* Progress */}
           <div className="border rounded-md p-3">
             <div className="flex justify-between items-center mb-2">
-              <h3 className="text-xs font-semibold">
-                Repayment Progress
-              </h3>
+              <h3 className="text-xs font-semibold">Repayment Progress</h3>
 
               <span className="text-[10px] font-medium">
                 {progress.toFixed(1)}%
@@ -185,7 +199,7 @@ const LoanDetailsModal = ({
               Loan Timeline
             </h3>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid md:grid-cols-2 lg:grid-cols-6 gap-3">
               <div>
                 <p className="text-[10px] text-gray-500">Requested On</p>
                 <p>{date(loan.requested_at || loan.created_at)}</p>
@@ -193,6 +207,17 @@ const LoanDetailsModal = ({
 
               <div>
                 <p className="text-[10px] text-gray-500">Approved On</p>
+                <div>
+                  <p className="text-[10px] text-gray-500">Last Interest</p>
+
+                  <p>{date(loan.last_interest_date)}</p>
+                </div>
+
+                <div>
+                  <p className="text-[10px] text-gray-500">Next Interest</p>
+
+                  <p>{date(loan.next_interest_date)}</p>
+                </div>
                 <p>{date(loan.approved_at)}</p>
               </div>
 

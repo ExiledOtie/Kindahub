@@ -31,14 +31,30 @@ const LoanTable = ({
               <th className="px-3 py-2 text-left whitespace-nowrap">Member</th>
               <th className="px-3 py-2 text-left whitespace-nowrap">Group</th>
               <th className="px-3 py-2 text-right whitespace-nowrap">Amount</th>
-              <th className="px-3 py-2 text-center whitespace-nowrap">Interest</th>
-              <th className="px-3 py-2 text-right whitespace-nowrap">Balance</th>
-              <th className="px-3 py-2 text-center whitespace-nowrap">Requested</th>
-              <th className="px-3 py-2 text-center whitespace-nowrap">Approved</th>
-              <th className="px-3 py-2 text-center whitespace-nowrap">Paid Off</th>
-              <th className="px-3 py-2 text-center whitespace-nowrap">Status</th>
-              <th className="px-3 py-2 text-center whitespace-nowrap">Progress</th>
-              <th className="px-3 py-2 text-center whitespace-nowrap">Actions</th>
+              <th className="px-3 py-2 text-center whitespace-nowrap">
+                Interest
+              </th>
+              <th className="px-3 py-2 text-right whitespace-nowrap">
+                Balance
+              </th>
+              <th className="px-3 py-2 text-center whitespace-nowrap">
+                Requested
+              </th>
+              <th className="px-3 py-2 text-center whitespace-nowrap">
+                Approved
+              </th>
+              <th className="px-3 py-2 text-center whitespace-nowrap">
+                Paid Off
+              </th>
+              <th className="px-3 py-2 text-center whitespace-nowrap">
+                Status
+              </th>
+              <th className="px-3 py-2 text-center whitespace-nowrap">
+                Progress
+              </th>
+              <th className="px-3 py-2 text-center whitespace-nowrap">
+                Actions
+              </th>
             </tr>
           </thead>
 
@@ -55,9 +71,7 @@ const LoanTable = ({
                       {loan.fullname}
                     </div>
 
-                    <div className="text-[9px] text-gray-500">
-                      #{loan.id}
-                    </div>
+                    <div className="text-[9px] text-gray-500">#{loan.id}</div>
                   </td>
 
                   {/* Group */}
@@ -71,13 +85,27 @@ const LoanTable = ({
                   </td>
 
                   {/* Interest */}
-                  <td className="px-3 py-2 text-center whitespace-nowrap">
-                    {Number(loan.interest_rate || 0).toFixed(2)}%
+                  <td className="px-3 py-2 whitespace-nowrap text-center">
+                    <div className="font-medium">
+                      {Number(loan.interest_rate || 0).toFixed(2)}%
+                    </div>
+
+                    <div className="text-[9px] text-gray-500">
+                      Earned:
+                      <br />
+                      KES {formatMoney(loan.interest_accrued)}
+                    </div>
                   </td>
 
                   {/* Balance */}
-                  <td className="px-3 py-2 text-right font-semibold text-red-600 whitespace-nowrap">
-                    KES {formatMoney(loan.balance)}
+                  <td className="px-3 py-2 whitespace-nowrap">
+                    <div className="text-right font-semibold text-red-600">
+                      KES {formatMoney(loan.balance)}
+                    </div>
+
+                    <div className="text-[9px] text-gray-500">
+                      Principal: KES {formatMoney(loan.current_principal)}
+                    </div>
                   </td>
 
                   {/* Requested */}
@@ -87,7 +115,13 @@ const LoanTable = ({
 
                   {/* Approved */}
                   <td className="px-3 py-2 text-center whitespace-nowrap">
-                    {formatDate(loan.approved_at)}
+                    <div>{formatDate(loan.approved_at)}</div>
+
+                    <div className="text-[9px] text-gray-500">
+                      Next:
+                      <br />
+                      {formatDate(loan.next_interest_date)}
+                    </div>
                   </td>
 
                   {/* Paid Off */}

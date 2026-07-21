@@ -1,4 +1,6 @@
 const pool = require("../config/db");
+const {getWalletModel, debitWalletModel} = require("../models/memberCreditModel")
+
 
 /*
 |--------------------------------------------------------------------------
@@ -166,47 +168,128 @@ const getSingleLoanModel = async (id) => {
 |--------------------------------------------------------------------------
 */
 
-const approveLoanModel = async (loanId, approvedBy, interestRate = null) => {
+const approveLoanModel = async (
+  loanId,
+  approvedBy,
+  interestRate = null
+) => {
+  /*
+  |--------------------------------------------------------------------------
+  | GET LOAN
+  |--------------------------------------------------------------------------
+  */
+
   const loanResult = await pool.query(
     `
     SELECT *
     FROM loans
     WHERE id=$1
     `,
-    [loanId],
+    [loanId]
   );
 
   const loan = loanResult.rows[0];
 
   if (!loan) return null;
 
+  /*
+  |--------------------------------------------------------------------------
+  | INTEREST
+  |--------------------------------------------------------------------------
+  */
+
   const rate =
-    interestRate !== null ? Number(interestRate) : Number(loan.interest_rate);
+    interestRate !== null
+      ? Number(interestRate)
+      : Number(loan.interest_rate);
 
-  const totalInterest = (Number(loan.amount) * rate) / 100;
+  const principal = Number(loan.amount);
 
-  const totalPayable = Number(loan.amount) + totalInterest;
+  const totalInterest =
+    (principal * rate) / 100;
+
+  const totalPayable =
+    principal + totalInterest;
+
+  /*
+  |--------------------------------------------------------------------------
+  | MEMBER CREDIT WALLET
+  |--------------------------------------------------------------------------
+  */
+
+  const wallet = await getWalletModel(loan.user_id);
+
+  const walletBalance = Number(wallet.balance || 0);
+
+  let walletUsed = 0;
+
+  let amountDisbursed = principal;
+
+  if (walletBalance > 0) {
+
+    walletUsed = Math.min(
+      walletBalance,
+      principal
+    );
+
+    amountDisbursed =
+      principal - walletUsed;
+
+    await debitWalletModel(
+      loan.user_id,
+      walletUsed,
+      loan.id,
+      `Applied to Loan #${loan.id}`
+    );
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | APPROVE LOAN
+  |--------------------------------------------------------------------------
+  */
 
   const result = await pool.query(
     `
     UPDATE loans
 
     SET
-      status='approved',
-      approved_by=$2,
-      approved_at=NOW(),
-      interest_rate=$3,
-      total_payable=$4,
-      balance=$4
+        status='approved',
+        approved_by=$2,
+        approved_at=NOW(),
+        interest_rate=$3,
+
+        total_payable=$4,
+
+        balance=$4,
+
+        amount_disbursed=$5
 
     WHERE id=$1
 
     RETURNING *
     `,
-    [loanId, approvedBy, rate, totalPayable],
+    [
+      loanId,
+      approvedBy,
+      rate,
+      totalPayable,
+      amountDisbursed,
+    ]
   );
 
-  return result.rows[0];
+  const approvedLoan = result.rows[0];
+
+  approvedLoan.wallet_credit_used =
+    walletUsed;
+
+  approvedLoan.amount_disbursed =
+    amountDisbursed;
+
+  approvedLoan.total_interest =
+    totalInterest;
+
+  return approvedLoan;
 };
 
 /*
