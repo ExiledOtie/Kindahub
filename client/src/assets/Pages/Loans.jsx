@@ -59,7 +59,7 @@ const Loans = () => {
               progress: 0,
             };
           }
-        })
+        }),
       );
 
       const progressMap = {};
@@ -128,7 +128,7 @@ const Loans = () => {
       Swal.fire(
         "Error",
         err.response?.data?.message || "Failed to approve loan",
-        "error"
+        "error",
       );
     } finally {
       setActionLoading(null);
@@ -165,7 +165,7 @@ const Loans = () => {
       Swal.fire(
         "Error",
         err.response?.data?.message || "Failed to update interest rate",
-        "error"
+        "error",
       );
     } finally {
       setActionLoading(null);
@@ -192,7 +192,7 @@ const Loans = () => {
     }
   };
 
-   if (loading) {
+  if (loading) {
     return (
       <div className="flex justify-center items-center h-[65vh]">
         <ClipLoader size={28} color="#16a34a" />
@@ -202,7 +202,6 @@ const Loans = () => {
 
   return (
     <div className="space-y-2 text-[9px]">
-
       <LoanStats loans={loans} />
 
       <LoanFilters
@@ -226,14 +225,12 @@ const Loans = () => {
           setInterestAction("update");
           setInterestModal(true);
         }}
-        onRepayments={(loan) => navigate(`/loan-repayments/${loan.id}`)}
+        onRepayments={(loan) =>
+          navigate(`/dashboard/loan-repayments/${loan.id}`)
+        }
       />
 
-      <LoanPagination
-        page={page}
-        totalPages={totalPages}
-        setPage={setPage}
-      />
+      <LoanPagination page={page} totalPages={totalPages} setPage={setPage} />
 
       {selectedLoan && (
         <LoanDetailsModal
@@ -260,9 +257,7 @@ const Loans = () => {
 
       {interestModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-[1px] flex items-center justify-center z-50 p-3">
-
           <div className="bg-white rounded-lg shadow-xl w-full max-w-xs p-4 space-y-3">
-
             <div>
               <h2 className="text-[11px] font-semibold text-gray-800">
                 {interestAction === "approve"
@@ -292,21 +287,14 @@ const Loans = () => {
 
             {loanToApprove && (
               <div className="bg-gray-50 border rounded-md p-2 space-y-1 text-[9px]">
-
                 <div className="flex justify-between">
-                  <span className="text-gray-500">
-                    Member
-                  </span>
+                  <span className="text-gray-500">Member</span>
 
-                  <span className="font-medium">
-                    {loanToApprove.fullname}
-                  </span>
+                  <span className="font-medium">{loanToApprove.fullname}</span>
                 </div>
 
                 <div className="flex justify-between">
-                  <span className="text-gray-500">
-                    Loan Amount
-                  </span>
+                  <span className="text-gray-500">Loan Amount</span>
 
                   <span className="font-medium">
                     KES {Number(loanToApprove.amount).toLocaleString()}
@@ -314,20 +302,16 @@ const Loans = () => {
                 </div>
 
                 <div className="flex justify-between">
-                  <span className="text-gray-500">
-                    Current Interest
-                  </span>
+                  <span className="text-gray-500">Current Interest</span>
 
                   <span className="font-medium text-green-600">
                     {loanToApprove.interest_rate}%
                   </span>
                 </div>
-
               </div>
             )}
 
             <div className="flex justify-end gap-2 pt-1">
-
               <button
                 onClick={() => {
                   setInterestModal(false);
@@ -354,12 +338,10 @@ const Loans = () => {
                 {actionLoading
                   ? "Saving..."
                   : interestAction === "approve"
-                  ? "Approve Loan"
-                  : "Update Interest"}
+                    ? "Approve Loan"
+                    : "Update Interest"}
               </button>
-
             </div>
-
           </div>
         </div>
       )}
