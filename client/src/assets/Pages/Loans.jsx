@@ -42,7 +42,12 @@ const Loans = () => {
 
       setLoans(data.loans);
       setInterestEarned(Number(data.interestEarned || 0));
-
+      console.table(
+        data.loans.map((loan) => ({
+          group: loan.group_name,
+          status: loan.status,
+        })),
+      );
       const balances = await Promise.all(
         data.loans.map(async (loan) => {
           try {
