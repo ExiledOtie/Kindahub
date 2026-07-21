@@ -253,7 +253,7 @@ const Loans = () => {
           }}
           onReject={rejectLoan}
           onRepayments={(loan) =>
-            navigate(`/loan-repayments/${loan.id}`)
+            navigate(`/dashboard/loan-repayments/${loan.id}`)
           }
         />
       )}
