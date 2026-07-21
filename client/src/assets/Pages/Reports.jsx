@@ -7,7 +7,7 @@ import { saveAs } from "file-saver";
 import * as XLSX from "xlsx";
 
 const ITEMS_PER_PAGE = 10;
-const TABS = ["contributions","loans","repayments","savings"];
+const TABS = ["contributions","loans","repayments","savings", "interest"];
 
 const Reports = () => {
   const [activeTab, setActiveTab] = useState("contributions");
@@ -176,6 +176,7 @@ const Reports = () => {
           ["Repayments", summary.total_loan_repayments],
           ["Outstanding", summary.outstanding_balances],
           ["Savings", summary.total_savings],
+          ["Interest", summary.total_interest],
         ].map(([label, value]) => (
           <div key={label} className="bg-white border rounded-xl p-3">
             <p className="text-[10px] text-gray-500">{label}</p>
