@@ -40,11 +40,11 @@ const Loans = () => {
 
       const { data } = await axios.get("/loans");
 
-setLoans(data.loans);
-setInterestEarned(Number(data.interestEarned || 0));
+      setLoans(data.loans);
+      setInterestEarned(Number(data.interestEarned || 0));
 
       const balances = await Promise.all(
-        data.map(async (loan) => {
+        data.loans.map(async (loan) => {
           try {
             const res = await axios.get(`/loan-payments/${loan.id}/balance`);
 
@@ -204,10 +204,7 @@ setInterestEarned(Number(data.interestEarned || 0));
 
   return (
     <div className="space-y-2 text-[9px]">
-      <LoanStats
-  loans={loans}
-  interestEarned={interestEarned}
-/>
+      <LoanStats loans={loans} interestEarned={interestEarned} />
 
       <LoanFilters
         loans={loans}
