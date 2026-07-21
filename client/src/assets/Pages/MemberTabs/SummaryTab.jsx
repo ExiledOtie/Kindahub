@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import axios from "../../Utils/axios";
 import { ClipLoader } from "react-spinners";
 
-
 import {
   FaUserCircle,
   FaMoneyBillWave,
@@ -10,11 +9,8 @@ import {
   FaUsers,
 } from "react-icons/fa";
 
-import {
-  MdSavings,
-  MdLockReset,
-  MdOutlineCalendarMonth,
-} from "react-icons/md";
+import { MdSavings, MdLockReset, MdOutlineCalendarMonth } from "react-icons/md";
+import { FaPiggyBank } from "react-icons/fa";
 
 const SummaryTab = ({ memberId }) => {
   const [loading, setLoading] = useState(true);
@@ -34,9 +30,7 @@ const SummaryTab = ({ memberId }) => {
     try {
       setLoading(true);
 
-      const res = await axios.get(
-        `/users/member-summary/${memberId}`
-      );
+      const res = await axios.get(`/users/member-summary/${memberId}`);
 
       setData(res.data);
     } catch (error) {
@@ -52,10 +46,7 @@ const SummaryTab = ({ memberId }) => {
     try {
       setResetLoading(true);
 
-      await axios.put(
-        `/users/${memberId}/reset-password`,
-        { password }
-      );
+      await axios.put(`/users/${memberId}/reset-password`, { password });
 
       setShowModal(false);
       setPassword("");
@@ -83,11 +74,9 @@ const SummaryTab = ({ memberId }) => {
 
   return (
     <div className="space-y-4">
-
       {/* PROFILE CARD */}
       <div className="bg-white rounded-2xl border p-4 shadow-sm">
         <div className="flex justify-between flex-col lg:flex-row gap-5">
-
           {/* LEFT */}
           <div className="flex items-start gap-4">
             <div className="h-14 w-14 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-bold text-lg">
@@ -100,23 +89,21 @@ const SummaryTab = ({ memberId }) => {
                 {member?.fullname}
               </h2>
 
-              <p className="text-[11px] text-gray-500">
-                @{member?.username}
-              </p>
+              <p className="text-[11px] text-gray-500">@{member?.username}</p>
 
               <p className="text-[11px] text-gray-400 mt-2">
-                Member since: {member?.created_at ? new Date(member.created_at).toDateString() : "Unknown"}
+                Member since:{" "}
+                {member?.created_at
+                  ? new Date(member.created_at).toDateString()
+                  : "Unknown"}
               </p>
             </div>
           </div>
 
           {/* RIGHT */}
           <div className="flex flex-col lg:items-end gap-3">
-
             <div className="text-left lg:text-right">
-              <p className="text-[10px] text-gray-400">
-                Last Login
-              </p>
+              <p className="text-[10px] text-gray-400">Last Login</p>
 
               <p className="text-[11px] font-medium text-gray-700">
                 {member?.last_login
@@ -134,14 +121,12 @@ const SummaryTab = ({ memberId }) => {
                 Reset Password
               </button>
             )}
-
           </div>
         </div>
       </div>
 
       {/* STATS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-
         <StatCard
           icon={<FaMoneyBillWave />}
           title="Total Contributions"
@@ -174,46 +159,43 @@ const SummaryTab = ({ memberId }) => {
           color="text-purple-600"
         />
 
+        <StatCard
+          icon={<FaPiggyBank />}
+          title="Credit Wallet"
+          value={`KES ${Number(stats.walletBalance || 0).toLocaleString()}`}
+          bg="bg-emerald-100"
+          color="text-emerald-600"
+        />
       </div>
 
       {/* GROUP INFO */}
       <div className="bg-white border rounded-xl p-4">
         <div className="flex items-center gap-3 mb-4">
           <FaUsers className="text-green-600" />
-          <h3 className="font-semibold text-sm">
-            Group Information
-          </h3>
+          <h3 className="font-semibold text-sm">Group Information</h3>
         </div>
 
         <div className="grid grid-cols-3 text-[11px]">
           <div>
             <p className="text-gray-400">Group</p>
-            <p className="font-medium">
-              {member?.group_name || "N/A"}
-            </p>
+            <p className="font-medium">{member?.group_name || "N/A"}</p>
           </div>
 
           <div>
             <p className="text-gray-400">Role</p>
-            <p className="font-medium">
-              {member?.group_role || "Member"}
-            </p>
+            <p className="font-medium">{member?.group_role || "Member"}</p>
           </div>
 
           <div>
             <p className="text-gray-400">Status</p>
-            <p className="font-medium text-green-600">
-              {member?.status}
-            </p>
+            <p className="font-medium text-green-600">{member?.status}</p>
           </div>
         </div>
       </div>
 
       {/* ACTIVITIES */}
       <div className="bg-white border rounded-xl p-4">
-        <h3 className="text-sm font-semibold mb-4">
-          Recent Activity
-        </h3>
+        <h3 className="text-sm font-semibold mb-4">Recent Activity</h3>
 
         <div className="space-y-3">
           {activities.map((a, i) => (
@@ -222,12 +204,8 @@ const SummaryTab = ({ memberId }) => {
               className="flex justify-between border-b pb-3 last:border-none"
             >
               <div>
-                <p className="text-[11px] font-medium">
-                  {a.description}
-                </p>
-                <p className="text-[10px] text-gray-400">
-                  {a.type}
-                </p>
+                <p className="text-[11px] font-medium">{a.description}</p>
+                <p className="text-[10px] text-gray-400">{a.type}</p>
               </div>
 
               <p className="text-[10px] text-gray-400">
@@ -242,10 +220,7 @@ const SummaryTab = ({ memberId }) => {
       {showModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
           <div className="bg-white p-5 rounded-xl w-[300px]">
-
-            <h3 className="font-semibold mb-3">
-              Reset Password
-            </h3>
+            <h3 className="font-semibold mb-3">Reset Password</h3>
 
             <input
               type="password"
@@ -256,7 +231,6 @@ const SummaryTab = ({ memberId }) => {
             />
 
             <div className="flex justify-end gap-2 mt-4">
-
               <button
                 onClick={() => setShowModal(false)}
                 className="text-sm text-gray-500"
@@ -271,13 +245,10 @@ const SummaryTab = ({ memberId }) => {
               >
                 {resetLoading ? "Saving..." : "Reset"}
               </button>
-
             </div>
-
           </div>
         </div>
       )}
-
     </div>
   );
 };
@@ -286,9 +257,7 @@ const SummaryTab = ({ memberId }) => {
 const StatCard = ({ icon, title, value, bg, color }) => (
   <div className="bg-white border rounded-xl p-4 shadow-sm">
     <div className="flex gap-3 items-center">
-      <div className={`p-3 rounded-full ${bg} ${color}`}>
-        {icon}
-      </div>
+      <div className={`p-3 rounded-full ${bg} ${color}`}>{icon}</div>
 
       <div>
         <p className="text-[10px] text-gray-500">{title}</p>

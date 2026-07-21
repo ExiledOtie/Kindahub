@@ -322,7 +322,7 @@ const deleteUserModel = async (id) => {
 
 const getMemberSummaryModel = async (userId) => {
   const userResult = await pool.query(
-  `
+    `
   SELECT
     u.id,
     u.fullname,
@@ -353,8 +353,8 @@ const getMemberSummaryModel = async (userId) => {
 
   LIMIT 1
   `,
-  [userId]
-);
+    [userId],
+  );
 
   const contributionResult = await pool.query(
     `
@@ -389,6 +389,16 @@ const getMemberSummaryModel = async (userId) => {
     WHERE user_id = $1
       AND status = 'approved'
     `,
+    [userId],
+  );
+
+  const walletResult = await pool.query(
+    `
+  SELECT
+    COALESCE(balance,0) AS balance
+  FROM member_credit_wallet
+  WHERE user_id = $1
+  `,
     [userId],
   );
 
@@ -478,15 +488,20 @@ const getMemberSummaryModel = async (userId) => {
 
   const activeLoans = Number(activeLoansResult.rows[0].total);
 
+  const walletBalance = Number(walletResult.rows[0]?.balance || 0);
+
   return {
     user: userResult.rows[0],
 
     stats: {
       totalContributions,
       totalSavings,
-      currentBalance: totalContributions + totalSavings,
+
+      currentBalance: totalContributions + totalSavings + walletBalance,
 
       activeLoans,
+
+      walletBalance,
     },
 
     activities: activitiesResult.rows,
@@ -509,7 +524,6 @@ const getUserGroups = async (userId) => {
 
   return rows;
 };
-
 
 module.exports = {
   createUserModel,
