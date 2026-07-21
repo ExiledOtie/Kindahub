@@ -225,9 +225,13 @@ const Loans = () => {
           setInterestAction("update");
           setInterestModal(true);
         }}
-        onRepayments={(loan) =>
-          navigate(`/dashboard/loan-repayments/${loan.id}`)
-        }
+        onRepayments={(loan) => {
+          console.log(
+            "Navigating to:",
+            `/dashboard/loan-repayments/${loan.id}`,
+          );
+          navigate(`/dashboard/loan-repayments/${loan.id}`);
+        }}
       />
 
       <LoanPagination page={page} totalPages={totalPages} setPage={setPage} />
@@ -249,9 +253,13 @@ const Loans = () => {
             setInterestModal(true);
           }}
           onReject={rejectLoan}
-          onRepayments={(loan) =>
-            navigate(`/dashboard/loan-repayments/${loan.id}`)
-          }
+          onRepayments={(loan) => {
+            console.log(
+              "Navigating to:",
+              `/dashboard/loan-repayments/${loan.id}`,
+            );
+            navigate(`/dashboard/loan-repayments/${loan.id}`);
+          }}
         />
       )}
 
