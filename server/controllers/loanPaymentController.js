@@ -11,6 +11,7 @@ const {
 } = require("../models/loanPaymentModel");
 
 const Notification = require("../models/notificationModel");
+const { creditWalletModel } = require("../models/memberCreditModel");
 
 /*
 |--------------------------------------------------------------------------
@@ -25,13 +26,10 @@ const PENALTY_RATE = 5; // 5% monthly penalty for overdue
 |--------------------------------------------------------------------------
 */
 
-
-
 const calculateLoanBalance = async (loanId) => {
-  const loanRes = await pool.query(
-    `SELECT * FROM loans WHERE id = $1`,
-    [loanId]
-  );
+  const loanRes = await pool.query(`SELECT * FROM loans WHERE id = $1`, [
+    loanId,
+  ]);
 
   if (!loanRes.rows[0]) {
     throw new Error("Loan not found");
@@ -134,7 +132,7 @@ const createLoanPayment = async (req, res) => {
       FROM loans
       WHERE id = $1
       `,
-      [loan_id]
+      [loan_id],
     );
 
     if (loanRes.rows.length === 0) {
@@ -147,51 +145,42 @@ const createLoanPayment = async (req, res) => {
 
     const principal = Number(loan.amount);
 
-    const totalInterest =
-      (principal * Number(loan.interest_rate)) / 100;
+    const totalInterest = (principal * Number(loan.interest_rate)) / 100;
 
     const breakdown = await getPaymentBreakdownModel(loan_id);
 
-    const principalAlreadyPaid = Number(
-      breakdown.principal_paid
-    );
+    const principalAlreadyPaid = Number(breakdown.principal_paid);
 
-    const interestAlreadyPaid = Number(
-      breakdown.interest_paid
-    );
+    const interestAlreadyPaid = Number(breakdown.interest_paid);
 
-    const remainingPrincipal = Math.max(
-      principal - principalAlreadyPaid,
-      0
-    );
+    const remainingPrincipal = Math.max(principal - principalAlreadyPaid, 0);
 
-    const remainingInterest = Math.max(
-      totalInterest - interestAlreadyPaid,
-      0
-    );
+    const remainingInterest = Math.max(totalInterest - interestAlreadyPaid, 0);
 
     let remaining = paymentAmount;
 
-    const interestPaid = Math.min(
-      remaining,
-      remainingInterest
-    );
+    const interestPaid = Math.min(remaining, remainingInterest);
 
     remaining -= interestPaid;
 
-    const principalPaid = Math.min(
-      remaining,
-      remainingPrincipal
-    );
+    const principalPaid = Math.min(remaining, remainingPrincipal);
 
     remaining -= principalPaid;
 
     const currentBalance = Number(loan.balance);
 
-    const newBalance = Math.max(
-      currentBalance - paymentAmount,
-      0
-    );
+    /*
+|--------------------------------------------------------------------------
+| CHECK FOR OVERPAYMENT
+|--------------------------------------------------------------------------
+*/
+
+    const overpayment =
+      paymentAmount > currentBalance ? paymentAmount - currentBalance : 0;
+
+    const amountApplied = paymentAmount - overpayment;
+
+    const newBalance = Math.max(currentBalance - amountApplied, 0);
 
     /*
     |--------------------------------------------------------------------------
@@ -201,12 +190,12 @@ const createLoanPayment = async (req, res) => {
 
     const payment = await createLoanPaymentModel(
       loan_id,
-      paymentAmount,
+      amountApplied,
       principalPaid,
       interestPaid,
       newBalance,
       payment_method,
-      mpesa_code || null
+      mpesa_code || null,
     );
 
     /*
@@ -215,9 +204,7 @@ const createLoanPayment = async (req, res) => {
     |--------------------------------------------------------------------------
     */
 
-    const updatedBalance = await calculateLoanBalance(
-      loan_id
-    );
+    const updatedBalance = await calculateLoanBalance(loan_id);
 
     /*
     |--------------------------------------------------------------------------
@@ -228,7 +215,7 @@ const createLoanPayment = async (req, res) => {
     const updatedLoan = await updateLoanBalanceModel(
       loan_id,
       updatedBalance.totalPayable,
-      updatedBalance.balance
+      updatedBalance.balance,
     );
 
     /*
@@ -246,7 +233,7 @@ const createLoanPayment = async (req, res) => {
           balance = 0
         WHERE id = $1
         `,
-        [loan_id]
+        [loan_id],
       );
 
       updatedLoan.status = "repaid";
@@ -260,10 +247,18 @@ const createLoanPayment = async (req, res) => {
     */
 
     return res.status(201).json({
-      message: "Payment recorded successfully",
+      message:
+        overpayment > 0
+          ? `Payment received. KES ${overpayment.toLocaleString()} has been credited to the member's wallet.`
+          : "Payment recorded successfully.",
+
       payment,
+
       loan: updatedLoan,
+
       balance: updatedLoan.balance,
+
+      overpayment,
     });
   } catch (error) {
     console.error(error);
@@ -282,12 +277,7 @@ const createLoanPayment = async (req, res) => {
 
 const createMyLoanPayment = async (req, res) => {
   try {
-    const {
-      loan_id,
-      amount,
-      payment_method,
-      mpesa_code,
-    } = req.body;
+    const { loan_id, amount, payment_method, mpesa_code } = req.body;
 
     const paymentAmount = Number(amount || 0);
 
@@ -313,7 +303,7 @@ const createMyLoanPayment = async (req, res) => {
         ON u.id = l.user_id
       WHERE l.id = $1
       `,
-      [loan_id]
+      [loan_id],
     );
 
     if (loanRes.rows.length === 0) {
@@ -350,8 +340,23 @@ const createMyLoanPayment = async (req, res) => {
       loan.balance,
       payment_method,
       mpesa_code || null,
-      "pending"
+      "pending",
     );
+
+    /*
+|--------------------------------------------------------------------------
+| STORE EXTRA MONEY IN MEMBER CREDIT WALLET
+|--------------------------------------------------------------------------
+*/
+
+    if (overpayment > 0) {
+      await creditWalletModel(
+        loan.user_id,
+        overpayment,
+        loan.id,
+        "Loan overpayment",
+      );
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -376,11 +381,9 @@ const createMyLoanPayment = async (req, res) => {
     }
 
     return res.status(201).json({
-      message:
-        "Loan repayment submitted successfully. Awaiting approval.",
+      message: "Loan repayment submitted successfully. Awaiting approval.",
       payment,
     });
-
   } catch (error) {
     console.error(error);
 
@@ -390,8 +393,6 @@ const createMyLoanPayment = async (req, res) => {
   }
 };
 
-
-
 /*
 |--------------------------------------------------------------------------
 | GET LOAN PAYMENTS
@@ -400,9 +401,7 @@ const createMyLoanPayment = async (req, res) => {
 
 const getLoanPayments = async (req, res) => {
   try {
-    const payments = await getLoanPaymentsModel(
-      req.params.loanId
-    );
+    const payments = await getLoanPaymentsModel(req.params.loanId);
 
     res.status(200).json(payments);
   } catch (error) {
@@ -420,9 +419,7 @@ const getLoanPayments = async (req, res) => {
 
 const getMyLoanPayments = async (req, res) => {
   try {
-    const payments = await getMyLoanPaymentsModel(
-      req.user.id
-    );
+    const payments = await getMyLoanPaymentsModel(req.user.id);
 
     res.status(200).json(payments);
   } catch (error) {
@@ -442,9 +439,7 @@ const getMyLoanPayments = async (req, res) => {
 
 const getLoanBalance = async (req, res) => {
   try {
-    const balance = await calculateLoanBalance(
-      req.params.loanId
-    );
+    const balance = await calculateLoanBalance(req.params.loanId);
 
     res.json(balance);
   } catch (error) {
