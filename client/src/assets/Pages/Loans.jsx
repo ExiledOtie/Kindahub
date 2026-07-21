@@ -83,6 +83,12 @@ const Loans = () => {
     fetchLoans();
   }, []);
 
+  const groups = useMemo(() => {
+    return [
+      ...new Set(loans.map((loan) => loan.group_name).filter(Boolean)),
+    ].sort();
+  }, [loans]);
+
   const filteredLoans = useMemo(() => {
     return loans.filter((loan) => {
       const searchMatch =
@@ -207,13 +213,13 @@ const Loans = () => {
       <LoanStats loans={loans} interestEarned={interestEarned} />
 
       <LoanFilters
-        loans={loans}
         search={search}
         setSearch={setSearch}
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
         groupFilter={groupFilter}
         setGroupFilter={setGroupFilter}
+        groups={groups}
         setPage={setPage}
       />
 
