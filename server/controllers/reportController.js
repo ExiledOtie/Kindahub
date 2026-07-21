@@ -4,6 +4,7 @@ const {
   getLoansReportModel,
   getRepaymentsReportModel,
   getSavingsReportModel,
+  getInterestReportModel,
 } = require("../models/reportModel");
 
 /*
@@ -57,6 +58,11 @@ const getReports = async (req, res) => {
       case "savings":
         data =
           await getSavingsReportModel();
+        break;
+
+      case "interest":
+        data =
+          await getInterestReportModel();
         break;
 
       default:
