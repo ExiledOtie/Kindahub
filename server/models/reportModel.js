@@ -26,9 +26,39 @@ const getSummaryReportModel = async () => {
       ) AS total_loan_repayments,
 
       (
+  SELECT COALESCE(SUM(interest_paid),0)
+  FROM loan_payments
+) AS total_interest,
+
+      (
         SELECT COALESCE(SUM(amount), 0)
         FROM savings
       ) AS total_savings,
+       (
+  SELECT COALESCE(SUM(lp.interest_paid),0)
+  FROM loan_payments lp
+  JOIN loans l
+    ON l.id = lp.loan_id
+  JOIN groups g
+    ON g.id = l.group_id
+  WHERE LOWER(g.name)='kinda family'
+) AS kinda_family_interest,
+
+(
+  SELECT COALESCE(SUM(lp.interest_paid),0)
+  FROM loan_payments lp
+  JOIN loans l
+    ON l.id = lp.loan_id
+  JOIN groups g
+    ON g.id = l.group_id
+  WHERE LOWER(g.name)='13 amigos'
+) AS amigos_interest,
+
+(
+  SELECT COALESCE(SUM(lp.interest_paid),0)
+  FROM loan_payments lp
+  WHERE DATE_TRUNC('month',lp.created_at)=DATE_TRUNC('month',CURRENT_DATE)
+) AS monthly_interest,
 
       (
         SELECT COALESCE(
@@ -159,10 +189,49 @@ const getSavingsReportModel = async () => {
   return result.rows;
 };
 
+/*
+|--------------------------------------------------------------------------
+| INTEREST REPORT
+|--------------------------------------------------------------------------
+*/
+
+const getInterestReportModel = async () => {
+  const result = await pool.query(`
+    SELECT
+      lp.created_at AS date,
+      u.fullname AS member,
+      g.name AS group_name,
+
+      CONCAT('LN-', l.id) AS loan_reference,
+
+      lp.interest_paid AS interest_collected,
+
+      l.status
+
+    FROM loan_payments lp
+
+    INNER JOIN loans l
+      ON l.id = lp.loan_id
+
+    INNER JOIN users u
+      ON u.id = l.user_id
+
+    LEFT JOIN groups g
+      ON g.id = l.group_id
+
+    WHERE lp.interest_paid > 0
+
+    ORDER BY lp.created_at DESC;
+  `);
+
+  return result.rows;
+};
+
 module.exports = {
   getSummaryReportModel,
   getContributionsReportModel,
   getLoansReportModel,
   getRepaymentsReportModel,
   getSavingsReportModel,
+  getInterestReportModel,
 };
