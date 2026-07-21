@@ -115,7 +115,7 @@ const Reports = () => {
       </div>
 
       {activeTab !== "interest" && (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
           {[
             ["Total Contributions", summary.total_contributions],
             ["Loans Issued", summary.total_loans_issued],
@@ -148,22 +148,65 @@ const Reports = () => {
       </div>
 
       {activeTab === "interest" ? (
-        <div className="bg-white rounded-xl border">
-          <div className="border-b px-5 py-4">
-            <h3 className="font-semibold text-[14px]">Interest Report</h3>
+        <div className="bg-white rounded-xl border shadow-sm">
+          <div className="flex justify-between items-center border-b px-6 py-4">
+            <div>
+              <h3 className="text-[15px] font-semibold">💰 Interest Report</h3>
 
-            <p className="text-[10px] text-gray-500">
-              View all interest collected from loan repayments.
-            </p>
+              <p className="text-[10px] text-gray-500 mt-1">
+                View all interest collected from member loan repayments.
+              </p>
+            </div>
+
+            <button
+              onClick={exportExcel}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-[11px]"
+            >
+              Export Excel
+            </button>
           </div>
 
-          <div className="flex flex-wrap gap-3 p-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-5">
+            <div className="bg-green-50 rounded-xl p-4">
+              <p className="text-[10px] text-gray-500">Total Interest</p>
+
+              <h2 className="font-bold text-[18px] text-green-700">
+                KES {formatCurrency(summary.total_interest)}
+              </h2>
+            </div>
+
+            <div className="bg-blue-50 rounded-xl p-4">
+              <p className="text-[10px] text-gray-500">This Month</p>
+
+              <h2 className="font-bold text-[18px] text-blue-700">
+                KES {formatCurrency(summary.monthly_interest)}
+              </h2>
+            </div>
+
+            <div className="bg-purple-50 rounded-xl p-4">
+              <p className="text-[10px] text-gray-500">Kinda Family</p>
+
+              <h2 className="font-bold text-[18px] text-purple-700">
+                KES {formatCurrency(summary.kinda_family_interest)}
+              </h2>
+            </div>
+
+            <div className="bg-orange-50 rounded-xl p-4">
+              <p className="text-[10px] text-gray-500">13 Amigos</p>
+
+              <h2 className="font-bold text-[18px] text-orange-700">
+                KES {formatCurrency(summary.amigos_interest)}
+              </h2>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-3 px-5 pb-5">
             <input
               type="text"
               placeholder="Search member..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="border rounded-lg px-3 py-2 w-60"
+              className="border rounded-lg px-3 py-2 w-72"
             />
 
             <select
@@ -182,16 +225,9 @@ const Reports = () => {
 
             <button
               onClick={exportCSV}
-              className="ml-auto bg-blue-600 text-white rounded-lg px-4 py-2"
+              className="ml-auto bg-blue-600 text-white px-4 py-2 rounded-lg"
             >
               CSV
-            </button>
-
-            <button
-              onClick={exportExcel}
-              className="bg-green-600 text-white rounded-lg px-4 py-2"
-            >
-              Excel
             </button>
           </div>
         </div>
@@ -253,13 +289,13 @@ const Reports = () => {
         <div className="overflow-x-auto">
           {activeTab === "interest" ? (
             <table className="w-full text-[11px]">
-              <thead className="bg-green-50">
-                <tr>
-                  <th className="px-3 py-3 text-left">Date</th>
-                  <th className="px-3 py-3 text-left">Member</th>
-                  <th className="px-3 py-3 text-left">Group</th>
-                  <th className="px-3 py-3 text-left">Loan Ref</th>
-                  <th className="px-3 py-3 text-right">Interest Collected</th>
+              <thead className="bg-gray-100">
+                <tr className="text-[11px] uppercase tracking-wide text-gray-600">
+                  <th className="px-4 py-3 text-left">Date</th>
+                  <th className="px-4 py-3 text-left">Member</th>
+                  <th className="px-4 py-3 text-left">Group</th>
+                  <th className="px-4 py-3 text-left">Loan Ref</th>
+                  <th className="px-4 py-3 text-right">Interest Collected</th>
                 </tr>
               </thead>
 
