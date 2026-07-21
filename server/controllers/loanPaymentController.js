@@ -137,7 +137,7 @@ const createLoanPayment = async (req, res) => {
       FROM loans
       WHERE id = $1
       `,
-      [loan_id]
+      [loan_id],
     );
 
     if (loanRes.rows.length === 0) {
@@ -150,8 +150,7 @@ const createLoanPayment = async (req, res) => {
 
     const principal = Number(loan.amount);
 
-    const totalInterest =
-      (principal * Number(loan.interest_rate)) / 100;
+    const totalInterest = (principal * Number(loan.interest_rate)) / 100;
 
     /*
     |--------------------------------------------------------------------------
@@ -161,37 +160,21 @@ const createLoanPayment = async (req, res) => {
 
     const breakdown = await getPaymentBreakdownModel(loan_id);
 
-    const principalAlreadyPaid = Number(
-      breakdown.principal_paid
-    );
+    const principalAlreadyPaid = Number(breakdown.principal_paid);
 
-    const interestAlreadyPaid = Number(
-      breakdown.interest_paid
-    );
+    const interestAlreadyPaid = Number(breakdown.interest_paid);
 
-    const remainingPrincipal = Math.max(
-      principal - principalAlreadyPaid,
-      0
-    );
+    const remainingPrincipal = Math.max(principal - principalAlreadyPaid, 0);
 
-    const remainingInterest = Math.max(
-      totalInterest - interestAlreadyPaid,
-      0
-    );
+    const remainingInterest = Math.max(totalInterest - interestAlreadyPaid, 0);
 
     let remaining = paymentAmount;
 
-    const interestPaid = Math.min(
-      remaining,
-      remainingInterest
-    );
+    const interestPaid = Math.min(remaining, remainingInterest);
 
     remaining -= interestPaid;
 
-    const principalPaid = Math.min(
-      remaining,
-      remainingPrincipal
-    );
+    const principalPaid = Math.min(remaining, remainingPrincipal);
 
     remaining -= principalPaid;
 
@@ -204,17 +187,11 @@ const createLoanPayment = async (req, res) => {
     const currentBalance = Number(loan.balance);
 
     const overpayment =
-      paymentAmount > currentBalance
-        ? paymentAmount - currentBalance
-        : 0;
+      paymentAmount > currentBalance ? paymentAmount - currentBalance : 0;
 
-    const amountApplied =
-      paymentAmount - overpayment;
+    const amountApplied = paymentAmount - overpayment;
 
-    const newBalance = Math.max(
-      currentBalance - amountApplied,
-      0
-    );
+    const newBalance = Math.max(currentBalance - amountApplied, 0);
 
     /*
     |--------------------------------------------------------------------------
@@ -229,7 +206,7 @@ const createLoanPayment = async (req, res) => {
       interestPaid,
       newBalance,
       payment_method,
-      mpesa_code || null
+      mpesa_code || null,
     );
 
     /*
@@ -238,15 +215,13 @@ const createLoanPayment = async (req, res) => {
     |--------------------------------------------------------------------------
     */
 
-    const calculated =
-      await calculateLoanBalance(loan_id);
+    const calculated = await calculateLoanBalance(loan_id);
 
-    let updatedLoan =
-      await updateLoanBalanceModel(
-        loan_id,
-        calculated.totalPayable,
-        calculated.balance
-      );
+    let updatedLoan = await updateLoanBalanceModel(
+      loan_id,
+      calculated.totalPayable,
+      calculated.balance,
+    );
 
     /*
     |--------------------------------------------------------------------------
@@ -259,7 +234,7 @@ const createLoanPayment = async (req, res) => {
         loan.user_id,
         overpayment,
         loan.id,
-        "Loan overpayment"
+        "Loan overpayment",
       );
     }
 
@@ -272,15 +247,16 @@ const createLoanPayment = async (req, res) => {
     if (updatedLoan.balance <= 0) {
       const result = await pool.query(
         `
-        UPDATE loans
-        SET
-            status='repaid',
-            balance=0,
-            completed_at=NOW()
-        WHERE id=$1
-        RETURNING *
-        `,
-        [loan_id]
+    UPDATE loans
+    SET
+        status = 'repaid',
+        balance = 0,
+        paid_off_at = NOW(),
+        completed_at = NOW()
+    WHERE id = $1
+    RETURNING *
+    `,
+        [loan_id],
       );
 
       updatedLoan = result.rows[0];
@@ -308,7 +284,6 @@ const createLoanPayment = async (req, res) => {
 
       overpayment,
     });
-
   } catch (error) {
     console.error(error);
 

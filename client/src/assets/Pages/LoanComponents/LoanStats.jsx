@@ -8,40 +8,31 @@ import {
   FaWallet,
 } from "react-icons/fa";
 
-const LoanStats = ({ loans = [] }) => {
+const LoanStats = ({ loans = [], interestEarned = 0 }) => {
   const stats = useMemo(() => {
     const totalLoans = loans.length;
 
     const pendingLoans = loans.filter(
-      (loan) => loan.status === "pending"
+      (loan) => loan.status === "pending",
     ).length;
 
     const approvedLoans = loans.filter(
-      (loan) => loan.status === "approved"
+      (loan) => loan.status === "approved",
     ).length;
 
-    const repaidLoans = loans.filter(
-      (loan) => loan.status === "repaid"
-    ).length;
+    const repaidLoans = loans.filter((loan) => loan.status === "repaid").length;
 
     const outstandingBalance = loans
       .filter((loan) => loan.status === "approved")
       .reduce((sum, loan) => sum + Number(loan.balance || 0), 0);
-
-    const interestEarned = loans.reduce((sum, loan) => {
-      return (
-        sum +
-        (Number(loan.amount || 0) * Number(loan.interest_rate || 0)) / 100
-      );
-    }, 0);
-
+      
     return {
       totalLoans,
       pendingLoans,
       approvedLoans,
       repaidLoans,
       outstandingBalance,
-      interestEarned,
+      interestEarned: Number(interestEarned),
     };
   }, [loans]);
 

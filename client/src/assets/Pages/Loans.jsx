@@ -14,6 +14,7 @@ const ITEMS_PER_PAGE = 8;
 
 const Loans = () => {
   const [loans, setLoans] = useState([]);
+  const [interestEarned, setInterestEarned] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState("");
@@ -39,7 +40,8 @@ const Loans = () => {
 
       const { data } = await axios.get("/loans");
 
-      setLoans(data);
+setLoans(data.loans);
+setInterestEarned(Number(data.interestEarned || 0));
 
       const balances = await Promise.all(
         data.map(async (loan) => {
@@ -202,7 +204,10 @@ const Loans = () => {
 
   return (
     <div className="space-y-2 text-[9px]">
-      <LoanStats loans={loans} />
+      <LoanStats
+  loans={loans}
+  interestEarned={interestEarned}
+/>
 
       <LoanFilters
         loans={loans}

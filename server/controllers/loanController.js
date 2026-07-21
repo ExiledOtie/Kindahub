@@ -269,7 +269,16 @@ const getAllLoans = async (req, res) => {
   try {
     const loans = await getAllLoansModel();
 
-    res.status(200).json(loans);
+    const interest = await pool.query(`
+      SELECT
+        COALESCE(SUM(interest_paid),0) AS interest_earned
+      FROM loan_payments
+    `);
+
+    res.status(200).json({
+      loans,
+      interestEarned: Number(interest.rows[0].interest_earned),
+    });
   } catch (error) {
     console.log(error);
 
