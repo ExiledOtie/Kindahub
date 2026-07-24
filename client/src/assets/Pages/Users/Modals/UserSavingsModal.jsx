@@ -41,7 +41,10 @@ const UserSavingsModal = ({ open, onClose, onSuccess }) => {
       await axios.post("/savings/my", {
         amount,
         payment_method: paymentMethod,
+
         mpesa_code: paymentMethod === "mpesa" ? mpesaCode : null,
+
+        bank_reference: paymentMethod === "bank" ? bankReference : null,
       });
 
       Swal.fire({
@@ -111,6 +114,15 @@ const UserSavingsModal = ({ open, onClose, onSuccess }) => {
               placeholder="Mpesa Code"
               value={mpesaCode}
               onChange={(e) => setMpesaCode(e.target.value)}
+              className="w-full border rounded-lg px-3 py-2 text-xs"
+            />
+          )}
+          {paymentMethod === "bank" && (
+            <input
+              type="text"
+              placeholder="Bank Reference"
+              value={bankReference}
+              onChange={(e) => setBankReference(e.target.value)}
               className="w-full border rounded-lg px-3 py-2 text-xs"
             />
           )}
