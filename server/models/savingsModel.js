@@ -127,21 +127,18 @@ const getSingleSavingModel = async (id) => {
 | SAVINGS STATS
 |--------------------------------------------------------------------------
 */
-
 const getSavingsStatsModel = async () => {
-  const result = await pool.query(
-    `
-      SELECT
-        COUNT(*) AS total_transactions,
+  const result = await pool.query(`
+    SELECT
+      COUNT(*) FILTER (WHERE status = 'completed') AS total_transactions,
 
-        COALESCE(
-          SUM(amount),
-          0
-        ) AS total_savings
+      COALESCE(
+        SUM(amount) FILTER (WHERE status = 'completed'),
+        0
+      ) AS total_savings
 
-      FROM savings
-      `,
-  );
+    FROM savings
+  `);
 
   return result.rows[0];
 };

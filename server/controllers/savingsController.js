@@ -36,10 +36,10 @@ const createSaving = async (req, res) => {
     }
 
     /*
-    |--------------------------------------------------------------------------
-    | VALIDATION
-    |--------------------------------------------------------------------------
-    */
+|--------------------------------------------------------------------------
+| VALIDATION
+|--------------------------------------------------------------------------
+*/
 
     if (payment_method === "mpesa" && !mpesa_code) {
       return res.status(400).json({
@@ -53,38 +53,36 @@ const createSaving = async (req, res) => {
       });
     }
 
-    if (payment_method === "mpesa") {
+    /*
+|--------------------------------------------------------------------------
+| CHECK DUPLICATE PAYMENT REFERENCE
+|--------------------------------------------------------------------------
+*/
+
+    const paymentReference =
+      payment_method === "mpesa"
+        ? mpesa_code.trim().toUpperCase()
+        : payment_method === "bank"
+          ? bank_reference.trim().toUpperCase()
+          : null;
+
+    if (paymentReference) {
       const existing = await pool.query(
         `
-        SELECT id
-        FROM savings
-        WHERE UPPER(mpesa_code)=UPPER($1)
-        LIMIT 1
-        `,
-        [mpesa_code]
+    SELECT id
+    FROM savings
+    WHERE
+      UPPER(COALESCE(mpesa_code,'')) = $1
+      OR
+      UPPER(COALESCE(bank_reference,'')) = $1
+    LIMIT 1
+    `,
+        [paymentReference],
       );
 
       if (existing.rows.length) {
         return res.status(400).json({
-          message: "This Mpesa code has already been used.",
-        });
-      }
-    }
-
-    if (payment_method === "bank") {
-      const existing = await pool.query(
-        `
-        SELECT id
-        FROM savings
-        WHERE UPPER(bank_reference)=UPPER($1)
-        LIMIT 1
-        `,
-        [bank_reference]
-      );
-
-      if (existing.rows.length) {
-        return res.status(400).json({
-          message: "This Bank reference has already been used.",
+          message: "This payment reference has already been used.",
         });
       }
     }
@@ -97,7 +95,7 @@ const createSaving = async (req, res) => {
       mpesa_code || null,
       bank_reference || null,
       req.user.id,
-      "completed"
+      "completed",
     );
 
     await Notification.createNotification({
@@ -130,12 +128,7 @@ const createSaving = async (req, res) => {
 
 const createMySaving = async (req, res) => {
   try {
-    const {
-      amount,
-      payment_method,
-      mpesa_code,
-      bank_reference,
-    } = req.body;
+    const { amount, payment_method, mpesa_code, bank_reference } = req.body;
 
     const userId = req.user.id;
 
@@ -145,7 +138,7 @@ const createMySaving = async (req, res) => {
       FROM users
       WHERE id = $1
       `,
-      [userId]
+      [userId],
     );
 
     const group = await pool.query(
@@ -155,7 +148,7 @@ const createMySaving = async (req, res) => {
       WHERE user_id = $1
       LIMIT 1
       `,
-      [userId]
+      [userId],
     );
 
     const groupId = group.rows[0]?.group_id;
@@ -167,10 +160,10 @@ const createMySaving = async (req, res) => {
     }
 
     /*
-    |--------------------------------------------------------------------------
-    | VALIDATION
-    |--------------------------------------------------------------------------
-    */
+|--------------------------------------------------------------------------
+| VALIDATION
+|--------------------------------------------------------------------------
+*/
 
     if (payment_method === "mpesa" && !mpesa_code) {
       return res.status(400).json({
@@ -184,38 +177,36 @@ const createMySaving = async (req, res) => {
       });
     }
 
-    if (payment_method === "mpesa") {
+    /*
+|--------------------------------------------------------------------------
+| CHECK DUPLICATE PAYMENT REFERENCE
+|--------------------------------------------------------------------------
+*/
+
+    const paymentReference =
+      payment_method === "mpesa"
+        ? mpesa_code.trim().toUpperCase()
+        : payment_method === "bank"
+          ? bank_reference.trim().toUpperCase()
+          : null;
+
+    if (paymentReference) {
       const existing = await pool.query(
         `
-        SELECT id
-        FROM savings
-        WHERE UPPER(mpesa_code)=UPPER($1)
-        LIMIT 1
-        `,
-        [mpesa_code]
+    SELECT id
+    FROM savings
+    WHERE
+      UPPER(COALESCE(mpesa_code,'')) = $1
+      OR
+      UPPER(COALESCE(bank_reference,'')) = $1
+    LIMIT 1
+    `,
+        [paymentReference],
       );
 
       if (existing.rows.length) {
         return res.status(400).json({
-          message: "This Mpesa code has already been used.",
-        });
-      }
-    }
-
-    if (payment_method === "bank") {
-      const existing = await pool.query(
-        `
-        SELECT id
-        FROM savings
-        WHERE UPPER(bank_reference)=UPPER($1)
-        LIMIT 1
-        `,
-        [bank_reference]
-      );
-
-      if (existing.rows.length) {
-        return res.status(400).json({
-          message: "This Bank reference has already been used.",
+          message: "This payment reference has already been used.",
         });
       }
     }
@@ -228,7 +219,7 @@ const createMySaving = async (req, res) => {
       mpesa_code || null,
       bank_reference || null,
       userId,
-      "pending"
+      "pending",
     );
 
     /*
@@ -247,15 +238,15 @@ const createMySaving = async (req, res) => {
       payment_method === "mpesa"
         ? mpesa_code
         : payment_method === "bank"
-        ? bank_reference
-        : "Cash Payment";
+          ? bank_reference
+          : "Cash";
 
     for (const admin of admins.rows) {
       await Notification.createNotification({
         user_id: admin.id,
         title: "New Saving Submitted",
         message: `${member.rows[0].fullname} submitted a saving of KES ${Number(
-          amount
+          amount,
         ).toLocaleString()} via ${payment_method}. Reference: ${reference}`,
         type: "saving",
         reference_id: saving.id,
