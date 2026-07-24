@@ -14,7 +14,7 @@ const pool = require("../config/db");
 
 /*
 |--------------------------------------------------------------------------
-| CREATE SAVING (SUPER ADMIN / ADMIN)
+| CREATE SAVING (SUPER ADMIN /ADMIN)
 |--------------------------------------------------------------------------
 */
 
@@ -26,6 +26,7 @@ const createSaving = async (req, res) => {
       amount,
       payment_method,
       mpesa_code,
+      bank_reference,
     } = req.body;
 
     if (!user_id || !group_id || !amount) {
@@ -34,13 +35,67 @@ const createSaving = async (req, res) => {
       });
     }
 
-    // Super Admin/Admin savings are automatically approved
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDATION
+    |--------------------------------------------------------------------------
+    */
+
+    if (payment_method === "mpesa" && !mpesa_code) {
+      return res.status(400).json({
+        message: "Mpesa code is required",
+      });
+    }
+
+    if (payment_method === "bank" && !bank_reference) {
+      return res.status(400).json({
+        message: "Bank reference is required",
+      });
+    }
+
+    if (payment_method === "mpesa") {
+      const existing = await pool.query(
+        `
+        SELECT id
+        FROM savings
+        WHERE UPPER(mpesa_code)=UPPER($1)
+        LIMIT 1
+        `,
+        [mpesa_code]
+      );
+
+      if (existing.rows.length) {
+        return res.status(400).json({
+          message: "This Mpesa code has already been used.",
+        });
+      }
+    }
+
+    if (payment_method === "bank") {
+      const existing = await pool.query(
+        `
+        SELECT id
+        FROM savings
+        WHERE UPPER(bank_reference)=UPPER($1)
+        LIMIT 1
+        `,
+        [bank_reference]
+      );
+
+      if (existing.rows.length) {
+        return res.status(400).json({
+          message: "This Bank reference has already been used.",
+        });
+      }
+    }
+
     const saving = await createSavingModel(
       user_id,
       group_id,
       amount,
       payment_method,
       mpesa_code || null,
+      bank_reference || null,
       req.user.id,
       "completed"
     );
@@ -79,6 +134,7 @@ const createMySaving = async (req, res) => {
       amount,
       payment_method,
       mpesa_code,
+      bank_reference,
     } = req.body;
 
     const userId = req.user.id;
@@ -110,13 +166,67 @@ const createMySaving = async (req, res) => {
       });
     }
 
-    // Member savings require approval
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDATION
+    |--------------------------------------------------------------------------
+    */
+
+    if (payment_method === "mpesa" && !mpesa_code) {
+      return res.status(400).json({
+        message: "Mpesa code is required",
+      });
+    }
+
+    if (payment_method === "bank" && !bank_reference) {
+      return res.status(400).json({
+        message: "Bank reference is required",
+      });
+    }
+
+    if (payment_method === "mpesa") {
+      const existing = await pool.query(
+        `
+        SELECT id
+        FROM savings
+        WHERE UPPER(mpesa_code)=UPPER($1)
+        LIMIT 1
+        `,
+        [mpesa_code]
+      );
+
+      if (existing.rows.length) {
+        return res.status(400).json({
+          message: "This Mpesa code has already been used.",
+        });
+      }
+    }
+
+    if (payment_method === "bank") {
+      const existing = await pool.query(
+        `
+        SELECT id
+        FROM savings
+        WHERE UPPER(bank_reference)=UPPER($1)
+        LIMIT 1
+        `,
+        [bank_reference]
+      );
+
+      if (existing.rows.length) {
+        return res.status(400).json({
+          message: "This Bank reference has already been used.",
+        });
+      }
+    }
+
     const saving = await createSavingModel(
       userId,
       groupId,
       amount,
       payment_method,
       mpesa_code || null,
+      bank_reference || null,
       userId,
       "pending"
     );
@@ -133,15 +243,20 @@ const createMySaving = async (req, res) => {
       WHERE is_super_admin = true
     `);
 
+    const reference =
+      payment_method === "mpesa"
+        ? mpesa_code
+        : payment_method === "bank"
+        ? bank_reference
+        : "Cash Payment";
+
     for (const admin of admins.rows) {
       await Notification.createNotification({
         user_id: admin.id,
         title: "New Saving Submitted",
         message: `${member.rows[0].fullname} submitted a saving of KES ${Number(
           amount
-        ).toLocaleString()} via ${payment_method}. Mpesa Code: ${
-          mpesa_code || "N/A"
-        }`,
+        ).toLocaleString()} via ${payment_method}. Reference: ${reference}`,
         type: "saving",
         reference_id: saving.id,
       });

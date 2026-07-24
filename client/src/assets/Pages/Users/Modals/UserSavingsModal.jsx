@@ -34,7 +34,13 @@ const UserSavingsModal = ({ open, onClose, onSuccess }) => {
         text: "Mpesa code is required",
       });
     }
-
+    if (paymentMethod === "bank" && !bankReference) {
+      return Swal.fire({
+        icon: "warning",
+        title: "Validation",
+        text: "Bank reference is required",
+      });
+    }
     try {
       setLoading(true);
 
@@ -55,6 +61,7 @@ const UserSavingsModal = ({ open, onClose, onSuccess }) => {
 
       setAmount("");
       setMpesaCode("");
+      setBankReference("");
       setPaymentMethod("mpesa");
 
       onClose();
@@ -98,7 +105,11 @@ const UserSavingsModal = ({ open, onClose, onSuccess }) => {
 
           <select
             value={paymentMethod}
-            onChange={(e) => setPaymentMethod(e.target.value)}
+            onChange={(e) => {
+              setPaymentMethod(e.target.value);
+              setMpesaCode("");
+              setBankReference("");
+            }}
             className="w-full border rounded-lg px-3 py-2 text-xs"
           >
             <option value="mpesa">Mpesa</option>

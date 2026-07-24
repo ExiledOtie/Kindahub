@@ -12,8 +12,9 @@ const createSavingModel = async (
   amount,
   paymentMethod,
   mpesaCode,
+  bankReference,
   createdBy,
-  status = "completed",
+  status = "completed"
 ) => {
   const result = await pool.query(
     `
@@ -24,15 +25,16 @@ const createSavingModel = async (
       amount,
       payment_method,
       mpesa_code,
+      bank_reference,
       created_by,
       status
     )
 
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 
     RETURNING *
     `,
-    [userId, groupId, amount, paymentMethod, mpesaCode, createdBy, status],
+    [userId, groupId, amount, paymentMethod, mpesaCode, bankReference, createdBy, status],
   );
 
   return result.rows[0];
