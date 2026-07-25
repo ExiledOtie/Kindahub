@@ -356,29 +356,31 @@ const getMemberSummaryModel = async (userId) => {
     [userId],
   );
 
-  const contributionResult = await pool.query(
-    `
+const contributionResult = await pool.query(
+  `
     SELECT
       COALESCE(SUM(amount), 0) AS total
 
     FROM contributions
 
     WHERE user_id = $1
+      AND LOWER(status) = 'completed'
     `,
-    [userId],
-  );
+  [userId],
+);
 
-  const savingsResult = await pool.query(
-    `
+const savingsResult = await pool.query(
+  `
     SELECT
       COALESCE(SUM(amount), 0) AS total
 
     FROM savings
 
     WHERE user_id = $1
+      AND LOWER(status) = 'completed'
     `,
-    [userId],
-  );
+  [userId],
+);
 
   const activeLoansResult = await pool.query(
     `
@@ -419,16 +421,17 @@ const getMemberSummaryModel = async (userId) => {
     UNION ALL
 
     SELECT
-      'saving' AS type,
-      amount,
-      created_at,
-      'Savings of KES ' ||
-      TO_CHAR(amount, 'FM999,999,999') ||
-      ' added' AS description
+  'saving' AS type,
+  amount,
+  created_at,
+  'Savings of KES ' ||
+  TO_CHAR(amount, 'FM999,999,999') ||
+  ' added' AS description
 
-    FROM savings
+FROM savings
 
-    WHERE user_id = $1
+WHERE user_id = $1
+  AND LOWER(status) = 'completed'
 
     UNION ALL
 
