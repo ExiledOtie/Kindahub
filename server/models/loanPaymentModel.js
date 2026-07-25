@@ -14,6 +14,7 @@ const createLoanPaymentModel = async (
   balanceAfter,
   paymentMethod,
   mpesaCode,
+  bankReference,
   status = "completed"
 ) => {
   const result = await pool.query(
@@ -27,9 +28,10 @@ const createLoanPaymentModel = async (
       balance_after,
       payment_method,
       mpesa_code,
+      bank_reference,
       status
     )
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
     RETURNING *
     `,
     [
@@ -40,6 +42,7 @@ const createLoanPaymentModel = async (
       balanceAfter,
       paymentMethod,
       mpesaCode,
+      bankReference,
       status,
     ]
   );

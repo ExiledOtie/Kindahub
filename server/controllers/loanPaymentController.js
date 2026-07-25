@@ -115,7 +115,13 @@ const getAllLoanPayments = async (req, res) => {
 */
 const createLoanPayment = async (req, res) => {
   try {
-    const { loan_id, amount, payment_method, mpesa_code } = req.body;
+    const {
+      loan_id,
+      amount,
+      payment_method,
+      mpesa_code,
+      bank_reference,
+    } = req.body;
 
     const paymentAmount = Number(amount || 0);
 
@@ -124,6 +130,18 @@ const createLoanPayment = async (req, res) => {
         message: "Invalid payment amount",
       });
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDATE PAYMENT REFERENCE
+    |--------------------------------------------------------------------------
+    */
+
+    await validatePaymentReference(
+      payment_method,
+      mpesa_code,
+      bank_reference
+    );
 
     /*
     |--------------------------------------------------------------------------
@@ -137,10 +155,10 @@ const createLoanPayment = async (req, res) => {
       FROM loans
       WHERE id = $1
       `,
-      [loan_id],
+      [loan_id]
     );
 
-    if (loanRes.rows.length === 0) {
+    if (!loanRes.rows.length) {
       return res.status(404).json({
         message: "Loan not found",
       });
@@ -148,9 +166,15 @@ const createLoanPayment = async (req, res) => {
 
     const loan = loanRes.rows[0];
 
-    const principal = Number(loan.amount);
+    /*
+    |--------------------------------------------------------------------------
+    | RECALCULATE CURRENT BALANCE FIRST
+    |--------------------------------------------------------------------------
+    */
 
-    const totalInterest = (principal * Number(loan.interest_rate)) / 100;
+    const calculated = await calculateLoanBalance(loan_id);
+
+    let currentBalance = Number(calculated.balance);
 
     /*
     |--------------------------------------------------------------------------
@@ -158,40 +182,66 @@ const createLoanPayment = async (req, res) => {
     |--------------------------------------------------------------------------
     */
 
-    const breakdown = await getPaymentBreakdownModel(loan_id);
+    const principal = Number(loan.amount);
 
-    const principalAlreadyPaid = Number(breakdown.principal_paid);
+    const totalInterest =
+      (principal * Number(loan.interest_rate)) / 100;
 
-    const interestAlreadyPaid = Number(breakdown.interest_paid);
+    const breakdown =
+      await getPaymentBreakdownModel(loan_id);
 
-    const remainingPrincipal = Math.max(principal - principalAlreadyPaid, 0);
+    const principalAlreadyPaid =
+      Number(breakdown.principal_paid);
 
-    const remainingInterest = Math.max(totalInterest - interestAlreadyPaid, 0);
+    const interestAlreadyPaid =
+      Number(breakdown.interest_paid);
 
-    let remaining = paymentAmount;
+    const remainingPrincipal = Math.max(
+      principal - principalAlreadyPaid,
+      0
+    );
 
-    const interestPaid = Math.min(remaining, remainingInterest);
-
-    remaining -= interestPaid;
-
-    const principalPaid = Math.min(remaining, remainingPrincipal);
-
-    remaining -= principalPaid;
+    const remainingInterest = Math.max(
+      totalInterest - interestAlreadyPaid,
+      0
+    );
 
     /*
     |--------------------------------------------------------------------------
-    | OVERPAYMENT
+    | SPLIT PAYMENT
     |--------------------------------------------------------------------------
     */
 
-    const currentBalance = Number(loan.balance);
+    const amountApplied = Math.min(
+      paymentAmount,
+      currentBalance
+    );
 
-    const overpayment =
-      paymentAmount > currentBalance ? paymentAmount - currentBalance : 0;
+    const overpayment = Math.max(
+      paymentAmount - currentBalance,
+      0
+    );
 
-    const amountApplied = paymentAmount - overpayment;
+    let remaining = amountApplied;
 
-    const newBalance = Math.max(currentBalance - amountApplied, 0);
+    const interestPaid = Math.min(
+      remaining,
+      remainingInterest
+    );
+
+    remaining -= interestPaid;
+
+    const principalPaid = Math.min(
+      remaining,
+      remainingPrincipal
+    );
+
+    remaining -= principalPaid;
+
+    const balanceAfter = Math.max(
+      currentBalance - amountApplied,
+      0
+    );
 
     /*
     |--------------------------------------------------------------------------
@@ -199,33 +249,22 @@ const createLoanPayment = async (req, res) => {
     |--------------------------------------------------------------------------
     */
 
-    const payment = await createLoanPaymentModel(
-      loan_id,
-      amountApplied,
-      principalPaid,
-      interestPaid,
-      newBalance,
-      payment_method,
-      mpesa_code || null,
-    );
+    const payment =
+      await createLoanPaymentModel(
+        loan_id,
+        amountApplied,
+        principalPaid,
+        interestPaid,
+        balanceAfter,
+        payment_method,
+        mpesa_code || null,
+        bank_reference || null,
+        "completed"
+      );
 
     /*
     |--------------------------------------------------------------------------
-    | RECALCULATE BALANCE
-    |--------------------------------------------------------------------------
-    */
-
-    const calculated = await calculateLoanBalance(loan_id);
-
-    let updatedLoan = await updateLoanBalanceModel(
-      loan_id,
-      calculated.totalPayable,
-      calculated.balance,
-    );
-
-    /*
-    |--------------------------------------------------------------------------
-    | STORE OVERPAYMENT IN MEMBER WALLET
+    | CREDIT MEMBER WALLET
     |--------------------------------------------------------------------------
     */
 
@@ -234,29 +273,45 @@ const createLoanPayment = async (req, res) => {
         loan.user_id,
         overpayment,
         loan.id,
-        "Loan overpayment",
+        "Loan overpayment"
       );
     }
 
     /*
     |--------------------------------------------------------------------------
-    | MARK LOAN REPAID
+    | RECALCULATE AFTER PAYMENT
+    |--------------------------------------------------------------------------
+    */
+
+    const updatedCalculation =
+      await calculateLoanBalance(loan_id);
+
+    let updatedLoan =
+      await updateLoanBalanceModel(
+        loan_id,
+        updatedCalculation.totalPayable,
+        updatedCalculation.balance
+      );
+
+    /*
+    |--------------------------------------------------------------------------
+    | MARK AS REPAID
     |--------------------------------------------------------------------------
     */
 
     if (updatedLoan.balance <= 0) {
       const result = await pool.query(
         `
-    UPDATE loans
-    SET
-        status = 'repaid',
-        balance = 0,
-        paid_off_at = NOW(),
-        completed_at = NOW()
-    WHERE id = $1
-    RETURNING *
-    `,
-        [loan_id],
+        UPDATE loans
+        SET
+          status = 'repaid',
+          balance = 0,
+          paid_off_at = NOW(),
+          completed_at = NOW()
+        WHERE id = $1
+        RETURNING *
+        `,
+        [loan_id]
       );
 
       updatedLoan = result.rows[0];
@@ -284,12 +339,18 @@ const createLoanPayment = async (req, res) => {
 
       overpayment,
     });
+
   } catch (error) {
     console.error(error);
 
-    return res.status(500).json({
+    return res.status(
+      error.message ===
+        "This payment reference has already been used."
+        ? 400
+        : 500
+    ).json({
       success: false,
-      message: "Server error",
+      message: error.message || "Server error",
     });
   }
 };
@@ -299,10 +360,15 @@ const createLoanPayment = async (req, res) => {
 | MEMBER CREATE LOAN PAYMENT
 |--------------------------------------------------------------------------
 */
-
 const createMyLoanPayment = async (req, res) => {
   try {
-    const { loan_id, amount, payment_method, mpesa_code } = req.body;
+    const {
+      loan_id,
+      amount,
+      payment_method,
+      mpesa_code,
+      bank_reference,
+    } = req.body;
 
     const paymentAmount = Number(amount || 0);
 
@@ -311,6 +377,18 @@ const createMyLoanPayment = async (req, res) => {
         message: "Loan and valid payment amount are required.",
       });
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDATE PAYMENT REFERENCE
+    |--------------------------------------------------------------------------
+    */
+
+    await validatePaymentReference(
+      payment_method,
+      mpesa_code,
+      bank_reference
+    );
 
     /*
     |--------------------------------------------------------------------------
@@ -324,14 +402,16 @@ const createMyLoanPayment = async (req, res) => {
         l.*,
         u.fullname
       FROM loans l
+
       INNER JOIN users u
         ON u.id = l.user_id
+
       WHERE l.id = $1
       `,
-      [loan_id],
+      [loan_id]
     );
 
-    if (loanRes.rows.length === 0) {
+    if (!loanRes.rows.length) {
       return res.status(404).json({
         message: "Loan not found",
       });
@@ -353,7 +433,7 @@ const createMyLoanPayment = async (req, res) => {
 
     /*
     |--------------------------------------------------------------------------
-    | SAVE AS PENDING
+    | SAVE PAYMENT AS PENDING
     |--------------------------------------------------------------------------
     */
 
@@ -365,23 +445,9 @@ const createMyLoanPayment = async (req, res) => {
       loan.balance,
       payment_method,
       mpesa_code || null,
-      "pending",
+      bank_reference || null,
+      "pending"
     );
-
-    /*
-|--------------------------------------------------------------------------
-| STORE EXTRA MONEY IN MEMBER CREDIT WALLET
-|--------------------------------------------------------------------------
-*/
-
-    if (overpayment > 0) {
-      await creditWalletModel(
-        loan.user_id,
-        overpayment,
-        loan.id,
-        "Loan overpayment",
-      );
-    }
 
     /*
     |--------------------------------------------------------------------------
@@ -395,25 +461,46 @@ const createMyLoanPayment = async (req, res) => {
       WHERE is_super_admin = true
     `);
 
+    const reference =
+      payment_method === "mpesa"
+        ? mpesa_code
+        : payment_method === "bank"
+        ? bank_reference
+        : "Cash";
+
     for (const admin of admins.rows) {
       await Notification.createNotification({
         user_id: admin.id,
         title: "Loan Repayment Submitted",
-        message: `${loan.fullname} submitted a loan repayment of KES ${paymentAmount.toLocaleString()} awaiting approval.`,
+        message: `${loan.fullname} submitted a loan repayment of KES ${paymentAmount.toLocaleString()} via ${payment_method}. Reference: ${reference}. Awaiting approval.`,
         type: "loan_payment",
         reference_id: payment.id,
       });
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | RESPONSE
+    |--------------------------------------------------------------------------
+    */
+
     return res.status(201).json({
+      success: true,
       message: "Loan repayment submitted successfully. Awaiting approval.",
       payment,
     });
+
   } catch (error) {
     console.error(error);
 
-    return res.status(500).json({
-      message: "Failed to submit loan repayment.",
+    return res.status(
+      error.message ===
+        "This payment reference has already been used."
+        ? 400
+        : 500
+    ).json({
+      success: false,
+      message: error.message || "Failed to submit loan repayment.",
     });
   }
 };

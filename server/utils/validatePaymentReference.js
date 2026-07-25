@@ -3,7 +3,7 @@ const pool = require("../config/db");
 const validatePaymentReference = async (
   paymentMethod,
   mpesaCode,
-  bankReference
+  bankReference,
 ) => {
   // Cash payments don't have references
   if (paymentMethod === "cash") {
@@ -14,8 +14,8 @@ const validatePaymentReference = async (
     paymentMethod === "mpesa"
       ? mpesaCode?.trim().toUpperCase()
       : paymentMethod === "bank"
-      ? bankReference?.trim().toUpperCase()
-      : null;
+        ? bankReference?.trim().toUpperCase()
+        : null;
 
   if (!paymentReference) {
     return;
@@ -24,22 +24,30 @@ const validatePaymentReference = async (
   const existing = await pool.query(
     `
     SELECT id
-    FROM savings
-    WHERE
-      UPPER(COALESCE(mpesa_code,'')) = $1
-      OR UPPER(COALESCE(bank_reference,'')) = $1
+FROM savings
+WHERE
+  UPPER(COALESCE(mpesa_code,'')) = $1
+  OR UPPER(COALESCE(bank_reference,'')) = $1
 
-    UNION
+UNION
 
-    SELECT id
-    FROM contributions
-    WHERE
-      UPPER(COALESCE(mpesa_code,'')) = $1
-      OR UPPER(COALESCE(bank_reference,'')) = $1
+SELECT id
+FROM contributions
+WHERE
+  UPPER(COALESCE(mpesa_code,'')) = $1
+  OR UPPER(COALESCE(bank_reference,'')) = $1
 
-    LIMIT 1
+UNION
+
+SELECT id
+FROM loan_payments
+WHERE
+  UPPER(COALESCE(mpesa_code,'')) = $1
+  OR UPPER(COALESCE(bank_reference,'')) = $1
+
+LIMIT 1
     `,
-    [paymentReference]
+    [paymentReference],
   );
 
   if (existing.rows.length > 0) {
