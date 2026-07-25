@@ -130,7 +130,7 @@ const SummaryTab = ({ memberId }) => {
         <StatCard
           icon={<FaMoneyBillWave />}
           title="Total Contributions"
-          value={`KES ${stats.totalContributions || 0}`}
+          value={`KES ${Number(stats.totalContributions || 0).toLocaleString()}`}
           bg="bg-green-100"
           color="text-green-600"
         />
@@ -138,7 +138,7 @@ const SummaryTab = ({ memberId }) => {
         <StatCard
           icon={<MdSavings />}
           title="Total Savings"
-          value={`KES ${stats.totalSavings || 0}`}
+          value={`KES ${Number(stats.totalSavings || 0).toLocaleString()}`}
           bg="bg-blue-100"
           color="text-blue-600"
         />
@@ -146,7 +146,7 @@ const SummaryTab = ({ memberId }) => {
         <StatCard
           icon={<FaWallet />}
           title="Current Balance"
-          value={`KES ${stats.currentBalance || 0}`}
+          value={`KES ${Number(stats.currentBalance || 0).toLocaleString()}`}
           bg="bg-yellow-100"
           color="text-yellow-600"
         />
@@ -255,13 +255,13 @@ const SummaryTab = ({ memberId }) => {
 
 /* SMALL STATS COMPONENT */
 const StatCard = ({ icon, title, value, bg, color }) => (
-  <div className="bg-white border rounded-xl p-4 shadow-sm">
-    <div className="flex gap-3 items-center">
-      <div className={`p-3 rounded-full ${bg} ${color}`}>{icon}</div>
+  <div className="bg-white border rounded-xl p-3 shadow-sm">
+    <div className="flex gap-2 items-center">
+      <div className={`p-2 rounded-full ${bg} ${color}`}>{icon}</div>
 
       <div>
-        <p className="text-[10px] text-gray-500">{title}</p>
-        <p className="font-bold text-sm">{value}</p>
+        <p className="text-[8px] text-gray-500">{title}</p>
+        <p className="font-semibold text-[12px]">{value}</p>
       </div>
     </div>
   </div>
