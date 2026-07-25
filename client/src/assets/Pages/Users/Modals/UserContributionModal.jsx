@@ -23,6 +23,10 @@ const UserContributionModal = ({
     setMpesaCode] =
     useState("");
 
+  const [bankReference,
+    setBankReference] =
+    useState("");
+
   if (!open) return null;
 
   const handleSubmit = async (e) => {

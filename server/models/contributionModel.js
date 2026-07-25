@@ -12,6 +12,7 @@ const createContributionModel = async (
   amount,
   paymentMethod,
   mpesaCode,
+  bankReference,
   createdBy,
   status = "pending"
 ) => {
@@ -24,11 +25,12 @@ const createContributionModel = async (
       amount,
       payment_method,
       mpesa_code,
+      bank_reference,
       created_by,
       status
     )
 
-    VALUES ($1,$2,$3,$4,$5,$6,$7)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
 
     RETURNING *
     `,
@@ -38,6 +40,7 @@ const createContributionModel = async (
       amount,
       paymentMethod,
       mpesaCode,
+      bankReference,
       createdBy,
       status,
     ]

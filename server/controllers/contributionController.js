@@ -7,6 +7,7 @@ const {
   approveContributionModel,
   rejectContributionModel,
 } = require("../models/contributionModel");
+const validatePaymentReference = require("../utils/validatePaymentReference");
 const Notification = require("../models/notificationModel");
 
 const pool = require("../config/db");
@@ -19,7 +20,43 @@ const pool = require("../config/db");
 
 const createContribution = async (req, res) => {
   try {
-    const { user_id, amount, payment_method, mpesa_code } = req.body;
+    const {
+      user_id,
+      amount,
+      payment_method,
+      mpesa_code,
+      bank_reference,
+    } = req.body;
+
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDATION
+    |--------------------------------------------------------------------------
+    */
+
+    if (payment_method === "mpesa" && !mpesa_code) {
+      return res.status(400).json({
+        message: "Mpesa code is required",
+      });
+    }
+
+    if (payment_method === "bank" && !bank_reference) {
+      return res.status(400).json({
+        message: "Bank reference is required",
+      });
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDATE PAYMENT REFERENCE
+    |--------------------------------------------------------------------------
+    */
+
+    await validatePaymentReference(
+      payment_method,
+      mpesa_code,
+      bank_reference
+    );
 
     const group = await pool.query(
       `
@@ -46,6 +83,7 @@ const createContribution = async (req, res) => {
       amount,
       payment_method,
       mpesa_code || null,
+      bank_reference || null,
       req.user.id,
       "completed"
     );
@@ -65,8 +103,14 @@ const createContribution = async (req, res) => {
   } catch (error) {
     console.log(error);
 
+    if (error.message === "This payment reference has already been used.") {
+      return res.status(400).json({
+        message: error.message,
+      });
+    }
+
     res.status(500).json({
-      message: error.message,
+      message: "Server error",
     });
   }
 };
@@ -80,7 +124,42 @@ const createContribution = async (req, res) => {
 
 const createMyContribution = async (req, res) => {
   try {
-    const { amount, payment_method, mpesa_code } = req.body;
+    const {
+      amount,
+      payment_method,
+      mpesa_code,
+      bank_reference,
+    } = req.body;
+
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDATION
+    |--------------------------------------------------------------------------
+    */
+
+    if (payment_method === "mpesa" && !mpesa_code) {
+      return res.status(400).json({
+        message: "Mpesa code is required",
+      });
+    }
+
+    if (payment_method === "bank" && !bank_reference) {
+      return res.status(400).json({
+        message: "Bank reference is required",
+      });
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDATE PAYMENT REFERENCE
+    |--------------------------------------------------------------------------
+    */
+
+    await validatePaymentReference(
+      payment_method,
+      mpesa_code,
+      bank_reference
+    );
 
     const userId = req.user.id;
 
@@ -118,6 +197,7 @@ const createMyContribution = async (req, res) => {
       amount,
       payment_method,
       mpesa_code || null,
+      bank_reference || null,
       userId,
       "pending"
     );
@@ -134,15 +214,20 @@ const createMyContribution = async (req, res) => {
       WHERE is_super_admin = true
     `);
 
+    const reference =
+      payment_method === "mpesa"
+        ? mpesa_code
+        : payment_method === "bank"
+        ? bank_reference
+        : "Cash";
+
     for (const admin of admins.rows) {
       await Notification.createNotification({
         user_id: admin.id,
         title: "New Contribution Submitted",
         message: `${member.rows[0].fullname} submitted KES ${Number(
           amount
-        ).toLocaleString()} via ${payment_method}. Mpesa Code: ${
-          mpesa_code || "N/A"
-        }`,
+        ).toLocaleString()} via ${payment_method}. Reference: ${reference}`,
         type: "contribution",
         reference_id: contribution.id,
       });
@@ -154,6 +239,12 @@ const createMyContribution = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
+
+    if (error.message === "This payment reference has already been used.") {
+      return res.status(400).json({
+        message: error.message,
+      });
+    }
 
     res.status(500).json({
       message: "Failed to submit contribution",
