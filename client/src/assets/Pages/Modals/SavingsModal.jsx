@@ -1,70 +1,68 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import axios from "../../Utils/axios";
 import Swal from "sweetalert2";
 
 const SavingsModal = ({ open, onClose, userId, onSuccess }) => {
-  const [groups, setGroups] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
-    group_id: "",
     amount: "",
     payment_method: "cash",
     mpesa_code: "",
     bank_reference: "",
   });
 
-  /*
-  |--------------------------------------------------------------------------
-  | FETCH GROUPS
-  |--------------------------------------------------------------------------
-  */
+  if (!open) return null;
 
-  useEffect(() => {
-    if (open) {
-      fetchGroups();
-    }
-  }, [open]);
-
-  const fetchGroups = async () => {
-    try {
-      const res = await axios.get("/groups");
-
-      setGroups(res.data);
-    } catch (error) {
-      console.log(error);
-    }
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
   };
-
-  /*
-  |--------------------------------------------------------------------------
-  | SUBMIT
-  |--------------------------------------------------------------------------
-  */
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!formData.amount) {
+      return Swal.fire({
+        icon: "warning",
+        title: "Missing Amount",
+        text: "Please enter the savings amount.",
+      });
+    }
+
     try {
+      setLoading(true);
+
       await axios.post("/savings", {
         user_id: userId,
-        group_id: formData.group_id,
         amount: formData.amount,
         payment_method: formData.payment_method,
         mpesa_code:
-          formData.payment_method === "mpesa" ? formData.mpesa_code : null,
-
+          formData.payment_method === "mpesa"
+            ? formData.mpesa_code
+            : null,
         bank_reference:
-          formData.payment_method === "bank" ? formData.bank_reference : null,
+          formData.payment_method === "bank"
+            ? formData.bank_reference
+            : null,
       });
 
       Swal.fire({
         icon: "success",
         title: "Success",
-        text: "Savings added successfully",
+        text: "Savings added successfully.",
       });
 
-      onSuccess();
+      setFormData({
+        amount: "",
+        payment_method: "cash",
+        mpesa_code: "",
+        bank_reference: "",
+      });
 
+      onSuccess?.();
       onClose();
     } catch (error) {
       console.log(error);
@@ -72,116 +70,130 @@ const SavingsModal = ({ open, onClose, userId, onSuccess }) => {
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: "Failed to add savings",
+        text:
+          error?.response?.data?.message ||
+          "Failed to add savings.",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (!open) return null;
-
   return (
-    <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
-      <div className="bg-white rounded-xl w-full max-w-md p-5">
-        <h2 className="text-sm font-semibold mb-4">Add Savings</h2>
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-xl shadow-lg w-full max-w-md">
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <select
-            required
-            value={formData.group_id}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                group_id: e.target.value,
-              })
-            }
-            className="w-full border rounded-lg p-2 text-sm"
-          >
-            <option value="">Select Group</option>
+        {/* HEADER */}
 
-            {groups.map((group) => (
-              <option key={group.id} value={group.id}>
-                {group.name}
-              </option>
-            ))}
-          </select>
+        <div className="px-5 py-4 border-b">
+          <h2 className="text-sm font-semibold text-gray-800">
+            Add Savings
+          </h2>
 
-          <input
-            type="number"
-            required
-            placeholder="Amount"
-            value={formData.amount}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                amount: e.target.value,
-              })
-            }
-            className="w-full border rounded-lg p-2 text-sm"
-          />
+          <p className="text-[10px] text-gray-500 mt-1">
+            Record a new savings transaction.
+          </p>
+        </div>
 
-          <select
-            value={formData.payment_method}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                payment_method: e.target.value,
-              })
-            }
-            className="w-full border rounded-lg p-2 text-sm"
-          >
-            <option value="cash">Cash</option>
+        {/* FORM */}
 
-            <option value="mpesa">Mpesa</option>
+        <form onSubmit={handleSubmit} className="p-5 space-y-4">
 
-            <option value="bank">Bank</option>
-          </select>
+          {/* Amount */}
+
+          <div>
+            <label className="block text-[10px] font-medium text-gray-700 mb-1">
+              Amount (KES)
+            </label>
+
+            <input
+              type="number"
+              name="amount"
+              value={formData.amount}
+              onChange={handleChange}
+              placeholder="5000"
+              className="w-full border rounded-lg px-3 py-2 text-[11px] focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+
+          {/* Payment Method */}
+
+          <div>
+            <label className="block text-[10px] font-medium text-gray-700 mb-1">
+              Payment Method
+            </label>
+
+            <select
+              name="payment_method"
+              value={formData.payment_method}
+              onChange={handleChange}
+              className="w-full border rounded-lg px-3 py-2 text-[11px] focus:outline-none focus:ring-2 focus:ring-green-500"
+            >
+              <option value="cash">Cash</option>
+              <option value="mpesa">Mpesa</option>
+              <option value="bank">Bank</option>
+            </select>
+          </div>
+
+          {/* Mpesa */}
 
           {formData.payment_method === "mpesa" && (
-            <input
-              type="text"
-              placeholder="Mpesa Code"
-              value={formData.mpesa_code}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  mpesa_code: e.target.value,
-                })
-              }
-              className="w-full border rounded-lg p-2 text-sm"
-            />
+            <div>
+              <label className="block text-[10px] font-medium text-gray-700 mb-1">
+                Mpesa Code
+              </label>
+
+              <input
+                type="text"
+                name="mpesa_code"
+                value={formData.mpesa_code}
+                onChange={handleChange}
+                placeholder="SHG7ABCD12"
+                className="w-full border rounded-lg px-3 py-2 text-[11px] focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            </div>
           )}
+
+          {/* Bank */}
 
           {formData.payment_method === "bank" && (
-            <input
-              type="text"
-              placeholder="Bank Reference"
-              value={formData.bank_reference}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  bank_reference: e.target.value,
-                })
-              }
-              className="w-full border rounded-lg p-2 text-sm"
-            />
+            <div>
+              <label className="block text-[10px] font-medium text-gray-700 mb-1">
+                Bank Reference
+              </label>
+
+              <input
+                type="text"
+                name="bank_reference"
+                value={formData.bank_reference}
+                onChange={handleChange}
+                placeholder="Bank Reference"
+                className="w-full border rounded-lg px-3 py-2 text-[11px] focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            </div>
           )}
 
-          <div className="flex justify-end gap-2">
+          {/* Buttons */}
+
+          <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border rounded-lg text-sm"
+              disabled={loading}
+              className="px-4 py-2 text-[10px] border rounded-lg hover:bg-gray-50"
             >
               Cancel
             </button>
 
             <button
               type="submit"
-              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm"
+              disabled={loading}
+              className="px-4 py-2 text-[10px] bg-green-600 text-white rounded-lg hover:bg-green-700"
             >
-              Save
+              {loading ? "Saving..." : "Save"}
             </button>
           </div>
+
         </form>
       </div>
     </div>
