@@ -38,21 +38,23 @@ const getAdminSummary = async () => {
       WHERE LOWER(status)='approved'
     )::INT AS "approvedLoans",
 
-    /* ============================
-       SAVINGS
-    ============================ */
+/* ============================
+   SAVINGS
+============================ */
 
-    (
-      SELECT COALESCE(SUM(amount),0)
-      FROM savings
-    ) AS "totalSavings",
+(
+  SELECT COALESCE(SUM(amount),0)
+  FROM savings
+  WHERE LOWER(status)='completed'
+) AS "totalSavings",
 
-    (
-      SELECT COALESCE(SUM(amount),0)
-      FROM savings
-      WHERE DATE_TRUNC('month',created_at)
-          = DATE_TRUNC('month',CURRENT_DATE)
-    ) AS "monthlySavings",
+(
+  SELECT COALESCE(SUM(amount),0)
+  FROM savings
+  WHERE LOWER(status)='completed'
+    AND DATE_TRUNC('month',created_at)
+        = DATE_TRUNC('month',CURRENT_DATE)
+) AS "monthlySavings",
 
     /* ============================
        CONTRIBUTIONS
@@ -132,11 +134,12 @@ const getMemberSummary = async (userId) => {
     SELECT
 
       -- Total Savings
-      (
-        SELECT COALESCE(SUM(amount),0)
-        FROM savings
-        WHERE user_id = $1
-      ) AS "mySavings",
+(
+  SELECT COALESCE(SUM(amount),0)
+  FROM savings
+  WHERE user_id = $1
+    AND LOWER(status)='completed'
+) AS "mySavings",
 
       -- Total Contributions
       (
@@ -241,17 +244,23 @@ const getMemberLoanChart = async (userId) => {
  */
 const getAdminSavingsChart = async () => {
   const query = `
-    SELECT
-      TO_CHAR(created_at,'Mon') AS month,
-      COALESCE(SUM(amount),0) AS amount
-    FROM savings
-    WHERE created_at >= DATE_TRUNC('year',CURRENT_DATE)
-    GROUP BY
-      EXTRACT(MONTH FROM created_at),
-      TO_CHAR(created_at,'Mon')
-    ORDER BY
-      EXTRACT(MONTH FROM created_at);
-  `;
+  SELECT
+    TO_CHAR(created_at,'Mon') AS month,
+    COALESCE(SUM(amount),0) AS amount
+
+  FROM savings
+
+  WHERE
+    LOWER(status)='completed'
+    AND created_at >= DATE_TRUNC('year',CURRENT_DATE)
+
+  GROUP BY
+    EXTRACT(MONTH FROM created_at),
+    TO_CHAR(created_at,'Mon')
+
+  ORDER BY
+    EXTRACT(MONTH FROM created_at);
+`;
 
   const { rows } = await db.query(query);
 
@@ -265,18 +274,24 @@ const getAdminSavingsChart = async () => {
  */
 const getMemberSavingsChart = async (userId) => {
   const query = `
-    SELECT
-      TO_CHAR(created_at,'Mon') AS month,
-      COALESCE(SUM(amount),0) AS amount
-    FROM savings
-    WHERE user_id=$1
-      AND created_at >= DATE_TRUNC('year',CURRENT_DATE)
-    GROUP BY
-      EXTRACT(MONTH FROM created_at),
-      TO_CHAR(created_at,'Mon')
-    ORDER BY
-      EXTRACT(MONTH FROM created_at);
-  `;
+  SELECT
+    TO_CHAR(created_at,'Mon') AS month,
+    COALESCE(SUM(amount),0) AS amount
+
+  FROM savings
+
+  WHERE
+    user_id=$1
+    AND LOWER(status)='completed'
+    AND created_at >= DATE_TRUNC('year',CURRENT_DATE)
+
+  GROUP BY
+    EXTRACT(MONTH FROM created_at),
+    TO_CHAR(created_at,'Mon')
+
+  ORDER BY
+    EXTRACT(MONTH FROM created_at);
+`;
 
   const { rows } = await db.query(query, [userId]);
 
@@ -293,13 +308,14 @@ const getRecentActivities = async (limit = 10) => {
       SELECT *
       FROM (
 
-          SELECT
-              s.created_at,
-              'Saving' AS type,
-              CONCAT(u.fullname,' saved KES ',s.amount) AS description
-          FROM savings s
-          JOIN users u
-            ON u.id=s.user_id
+SELECT
+    s.created_at,
+    'Saving' AS type,
+    CONCAT(u.fullname,' saved KES ',s.amount) AS description
+FROM savings s
+JOIN users u
+  ON u.id=s.user_id
+WHERE LOWER(s.status)='completed'
 
           UNION ALL
 
@@ -358,8 +374,9 @@ const getMemberRecentActivities = async (userId, limit = 10) => {
         s.created_at,
         'Saving' AS type,
         CONCAT('You saved KES ',s.amount) AS description
-      FROM savings s
-      WHERE s.user_id=$1
+ FROM savings s
+WHERE s.user_id=$1
+  AND LOWER(s.status)='completed'
 
       UNION ALL
 
@@ -369,6 +386,7 @@ const getMemberRecentActivities = async (userId, limit = 10) => {
         CONCAT('You contributed KES ',c.amount)
       FROM contributions c
       WHERE c.user_id=$1
+        AND LOWER(c.status)='completed'
 
       UNION ALL
 
@@ -446,24 +464,25 @@ const getLoanChart = async () => {
  */
 const getSavingsChart = async () => {
   const query = `
-      SELECT
+  SELECT
 
-      TO_CHAR(created_at,'Mon') AS month,
+    TO_CHAR(created_at,'Mon') AS month,
 
-      COALESCE(SUM(amount),0) AS amount
+    COALESCE(SUM(amount),0) AS amount
 
-      FROM savings
+  FROM savings
 
-      WHERE created_at >=
-      DATE_TRUNC('year',CURRENT_DATE)
+  WHERE
+    LOWER(status)='completed'
+    AND created_at >= DATE_TRUNC('year',CURRENT_DATE)
 
-      GROUP BY
-      EXTRACT(MONTH FROM created_at),
-      TO_CHAR(created_at,'Mon')
+  GROUP BY
+    EXTRACT(MONTH FROM created_at),
+    TO_CHAR(created_at,'Mon')
 
-      ORDER BY
-      EXTRACT(MONTH FROM created_at);
-  `;
+  ORDER BY
+    EXTRACT(MONTH FROM created_at);
+`;
 
   const { rows } = await db.query(query);
 
@@ -577,7 +596,6 @@ const getLoanStatusDistribution = async () => {
     color: colors[item.status] || "#94a3b8",
   }));
 };
-
 
 const getMemberRecentLoanRequests = async (userId, limit = 5) => {
   const query = `
