@@ -61,21 +61,21 @@ const SavingsTab = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* HEADER */}
 
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-sm font-semibold text-gray-800">Savings</h2>
+          <h2 className="text-[10px] font-semibold text-gray-800">Savings</h2>
 
-          <p className="text-xs text-gray-500">Manage member savings</p>
+          <p className="text-[9px] text-gray-500">Manage member savings</p>
         </div>
 
         <button
           onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-xs"
+          className="flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-[10px]"
         >
-          <Plus size={14} />
+          <Plus size={12} />
           Add Savings
         </button>
       </div>
@@ -83,26 +83,26 @@ const SavingsTab = () => {
       {/* STATS */}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div className="bg-white border rounded-xl p-4">
-          <p className="text-xs text-gray-500">Total Savings</p>
+        <div className="bg-white border rounded-xl p-3">
+          <p className="text-[9px] text-gray-500">Total Savings</p>
 
-          <h3 className="text-lg font-bold text-green-600 mt-1">
+          <h3 className="text-lg font-semibold text-green-600 mt-1">
             KES {Number(totalSavings).toLocaleString()}
           </h3>
         </div>
 
-        <div className="bg-white border rounded-xl p-4">
-          <p className="text-xs text-gray-500">Transactions</p>
+        <div className="bg-white border rounded-xl p-3">
+          <p className="text-[9px] text-gray-500">Transactions</p>
 
-          <h3 className="text-lg font-bold text-blue-600 mt-1">
+          <h3 className="text-lg font-semibold text-blue-600 mt-1">
             {savings.length}
           </h3>
         </div>
 
-        <div className="bg-white border rounded-xl p-4">
-          <p className="text-xs text-gray-500">Latest Saving</p>
+        <div className="bg-white border rounded-xl p-3">
+          <p className="text-[9px] text-gray-500">Latest Saving</p>
 
-          <h3 className="text-lg font-bold text-purple-600 mt-1">
+          <h3 className="text-lg font-semibold text-purple-600 mt-1">
             {savings[0]
               ? `KES ${Number(savings[0].amount).toLocaleString()}`
               : "KES 0"}
@@ -114,18 +114,18 @@ const SavingsTab = () => {
 
       <div className="bg-white border rounded-xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-xs">
+          <table className="w-full text-[10px]">
             <thead className="bg-gray-50 border-b">
               <tr>
-                <th className="px-4 py-3 text-left">#</th>
+                <th className="px-3 py-2 text-left font-semibold">#</th>
 
-                <th className="px-4 py-3 text-left">Date</th>
+                <th className="px-3 py-2 text-left font-semibold">Date</th>
 
-                <th className="px-4 py-3 text-left">Amount</th>
+                <th className="px-3 py-2 text-left font-semibold">Amount</th>
 
-                <th className="px-4 py-3 text-left">Method</th>
+                <th className="px-3 py-2 text-left font-semibold">Method</th>
 
-                <th className="px-4 py-3 text-left">Status</th>
+                <th className="px-3 py-2 text-left font-semibold">Status</th>
               </tr>
             </thead>
 
@@ -133,21 +133,21 @@ const SavingsTab = () => {
               {savings.length > 0 ? (
                 savings.map((saving, index) => (
                   <tr key={saving.id} className="border-b">
-                    <td className="px-4 py-3">{index + 1}</td>
+                    <td className="px-3 py-2">{index + 1}</td>
 
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-2">
                       {new Date(saving.created_at).toLocaleDateString()}
                     </td>
 
-                    <td className="px-4 py-3 font-medium">
+                    <td className="px-3 py-2 font-medium">
                       KES {Number(saving.amount).toLocaleString()}
                     </td>
 
-                    <td className="px-4 py-3">{saving.payment_method}</td>
+                    <td className="px-3 py-2">{saving.payment_method}</td>
 
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-2">
                       <span
-                        className={`px-2 py-1 rounded-full text-[9px]
+                        className={`px-2 py-0.5 rounded-full text-[8px] font-medium
   ${
     saving.status === "completed"
       ? "bg-green-100 text-green-700"
@@ -163,7 +163,7 @@ const SavingsTab = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="5" className="text-center py-8 text-gray-500">
+                  <td colSpan="5" className="text-center py-6 text-[10px] text-gray-500">
                     No savings found
                   </td>
                 </tr>
