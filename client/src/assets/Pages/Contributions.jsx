@@ -53,7 +53,9 @@ const Contributions = () => {
   // ========================
   const totalAmount = useMemo(
     () =>
-      contributions.reduce((sum, item) => sum + Number(item.amount || 0), 0),
+      contributions
+        .filter((item) => item.status === "completed")
+        .reduce((sum, item) => sum + Number(item.amount || 0), 0),
     [contributions],
   );
 
@@ -63,15 +65,17 @@ const Contributions = () => {
   const groupTotalsArray = useMemo(() => {
     const map = {};
 
-    contributions.forEach((c) => {
-      if (!c.group_name) return;
+    contributions
+      .filter((c) => c.status === "completed")
+      .forEach((c) => {
+        if (!c.group_name) return;
 
-      if (!map[c.group_name]) {
-        map[c.group_name] = 0;
-      }
+        if (!map[c.group_name]) {
+          map[c.group_name] = 0;
+        }
 
-      map[c.group_name] += Number(c.amount || 0);
-    });
+        map[c.group_name] += Number(c.amount || 0);
+      });
 
     return Object.entries(map).map(([group, total]) => ({
       group,
@@ -342,7 +346,11 @@ const Contributions = () => {
                             : "bg-red-100 text-red-700"
                       }`}
                     >
-                      {c.status}
+                      {c.status === "completed"
+                        ? "Approved"
+                        : c.status === "pending"
+                          ? "Pending"
+                          : "Rejected"}
                     </span>
                   </td>
                   <td className="px-2 py-2">{formatDate(c.created_at)}</td>

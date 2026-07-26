@@ -359,10 +359,19 @@ const approveContribution = async (req, res) => {
       });
     }
 
+    const reference =
+      contribution.payment_method === "mpesa"
+        ? contribution.mpesa_code
+        : contribution.payment_method === "bank"
+        ? contribution.bank_reference
+        : "Cash";
+
     await Notification.createNotification({
       user_id: contribution.user_id,
       title: "Contribution Approved",
-      message: `Your contribution of KES ${contribution.amount} has been approved.`,
+      message: `Your contribution of KES ${Number(
+        contribution.amount
+      ).toLocaleString()} submitted via ${contribution.payment_method} has been approved. Reference: ${reference}.`,
       type: "contribution",
       reference_id: contribution.id,
     });
@@ -379,6 +388,7 @@ const approveContribution = async (req, res) => {
     });
   }
 };
+
 const rejectContribution = async (req, res) => {
   try {
     const contribution = await rejectContributionModel(req.params.id);
@@ -389,10 +399,21 @@ const rejectContribution = async (req, res) => {
       });
     }
 
+    const reference =
+      contribution.payment_method === "mpesa"
+        ? contribution.mpesa_code
+        : contribution.payment_method === "bank"
+        ? contribution.bank_reference
+        : "Cash";
+
     await Notification.createNotification({
       user_id: contribution.user_id,
       title: "Contribution Rejected",
-      message: `Your contribution of KES ${contribution.amount} was rejected. Please verify your Mpesa code.`,
+      message: `Your contribution of KES ${Number(
+        contribution.amount
+      ).toLocaleString()} submitted via ${
+        contribution.payment_method
+      } (Reference: ${reference}) was rejected. Please verify your payment details and submit again.`,
       type: "contribution",
       reference_id: contribution.id,
     });

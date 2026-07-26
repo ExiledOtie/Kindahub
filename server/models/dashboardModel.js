@@ -60,32 +60,35 @@ const getAdminSummary = async () => {
        CONTRIBUTIONS
     ============================ */
 
-    (
-      SELECT COALESCE(SUM(amount),0)
-      FROM contributions
-      WHERE DATE_TRUNC('month',created_at)
-          = DATE_TRUNC('month',CURRENT_DATE)
-    ) AS "monthlyContributions",
+  (
+  SELECT COALESCE(SUM(amount),0)
+  FROM contributions
+  WHERE LOWER(status)='completed'
+    AND DATE_TRUNC('month',created_at)
+        = DATE_TRUNC('month',CURRENT_DATE)
+) AS "monthlyContributions",
 
-    (
-      SELECT COALESCE(SUM(c.amount),0)
-      FROM contributions c
-      JOIN user_groups ug
-        ON ug.user_id = c.user_id
-      JOIN groups g
-        ON g.id = ug.group_id
-      WHERE LOWER(g.name) = 'kinda family'
-    ) AS "kindaFamilyContributions",
+(
+  SELECT COALESCE(SUM(c.amount),0)
+  FROM contributions c
+  JOIN user_groups ug
+    ON ug.user_id = c.user_id
+  JOIN groups g
+    ON g.id = ug.group_id
+  WHERE LOWER(g.name)='kinda family'
+    AND LOWER(c.status)='completed'
+) AS "kindaFamilyContributions",
 
-    (
-      SELECT COALESCE(SUM(c.amount),0)
-      FROM contributions c
-      JOIN user_groups ug
-        ON ug.user_id = c.user_id
-      JOIN groups g
-        ON g.id = ug.group_id
-      WHERE LOWER(g.name) = '13 amigos'
-    ) AS "amigosContributions",
+(
+  SELECT COALESCE(SUM(c.amount),0)
+  FROM contributions c
+  JOIN user_groups ug
+    ON ug.user_id = c.user_id
+  JOIN groups g
+    ON g.id = ug.group_id
+  WHERE LOWER(g.name)='13 amigos'
+    AND LOWER(c.status)='completed'
+) AS "amigosContributions",
 
     /* ============================
        LOANS
@@ -142,11 +145,12 @@ const getMemberSummary = async (userId) => {
 ) AS "mySavings",
 
       -- Total Contributions
-      (
-        SELECT COALESCE(SUM(amount),0)
-        FROM contributions
-        WHERE user_id = $1
-      ) AS "myContributions",
+(
+    SELECT COALESCE(SUM(amount),0)
+    FROM contributions
+    WHERE user_id = $1
+      AND LOWER(status)='completed'
+) AS "myContributions",
 
       -- Active Loan Amount (Approved Loans Only)
       (
@@ -319,13 +323,14 @@ WHERE LOWER(s.status)='completed'
 
           UNION ALL
 
-          SELECT
-              c.created_at,
-              'Contribution',
-              CONCAT(u.fullname,' contributed KES ',c.amount)
-          FROM contributions c
-          JOIN users u
-            ON u.id=c.user_id
+ SELECT
+    c.created_at,
+    'Contribution',
+    CONCAT(u.fullname,' contributed KES ',c.amount)
+FROM contributions c
+JOIN users u
+  ON u.id=c.user_id
+WHERE LOWER(c.status)='completed'
 
           UNION ALL
 
@@ -509,13 +514,15 @@ const getRecentLoanRequests = async (limit = 5) => {
 
 const getRecentContributions = async () => {
   const query = `
-    SELECT
-      c.id,
-      u.fullname AS "memberName",
-      INITCAP(c.payment_method) AS type,
-      c.amount,
-      c.created_at AS date,
-      INITCAP(c.status) AS status
+   SELECT
+  c.id,
+  u.fullname AS "memberName",
+  INITCAP(c.payment_method) AS type,
+  c.amount,
+  c.mpesa_code,
+  c.bank_reference,
+  c.created_at AS date,
+  INITCAP(c.status) AS status
 
     FROM contributions c
 
@@ -621,12 +628,15 @@ const getMemberRecentLoanRequests = async (userId, limit = 5) => {
 const getMemberRecentContributions = async (userId, limit = 5) => {
   const query = `
     SELECT
-      c.id,
-      u.fullname,
-      c.amount,
-      c.status,
-      c.created_at AS date,
-      'Monthly' AS type
+  c.id,
+  u.fullname,
+  c.amount,
+  c.payment_method,
+  c.mpesa_code,
+  c.bank_reference,
+  c.status,
+  c.created_at AS date,
+  'Monthly' AS type
     FROM contributions c
     JOIN users u
       ON u.id = c.user_id
@@ -695,6 +705,7 @@ const getGroupContributionChart = async (year = new Date().getFullYear()) => {
           ON g.id = ug.group_id
         WHERE
           LOWER(g.name) = 'kinda family'
+          AND LOWER(c.status)='completed'
           AND EXTRACT(MONTH FROM c.created_at) = months.month_no
           AND EXTRACT(YEAR FROM c.created_at) = $1
       ),0) AS "kindaFamily",
@@ -708,6 +719,7 @@ const getGroupContributionChart = async (year = new Date().getFullYear()) => {
           ON g.id = ug.group_id
         WHERE
           LOWER(g.name) = '13 amigos'
+          AND LOWER(c.status)='completed'
           AND EXTRACT(MONTH FROM c.created_at) = months.month_no
           AND EXTRACT(YEAR FROM c.created_at) = $1
       ),0) AS amigos

@@ -81,8 +81,8 @@ const UserContributions = () => {
           </h1>
 
           <p className="text-xs text-gray-500 mt-1">
-            Submit and track your contributions
-          </p>
+  Contributions remain pending until approved by an administrator.
+</p>
         </div>
 
         <button
