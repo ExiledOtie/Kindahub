@@ -52,68 +52,74 @@ const UserContributions = () => {
     .reduce((sum, item) => sum + Number(item.amount || 0), 0);
 
   const pendingCount = contributions.filter(
-    (item) => item.status === "pending",
+    (item) => item.status === "pending"
   ).length;
 
   const approvedCount = contributions.filter(
-    (item) => item.status === "completed",
+    (item) => item.status === "completed"
   ).length;
 
   if (loading) {
     return (
       <div className="flex justify-center items-center h-[50vh]">
-        <ClipLoader size={35} color="#16a34a" />
+        <ClipLoader size={28} color="#16a34a" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3 text-[9px]">
       {/* Header */}
 
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-sm font-semibold text-gray-800">
+          <h1 className="text-[11px] font-semibold text-gray-800">
             My Contributions
           </h1>
 
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-[9px] text-gray-500 mt-0.5">
             Contributions remain pending until approved by an administrator.
           </p>
         </div>
 
         <button
           onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-xs"
+          className="flex items-center gap-1.5 h-8 bg-green-600 hover:bg-green-700 text-white px-3 rounded-md text-[9px]"
         >
-          <Plus size={14} />
+          <Plus size={12} />
           Add Contribution
         </button>
       </div>
 
       {/* Summary Cards */}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white border rounded-xl p-4">
-          <p className="text-xs text-gray-500">Total Approved</p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+        <div className="bg-white border rounded-md p-2.5 shadow-sm">
+          <p className="text-[8px] uppercase tracking-wide text-gray-500">
+            Total Approved
+          </p>
 
-          <h2 className="text-lg font-bold text-green-700 mt-2">
+          <h2 className="text-[11px] font-bold text-green-700 mt-1">
             KES {formatCurrency(totalAmount)}
           </h2>
         </div>
 
-        <div className="bg-white border rounded-xl p-4">
-          <p className="text-xs text-gray-500">Pending Verification</p>
+        <div className="bg-white border rounded-md p-2.5 shadow-sm">
+          <p className="text-[8px] uppercase tracking-wide text-gray-500">
+            Pending Verification
+          </p>
 
-          <h2 className="text-lg font-bold text-orange-600 mt-2">
+          <h2 className="text-[11px] font-bold text-orange-600 mt-1">
             {pendingCount}
           </h2>
         </div>
 
-        <div className="bg-white border rounded-xl p-4">
-          <p className="text-xs text-gray-500">Approved Contributions</p>
+        <div className="bg-white border rounded-md p-2.5 shadow-sm">
+          <p className="text-[8px] uppercase tracking-wide text-gray-500">
+            Approved Contributions
+          </p>
 
-          <h2 className="text-lg font-bold text-blue-600 mt-2">
+          <h2 className="text-[11px] font-bold text-blue-600 mt-1">
             {approvedCount}
           </h2>
         </div>
@@ -121,22 +127,22 @@ const UserContributions = () => {
 
       {/* Table */}
 
-      <div className="bg-white border rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-xs">
+          <table className="w-full text-[9px]">
             <thead className="bg-gray-50 border-b">
-              <tr>
-                <th className="px-2 py-2 text-left">#</th>
+              <tr className="text-gray-600">
+                <th className="px-2 py-1.5 text-left">#</th>
 
-                <th className="px-2 py-2 text-left">Date</th>
+                <th className="px-2 py-1.5 text-left">Date</th>
 
-                <th className="px-2 py-2 text-left">Amount</th>
+                <th className="px-2 py-1.5 text-left">Amount</th>
 
-                <th className="px-2 py-2 text-left">Reference</th>
+                <th className="px-2 py-1.5 text-left">Reference</th>
 
-                <th className="px-2 py-2 text-left">Method</th>
+                <th className="px-2 py-1.5 text-left">Method</th>
 
-                <th className="px-2 py-2 text-left">Status</th>
+                <th className="px-2 py-1.5 text-left">Status</th>
               </tr>
             </thead>
 
@@ -145,38 +151,40 @@ const UserContributions = () => {
                 contributions.map((contribution, index) => (
                   <tr
                     key={contribution.id}
-                    className="border-b hover:bg-gray-50"
+                    className="border-b hover:bg-gray-50 transition-colors"
                   >
-                    <td className="px-2 py-3">{index + 1}</td>
+                    <td className="px-2 py-1.5">
+                      {index + 1}
+                    </td>
 
-                    <td className="px-2 py-3">
+                    <td className="px-2 py-1.5 whitespace-nowrap">
                       {formatDate(contribution.created_at)}
                     </td>
 
-                    <td className="px-4 py-3 font-medium">
+                    <td className="px-2 py-1.5 font-semibold text-green-700 whitespace-nowrap">
                       KES {formatCurrency(contribution.amount)}
                     </td>
 
-                    <td className="px-2 py-2">
+                    <td className="px-2 py-1.5">
                       {contribution.payment_method === "mpesa"
                         ? contribution.mpesa_code || "-"
                         : contribution.payment_method === "bank"
-                          ? contribution.bank_reference || "-"
-                          : "-"}
+                        ? contribution.bank_reference || "-"
+                        : "-"}
                     </td>
 
-                    <td className="px-4 py-3 capitalize">
+                    <td className="px-2 py-1.5 capitalize">
                       {contribution.payment_method}
                     </td>
 
-                    <td className="px-4 py-3">
+                    <td className="px-2 py-1.5">
                       <span
-                        className={`px-2 py-1 rounded-full text-[10px] font-medium ${
+                        className={`inline-flex px-2 py-0.5 rounded-full text-[8px] font-medium ${
                           contribution.status === "completed"
                             ? "bg-green-100 text-green-700"
                             : contribution.status === "pending"
-                              ? "bg-yellow-100 text-yellow-700"
-                              : "bg-red-100 text-red-700"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : "bg-red-100 text-red-700"
                         }`}
                       >
                         {contribution.status}
@@ -186,7 +194,10 @@ const UserContributions = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="6" className="text-center py-10 text-gray-500">
+                  <td
+                    colSpan="6"
+                    className="text-center py-8 text-[9px] text-gray-500"
+                  >
                     No contributions found
                   </td>
                 </tr>
