@@ -319,7 +319,7 @@ const Contributions = () => {
                 <th className="px-2 py-2 text-left">Group</th>
                 <th className="px-2 py-2 text-left">Amount</th>
                 <th className="px-2 py-2 text-left">Method</th>
-                <th className="px-2 py-2 text-left">MPESA</th>
+                <th className="px-2 py-2 text-left">Reference</th>
                 <th className="px-2 py-2 text-left">Status</th>
                 <th className="px-2 py-2 text-left">Date</th>
                 <th className="px-2 py-2 text-left">Actions</th>
@@ -335,7 +335,13 @@ const Contributions = () => {
                     KES {formatCurrency(c.amount)}
                   </td>
                   <td className="px-2 py-2 capitalize">{c.payment_method}</td>
-                  <td className="px-2 py-2">{c.mpesa_code || "-"}</td>
+                  <td className="px-2 py-2">
+                    {c.payment_method === "mpesa"
+                      ? c.mpesa_code || "-"
+                      : c.payment_method === "bank"
+                        ? c.bank_reference || "-"
+                        : "-"}
+                  </td>
                   <td className="px-2 py-2">
                     <span
                       className={`px-2 py-1 rounded-full text-[10px] font-medium ${
