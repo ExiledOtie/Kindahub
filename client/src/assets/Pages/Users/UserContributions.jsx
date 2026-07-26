@@ -158,10 +158,10 @@ const UserContributions = () => {
                     </td>
 
                     <td className="px-2 py-2">
-                      {c.payment_method === "mpesa"
-                        ? c.mpesa_code || "-"
-                        : c.payment_method === "bank"
-                          ? c.bank_reference || "-"
+                      {contribution.payment_method === "mpesa"
+                        ? contribution.mpesa_code || "-"
+                        : contribution.payment_method === "bank"
+                          ? contribution.bank_reference || "-"
                           : "-"}
                     </td>
 
