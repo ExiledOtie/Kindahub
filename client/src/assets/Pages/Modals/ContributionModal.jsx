@@ -27,11 +27,19 @@ const ContributionModal = ({ open, onClose, memberId, onSuccess }) => {
       });
     }
 
-    if (paymentMethod === "mpesa" && !mpesaCode) {
+    if (paymentMethod === "mpesa" && !mpesaCode.trim()) {
       return Swal.fire({
         icon: "warning",
         title: "Validation",
         text: "Mpesa code is required",
+      });
+    }
+
+    if (paymentMethod === "bank" && !bankReference.trim()) {
+      return Swal.fire({
+        icon: "warning",
+        title: "Validation",
+        text: "Bank reference is required",
       });
     }
 
@@ -42,7 +50,10 @@ const ContributionModal = ({ open, onClose, memberId, onSuccess }) => {
         user_id: memberId,
         amount,
         payment_method: paymentMethod,
-        mpesa_code: paymentMethod === "mpesa" ? mpesaCode : null,
+        mpesa_code:
+          paymentMethod === "mpesa" ? mpesaCode.trim().toUpperCase() : null,
+        bank_reference:
+          paymentMethod === "bank" ? bankReference.trim().toUpperCase() : null,
       });
 
       Swal.fire({
@@ -53,6 +64,7 @@ const ContributionModal = ({ open, onClose, memberId, onSuccess }) => {
 
       setAmount("");
       setMpesaCode("");
+      setBankReference("");
       setPaymentMethod("mpesa");
 
       onClose();
@@ -117,11 +129,15 @@ const ContributionModal = ({ open, onClose, memberId, onSuccess }) => {
 
             <select
               value={paymentMethod}
-              onChange={(e) => setPaymentMethod(e.target.value)}
+              onChange={(e) => {
+                setPaymentMethod(e.target.value);
+                setMpesaCode("");
+                setBankReference("");
+              }}
               className="w-full border rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-green-500"
             >
               <option value="mpesa">Mpesa</option>
-
+              <option value="bank">Bank</option>
               <option value="cash">Cash</option>
             </select>
           </div>
@@ -139,6 +155,21 @@ const ContributionModal = ({ open, onClose, memberId, onSuccess }) => {
                 value={mpesaCode}
                 onChange={(e) => setMpesaCode(e.target.value)}
                 placeholder="e.g. SGH8YTR56"
+                className="w-full border rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+          )}
+          {paymentMethod === "bank" && (
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                Bank Reference
+              </label>
+
+              <input
+                type="text"
+                value={bankReference}
+                onChange={(e) => setBankReference(e.target.value)}
+                placeholder="Enter bank reference"
                 className="w-full border rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>
