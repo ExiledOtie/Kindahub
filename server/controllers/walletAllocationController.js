@@ -1,19 +1,26 @@
-
 const pool = require("../config/db");
 
-const {
-  getWalletDepositModel,
-  updateRemainingBalanceModel,
-} = require("../models/walletDepositModel");
-
-const {
-  createWalletAllocationModel,
-  getAllocationsByDepositModel,
-} = require("../models/walletAllocationModel");
+const Notification = require("../models/notificationModel");
 
 /*
 |--------------------------------------------------------------------------
 | CREATE WALLET ALLOCATIONS
+|--------------------------------------------------------------------------
+|
+| This controller:
+|
+| 1. Validates the wallet deposit
+| 2. Confirms it is verified
+| 3. Checks available balance
+| 4. Creates the actual:
+|      - contribution
+|      - saving
+|      - loan payment
+| 5. Gets the ID of the newly created transaction
+| 6. Creates wallet_allocations using that ID as reference_id
+| 7. Updates wallet remaining balance
+| 8. Commits everything as ONE transaction
+|
 |--------------------------------------------------------------------------
 */
 
@@ -25,17 +32,17 @@ const createWalletAllocation = async (req, res) => {
 
     const {
       wallet_deposit_id,
-      allocations,
       allocation_mode = "manual",
+      allocations,
     } = req.body;
+
+    const allocatedBy = req.user?.id;
 
     /*
     |--------------------------------------------------------------------------
     | CURRENT USER
     |--------------------------------------------------------------------------
     */
-
-    const allocatedBy = req.user?.id;
 
     if (!allocatedBy) {
       await client.query("ROLLBACK");
@@ -93,13 +100,26 @@ const createWalletAllocation = async (req, res) => {
 
     /*
     |--------------------------------------------------------------------------
-    | GET WALLET
+    | GET WALLET DEPOSIT
     |--------------------------------------------------------------------------
     */
 
-    const deposit = await getWalletDepositModel(wallet_deposit_id);
+    const depositResult = await client.query(
+      `
+      SELECT
+        wd.*,
+        u.fullname,
+        u.username
+      FROM wallet_deposits wd
+      INNER JOIN users u
+        ON u.id = wd.user_id
+      WHERE wd.id = $1
+      FOR UPDATE
+      `,
+      [wallet_deposit_id]
+    );
 
-    if (!deposit) {
+    if (depositResult.rows.length === 0) {
       await client.query("ROLLBACK");
 
       return res.status(404).json({
@@ -108,9 +128,11 @@ const createWalletAllocation = async (req, res) => {
       });
     }
 
+    const deposit = depositResult.rows[0];
+
     /*
     |--------------------------------------------------------------------------
-    | ONLY VERIFIED WALLET CAN BE USED
+    | ONLY VERIFIED DEPOSITS CAN BE ALLOCATED
     |--------------------------------------------------------------------------
     */
 
@@ -126,7 +148,17 @@ const createWalletAllocation = async (req, res) => {
 
     /*
     |--------------------------------------------------------------------------
-    | VALID ALLOCATION TYPES
+    | GET WALLET BALANCE
+    |--------------------------------------------------------------------------
+    */
+
+    const remainingBalance = Number(
+      deposit.remaining_balance || 0
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDATE ALLOCATION TYPES
     |--------------------------------------------------------------------------
     */
 
@@ -138,19 +170,9 @@ const createWalletAllocation = async (req, res) => {
 
     let totalAllocation = 0;
 
-    /*
-    |--------------------------------------------------------------------------
-    | VALIDATE EACH ALLOCATION
-    |--------------------------------------------------------------------------
-    */
-
     for (const item of allocations) {
       const type = item.type;
       const amount = Number(item.amount || 0);
-
-      /*
-      | Validate type
-      */
 
       if (!allowedTypes.includes(type)) {
         await client.query("ROLLBACK");
@@ -160,10 +182,6 @@ const createWalletAllocation = async (req, res) => {
           message: `Invalid allocation type: ${type}`,
         });
       }
-
-      /*
-      | Validate amount
-      */
 
       if (!Number.isFinite(amount) || amount <= 0) {
         await client.query("ROLLBACK");
@@ -176,19 +194,50 @@ const createWalletAllocation = async (req, res) => {
       }
 
       /*
-      | Loan payment requires reference
-      |
-      | For now this should be the loan payment transaction ID
-      | once the payment is actually created.
+      |--------------------------------------------------------------------------
+      | CONTRIBUTION REQUIRES GROUP
+      |--------------------------------------------------------------------------
       */
 
-      if (type === "loan_payment" && !item.reference_id) {
+      if (type === "contribution" && !item.group_id) {
         await client.query("ROLLBACK");
 
         return res.status(400).json({
           success: false,
           message:
-            "Reference ID is required for loan payment allocation.",
+            "Group ID is required for contribution allocation.",
+        });
+      }
+
+      /*
+      |--------------------------------------------------------------------------
+      | SAVING REQUIRES GROUP
+      |--------------------------------------------------------------------------
+      */
+
+      if (type === "saving" && !item.group_id) {
+        await client.query("ROLLBACK");
+
+        return res.status(400).json({
+          success: false,
+          message:
+            "Group ID is required for saving allocation.",
+        });
+      }
+
+      /*
+      |--------------------------------------------------------------------------
+      | LOAN PAYMENT REQUIRES LOAN ID
+      |--------------------------------------------------------------------------
+      */
+
+      if (type === "loan_payment" && !item.loan_id) {
+        await client.query("ROLLBACK");
+
+        return res.status(400).json({
+          success: false,
+          message:
+            "Loan ID is required for loan payment allocation.",
         });
       }
 
@@ -200,10 +249,6 @@ const createWalletAllocation = async (req, res) => {
     | CHECK WALLET BALANCE
     |--------------------------------------------------------------------------
     */
-
-    const remainingBalance = Number(
-      deposit.remaining_balance || 0
-    );
 
     if (totalAllocation > remainingBalance) {
       await client.query("ROLLBACK");
@@ -218,29 +263,375 @@ const createWalletAllocation = async (req, res) => {
 
     /*
     |--------------------------------------------------------------------------
-    | CREATE ALLOCATIONS
+    | PROCESS EACH ALLOCATION
     |--------------------------------------------------------------------------
     */
 
     const savedAllocations = [];
 
     for (const item of allocations) {
-      const allocation =
-        await createWalletAllocationModel(
-          wallet_deposit_id,
-          item.type,
-          Number(item.amount),
-          allocatedBy,
-          item.reference_id || null,
-          allocation_mode
+      const amount = Number(item.amount);
+      const type = item.type;
+
+      let referenceId = null;
+
+      /*
+      |--------------------------------------------------------------------------
+      | CONTRIBUTION
+      |--------------------------------------------------------------------------
+      */
+
+      if (type === "contribution") {
+        const contributionResult = await client.query(
+          `
+          INSERT INTO contributions
+          (
+            user_id,
+            group_id,
+            amount,
+            payment_method,
+            mpesa_code,
+            bank_reference,
+            created_by,
+            status
+          )
+          VALUES
+          (
+            $1,
+            $2,
+            $3,
+            'wallet',
+            NULL,
+            NULL,
+            $4,
+            'completed'
+          )
+          RETURNING *
+          `,
+          [
+            deposit.user_id,
+            item.group_id,
+            amount,
+            allocatedBy,
+          ]
         );
 
-      savedAllocations.push(allocation);
+        const contribution = contributionResult.rows[0];
+
+        referenceId = contribution.id;
+      }
+
+      /*
+      |--------------------------------------------------------------------------
+      | SAVING
+      |--------------------------------------------------------------------------
+      */
+
+      if (type === "saving") {
+        const savingResult = await client.query(
+          `
+          INSERT INTO savings
+          (
+            user_id,
+            group_id,
+            amount,
+            payment_method,
+            mpesa_code,
+            bank_reference,
+            created_by,
+            status
+          )
+          VALUES
+          (
+            $1,
+            $2,
+            $3,
+            'wallet',
+            NULL,
+            NULL,
+            $4,
+            'completed'
+          )
+          RETURNING *
+          `,
+          [
+            deposit.user_id,
+            item.group_id,
+            amount,
+            allocatedBy,
+          ]
+        );
+
+        const saving = savingResult.rows[0];
+
+        referenceId = saving.id;
+      }
+
+      /*
+      |--------------------------------------------------------------------------
+      | LOAN PAYMENT
+      |--------------------------------------------------------------------------
+      |
+      | For loan payment:
+      |
+      | loan_id comes from the request.
+      |
+      | The controller creates the actual loan payment.
+      |
+      | The resulting loan_payment.id becomes reference_id.
+      |
+      |--------------------------------------------------------------------------
+      */
+
+      if (type === "loan_payment") {
+        /*
+        |--------------------------------------------------------------------------
+        | GET LOAN
+        |--------------------------------------------------------------------------
+        */
+
+        const loanResult = await client.query(
+          `
+          SELECT
+            *
+          FROM loans
+          WHERE id = $1
+            AND user_id = $2
+          FOR UPDATE
+          `,
+          [
+            item.loan_id,
+            deposit.user_id,
+          ]
+        );
+
+        if (loanResult.rows.length === 0) {
+          await client.query("ROLLBACK");
+
+          return res.status(404).json({
+            success: false,
+            message:
+              "Loan not found or does not belong to the wallet owner.",
+          });
+        }
+
+        const loan = loanResult.rows[0];
+
+        /*
+        |--------------------------------------------------------------------------
+        | CHECK LOAN STATUS
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+          ["paid", "rejected", "cancelled"].includes(
+            String(loan.status).toLowerCase()
+          )
+        ) {
+          await client.query("ROLLBACK");
+
+          return res.status(400).json({
+            success: false,
+            message:
+              `Loan cannot receive a payment because its status is ${loan.status}.`,
+          });
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | CURRENT LOAN BALANCE
+        |--------------------------------------------------------------------------
+        */
+
+        const currentBalance = Number(
+          loan.balance || 0
+        );
+
+        if (currentBalance <= 0) {
+          await client.query("ROLLBACK");
+
+          return res.status(400).json({
+            success: false,
+            message: "This loan has already been fully paid.",
+          });
+        }
+
+        if (amount > currentBalance) {
+          await client.query("ROLLBACK");
+
+          return res.status(400).json({
+            success: false,
+            message:
+              "Loan payment cannot be greater than the outstanding loan balance.",
+            loan_balance: currentBalance,
+            payment_amount: amount,
+          });
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | PAYMENT ALLOCATION
+        |--------------------------------------------------------------------------
+        |
+        | IMPORTANT:
+        |
+        | For now the wallet allocation records the payment against
+        | the existing loan balance.
+        |
+        | Your existing loan-payment engine can be plugged here if
+        | you want interest-first / principal-first calculations.
+        |
+        |--------------------------------------------------------------------------
+        */
+
+        const principalPaid = amount;
+        const interestPaid = 0;
+
+        const newLoanBalance =
+          currentBalance - amount;
+
+        /*
+        |--------------------------------------------------------------------------
+        | CREATE LOAN PAYMENT
+        |--------------------------------------------------------------------------
+        */
+
+        const loanPaymentResult = await client.query(
+          `
+          INSERT INTO loan_payments
+          (
+            loan_id,
+            amount,
+            principal_paid,
+            interest_paid,
+            balance_after,
+            payment_method,
+            mpesa_code,
+            bank_reference,
+            status
+          )
+          VALUES
+          (
+            $1,
+            $2,
+            $3,
+            $4,
+            $5,
+            'wallet',
+            NULL,
+            NULL,
+            'completed'
+          )
+          RETURNING *
+          `,
+          [
+            item.loan_id,
+            amount,
+            principalPaid,
+            interestPaid,
+            newLoanBalance,
+          ]
+        );
+
+        const loanPayment =
+          loanPaymentResult.rows[0];
+
+        referenceId = loanPayment.id;
+
+        /*
+        |--------------------------------------------------------------------------
+        | UPDATE LOAN BALANCE
+        |--------------------------------------------------------------------------
+        */
+
+        await client.query(
+          `
+          UPDATE loans
+          SET balance = $2
+          WHERE id = $1
+          `,
+          [
+            item.loan_id,
+            newLoanBalance,
+          ]
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | MARK LOAN PAID IF BALANCE IS ZERO
+        |--------------------------------------------------------------------------
+        */
+
+        if (newLoanBalance === 0) {
+          await client.query(
+            `
+            UPDATE loans
+            SET status = 'paid'
+            WHERE id = $1
+            `,
+            [item.loan_id]
+          );
+        }
+      }
+
+      /*
+      |--------------------------------------------------------------------------
+      | CREATE WALLET ALLOCATION
+      |--------------------------------------------------------------------------
+      |
+      | reference_id is now the ID of:
+      |
+      | contribution
+      | saving
+      | loan_payment
+      |
+      |--------------------------------------------------------------------------
+      */
+
+      const allocationResult = await client.query(
+        `
+        INSERT INTO wallet_allocations
+        (
+          wallet_deposit_id,
+          allocation_type,
+          reference_id,
+          amount,
+          allocated_by,
+          allocation_mode,
+          status,
+          allocated_at
+        )
+        VALUES
+        (
+          $1,
+          $2,
+          $3,
+          $4,
+          $5,
+          $6,
+          'completed',
+          NOW()
+        )
+        RETURNING *
+        `,
+        [
+          wallet_deposit_id,
+          type,
+          referenceId,
+          amount,
+          allocatedBy,
+          allocation_mode,
+        ]
+      );
+
+      savedAllocations.push(
+        allocationResult.rows[0]
+      );
     }
 
     /*
     |--------------------------------------------------------------------------
-    | CALCULATE NEW BALANCE
+    | CALCULATE NEW WALLET BALANCE
     |--------------------------------------------------------------------------
     */
 
@@ -249,23 +640,60 @@ const createWalletAllocation = async (req, res) => {
 
     /*
     |--------------------------------------------------------------------------
-    | UPDATE WALLET BALANCE
+    | UPDATE WALLET REMAINING BALANCE
     |--------------------------------------------------------------------------
     */
 
-    const updatedWallet =
-      await updateRemainingBalanceModel(
+    const walletResult = await client.query(
+      `
+      UPDATE wallet_deposits
+      SET remaining_balance = $2
+      WHERE id = $1
+      RETURNING *
+      `,
+      [
         wallet_deposit_id,
-        newBalance
-      );
+        newBalance,
+      ]
+    );
+
+    const updatedWallet =
+      walletResult.rows[0];
 
     /*
     |--------------------------------------------------------------------------
-    | COMMIT
+    | COMMIT EVERYTHING
     |--------------------------------------------------------------------------
     */
 
     await client.query("COMMIT");
+
+    /*
+    |--------------------------------------------------------------------------
+    | NOTIFY MEMBER
+    |--------------------------------------------------------------------------
+    */
+
+    try {
+      await Notification.createNotification({
+        user_id: deposit.user_id,
+        title: "Wallet Allocation Completed",
+        message:
+          `KES ${totalAllocation.toLocaleString()} ` +
+          `from your wallet has been allocated successfully.`,
+        type: "wallet",
+        reference_id: wallet_deposit_id,
+      });
+    } catch (notificationError) {
+      /*
+      | Notification failure should NOT undo
+      | a successful financial transaction.
+      */
+      console.error(
+        "WALLET ALLOCATION NOTIFICATION ERROR:",
+        notificationError
+      );
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -290,8 +718,13 @@ const createWalletAllocation = async (req, res) => {
         allocation_mode,
       },
     });
-
   } catch (error) {
+    /*
+    |--------------------------------------------------------------------------
+    | ROLLBACK
+    |--------------------------------------------------------------------------
+    */
+
     await client.query("ROLLBACK");
 
     console.error(
@@ -305,7 +738,6 @@ const createWalletAllocation = async (req, res) => {
         error.message ||
         "Failed to allocate wallet deposit.",
     });
-
   } finally {
     client.release();
   }
@@ -328,16 +760,41 @@ const getWalletAllocations = async (req, res) => {
       });
     }
 
-    const allocations =
-      await getAllocationsByDepositModel(
-        depositId
-      );
+    const result = await pool.query(
+      `
+      SELECT
+        wa.*,
+
+        wd.user_id,
+        wd.amount AS deposit_amount,
+        wd.remaining_balance,
+        wd.payment_method,
+        wd.mpesa_code,
+        wd.bank_reference,
+        wd.status AS deposit_status,
+
+        u.fullname AS allocated_by_name,
+        u.username AS allocated_by_username
+
+      FROM wallet_allocations wa
+
+      INNER JOIN wallet_deposits wd
+        ON wd.id = wa.wallet_deposit_id
+
+      LEFT JOIN users u
+        ON u.id = wa.allocated_by
+
+      WHERE wa.wallet_deposit_id = $1
+
+      ORDER BY wa.allocated_at ASC
+      `,
+      [depositId]
+    );
 
     return res.status(200).json({
       success: true,
-      allocations,
+      allocations: result.rows,
     });
-
   } catch (error) {
     console.error(
       "GET WALLET ALLOCATIONS ERROR:",
@@ -355,4 +812,3 @@ module.exports = {
   createWalletAllocation,
   getWalletAllocations,
 };
-
