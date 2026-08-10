@@ -1,3 +1,4 @@
+
 const pool = require("../config/db");
 
 /*
@@ -26,9 +27,7 @@ const createWalletDepositModel = async (
       bank_reference,
       deposit_source
     )
-
-    VALUES ($1,$2,$2,$3,$4,$5,$6)
-
+    VALUES ($1, $2, $2, $3, $4, $5, $6)
     RETURNING *
     `,
     [
@@ -84,11 +83,8 @@ const getMyWalletDepositsModel = async (userId) => {
   const result = await pool.query(
     `
     SELECT *
-
     FROM wallet_deposits
-
     WHERE user_id = $1
-
     ORDER BY created_at DESC
     `,
     [userId]
@@ -107,12 +103,38 @@ const getWalletDepositModel = async (id) => {
   const result = await pool.query(
     `
     SELECT *
-
     FROM wallet_deposits
-
     WHERE id = $1
     `,
     [id]
+  );
+
+  return result.rows[0];
+};
+
+/*
+|--------------------------------------------------------------------------
+| GET WALLET DEPOSIT DETAILS
+|--------------------------------------------------------------------------
+*/
+
+const getWalletDepositDetailsModel = async (depositId) => {
+  const result = await pool.query(
+    `
+    SELECT
+      wd.*,
+      ug.group_id
+
+    FROM wallet_deposits wd
+
+    LEFT JOIN user_groups ug
+      ON ug.user_id = wd.user_id
+
+    WHERE wd.id = $1
+
+    LIMIT 1
+    `,
+    [depositId]
   );
 
   return result.rows[0];
@@ -177,7 +199,17 @@ const rejectWalletDepositModel = async (
 
 /*
 |--------------------------------------------------------------------------
-| UPDATE REMAINING BALANCE
+| UPDATE REMAINING WALLET BALANCE
+|--------------------------------------------------------------------------
+|
+| This is used when money is allocated from the wallet.
+|
+| Example:
+|
+| Deposit = 10,000
+| Allocate = 6,000
+| Remaining = 4,000
+|
 |--------------------------------------------------------------------------
 */
 
@@ -222,9 +254,7 @@ const checkDuplicateWalletReferenceModel = async (
     result = await pool.query(
       `
       SELECT id
-
       FROM wallet_deposits
-
       WHERE mpesa_code = $1
       `,
       [mpesaCode]
@@ -236,9 +266,7 @@ const checkDuplicateWalletReferenceModel = async (
     result = await pool.query(
       `
       SELECT id
-
       FROM wallet_deposits
-
       WHERE bank_reference = $1
       `,
       [bankReference]
@@ -254,9 +282,11 @@ module.exports = {
   createWalletDepositModel,
   getAllWalletDepositsModel,
   getMyWalletDepositsModel,
+  getWalletDepositDetailsModel,
   getWalletDepositModel,
   verifyWalletDepositModel,
   rejectWalletDepositModel,
   updateRemainingBalanceModel,
   checkDuplicateWalletReferenceModel,
 };
+

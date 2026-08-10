@@ -1,9 +1,14 @@
 const pool = require("../config/db");
 
 const {
-  createWalletDepositModel,
-  paymentReferenceExistsModel,
+  getWalletDepositByIdModel,
+  updateWalletRemainingBalanceModel,
 } = require("../models/walletDepositModel");
+
+const {
+  createWalletAllocationModel,
+  getAllocationsByDepositModel,
+} = require("../models/walletAllocationModel");
 
 const Notification = require("../models/notificationModel");
 const WalletDeposit = require("../models/walletDepositModel");
