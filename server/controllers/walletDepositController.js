@@ -1,111 +1,148 @@
+
 const pool = require("../config/db");
 
 const {
-  getWalletDepositByIdModel,
-  updateWalletRemainingBalanceModel,
+  createWalletDepositModel,
+  getAllWalletDepositsModel,
+  getMyWalletDepositsModel,
+  getWalletDepositModel,
+  verifyWalletDepositModel,
+  rejectWalletDepositModel,
+  checkDuplicateWalletReferenceModel,
 } = require("../models/walletDepositModel");
 
-const {
-  createWalletAllocationModel,
-  getAllocationsByDepositModel,
-} = require("../models/walletAllocationModel");
-
-const Notification = require("../models/notificationModel");
-const WalletDeposit = require("../models/walletDepositModel");
 const Notification = require("../models/notificationModel");
 
 /*
 |--------------------------------------------------------------------------
-| MEMBER DEPOSIT TO WALLET
+| MEMBER CREATE WALLET DEPOSIT
+|--------------------------------------------------------------------------
+|
+| Member submits money into the wallet.
+| Deposit starts as PENDING and must be verified by Super Admin.
+|
 |--------------------------------------------------------------------------
 */
 
 const createMyWalletDeposit = async (req, res) => {
   try {
-    const { amount, payment_method, mpesa_code, bank_reference, notes } =
-      req.body;
+    const {
+      amount,
+      payment_method,
+      mpesa_code,
+      bank_reference,
+    } = req.body;
 
     const userId = req.user.id;
 
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDATE AMOUNT
+    |--------------------------------------------------------------------------
+    */
+
     if (!amount || Number(amount) <= 0) {
       return res.status(400).json({
-        message: "Invalid amount",
+        success: false,
+        message: "Invalid amount.",
       });
     }
 
     /*
     |--------------------------------------------------------------------------
-    | DUPLICATE MPESA / BANK CODE
+    | VALIDATE PAYMENT METHOD
     |--------------------------------------------------------------------------
     */
 
-    if (payment_method === "mpesa") {
-      if (!mpesa_code) {
-        return res.status(400).json({
-          message: "Mpesa code is required",
-        });
-      }
-
-      const exists = await paymentReferenceExistsModel("mpesa", mpesa_code);
-
-      if (exists) {
-        return res.status(400).json({
-          message: "Mpesa code already used",
-        });
-      }
-    }
-
-    if (payment_method === "bank") {
-      if (!bank_reference) {
-        return res.status(400).json({
-          message: "Bank reference is required",
-        });
-      }
-
-      const exists = await paymentReferenceExistsModel("bank", bank_reference);
-
-      if (exists) {
-        return res.status(400).json({
-          message: "Bank reference already used",
-        });
-      }
+    if (!["mpesa", "bank", "cash"].includes(payment_method)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid payment method.",
+      });
     }
 
     /*
     |--------------------------------------------------------------------------
-    | SAVE DEPOSIT
+    | MPESA VALIDATION
     |--------------------------------------------------------------------------
     */
 
-    const deposit = await createWalletDepositModel({
+    if (payment_method === "mpesa" && !mpesa_code) {
+      return res.status(400).json({
+        success: false,
+        message: "Mpesa code is required.",
+      });
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | BANK VALIDATION
+    |--------------------------------------------------------------------------
+    */
+
+    if (payment_method === "bank" && !bank_reference) {
+      return res.status(400).json({
+        success: false,
+        message: "Bank reference is required.",
+      });
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | CHECK DUPLICATE REFERENCE
+    |--------------------------------------------------------------------------
+    */
+
+    const duplicate =
+      await checkDuplicateWalletReferenceModel(
+        payment_method,
+        mpesa_code,
+        bank_reference
+      );
+
+    if (duplicate) {
+      return res.status(400).json({
+        success: false,
+        message: "This payment reference has already been used.",
+      });
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | CREATE DEPOSIT
+    |--------------------------------------------------------------------------
+    */
+
+    const deposit = await createWalletDepositModel(
       userId,
-      amount,
-      paymentMethod: payment_method,
-      mpesaCode: mpesa_code,
-      bankReference: bank_reference,
-      notes,
-      status: "pending",
-      source: "member",
-    });
-
-    /*
-    |--------------------------------------------------------------------------
-    | GET MEMBER NAME
-    |--------------------------------------------------------------------------
-    */
-
-    const member = await pool.query(
-      `
-      SELECT fullname
-      FROM users
-      WHERE id=$1
-      `,
-      [userId],
+      Number(amount),
+      payment_method,
+      mpesa_code || null,
+      bank_reference || null,
+      "member"
     );
 
     /*
     |--------------------------------------------------------------------------
-    | NOTIFY ADMINS
+    | GET MEMBER
+    |--------------------------------------------------------------------------
+    */
+
+    const memberResult = await pool.query(
+      `
+      SELECT fullname
+      FROM users
+      WHERE id = $1
+      `,
+      [userId]
+    );
+
+    const memberName =
+      memberResult.rows[0]?.fullname || "Member";
+
+    /*
+    |--------------------------------------------------------------------------
+    | NOTIFY SUPER ADMINS
     |--------------------------------------------------------------------------
     */
 
@@ -113,16 +150,16 @@ const createMyWalletDeposit = async (req, res) => {
       `
       SELECT id
       FROM users
-      WHERE is_super_admin=true
-      `,
+      WHERE is_super_admin = true
+      `
     );
 
     for (const admin of admins.rows) {
       await Notification.createNotification({
         user_id: admin.id,
         title: "Wallet Deposit Submitted",
-        message: `${member.rows[0].fullname} deposited KES ${Number(
-          amount,
+        message: `${memberName} submitted a wallet deposit of KES ${Number(
+          amount
         ).toLocaleString()} awaiting verification.`,
         type: "wallet",
         reference_id: deposit.id,
@@ -131,104 +168,32 @@ const createMyWalletDeposit = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: "Wallet deposit submitted successfully. Awaiting verification.",
+      message:
+        "Wallet deposit submitted successfully. Awaiting verification.",
       deposit,
     });
   } catch (error) {
-    console.log(error);
+    console.error("CREATE MY WALLET DEPOSIT ERROR:", error);
 
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.message || "Failed to create wallet deposit.",
     });
   }
 };
-const createWalletDeposit = async (req, res) => {
-  try {
-    const { amount, payment_method, mpesa_code, bank_reference, notes } =
-      req.body;
 
-    if (!amount || Number(amount) <= 0) {
-      return res.status(400).json({
-        message: "Invalid amount",
-      });
-    }
-
-    if (payment_method === "mpesa" && !mpesa_code) {
-      return res.status(400).json({
-        message: "Mpesa code required",
-      });
-    }
-
-    if (payment_method === "bank" && !bank_reference) {
-      return res.status(400).json({
-        message: "Bank reference required",
-      });
-    }
-
-    /*
-    ----------------------------------------------------
-    Prevent duplicate Mpesa / Bank reference
-    ----------------------------------------------------
-    */
-
-    const duplicate = await WalletDeposit.checkDuplicateReference(
-      payment_method,
-      mpesa_code,
-      bank_reference,
-    );
-
-    if (duplicate) {
-      return res.status(400).json({
-        message: "This payment reference has already been used.",
-      });
-    }
-
-    const deposit = await WalletDeposit.createWalletDeposit(
-      req.user.id,
-      amount,
-      payment_method,
-      mpesa_code,
-      bank_reference,
-      notes,
-      "member",
-    );
-
-    /*
-    ----------------------------------------------------
-    Notify Super Admins
-    ----------------------------------------------------
-    */
-
-    const admins = await pool.query(`
-        SELECT id
-        FROM users
-        WHERE is_super_admin=true
-    `);
-
-    for (const admin of admins.rows) {
-      await Notification.createNotification({
-        user_id: admin.id,
-        title: "Wallet Deposit",
-        message: `${req.user.fullname} submitted a wallet deposit of KES ${Number(amount).toLocaleString()}`,
-        type: "wallet",
-        reference_id: deposit.id,
-      });
-    }
-
-    res.status(201).json({
-      success: true,
-      message: "Deposit submitted successfully. Awaiting verification.",
-      deposit,
-    });
-  } catch (error) {
-    console.log(error);
-
-    res.status(500).json({
-      message: error.message,
-    });
-  }
-};
+/*
+|--------------------------------------------------------------------------
+| ADMIN CREATE WALLET DEPOSIT
+|--------------------------------------------------------------------------
+|
+| Super Admin funds a member's wallet.
+|
+| IMPORTANT:
+| Admin-created deposits are automatically verified.
+|
+|--------------------------------------------------------------------------
+*/
 
 const adminWalletDeposit = async (req, res) => {
   try {
@@ -238,121 +203,359 @@ const adminWalletDeposit = async (req, res) => {
       payment_method,
       mpesa_code,
       bank_reference,
-      notes,
     } = req.body;
 
-    const duplicate = await WalletDeposit.checkDuplicateReference(
-      payment_method,
-      mpesa_code,
-      bank_reference,
-    );
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDATION
+    |--------------------------------------------------------------------------
+    */
+
+    if (!user_id) {
+      return res.status(400).json({
+        success: false,
+        message: "User is required.",
+      });
+    }
+
+    if (!amount || Number(amount) <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid amount.",
+      });
+    }
+
+    if (!["mpesa", "bank", "cash"].includes(payment_method)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid payment method.",
+      });
+    }
+
+    if (payment_method === "mpesa" && !mpesa_code) {
+      return res.status(400).json({
+        success: false,
+        message: "Mpesa code is required.",
+      });
+    }
+
+    if (payment_method === "bank" && !bank_reference) {
+      return res.status(400).json({
+        success: false,
+        message: "Bank reference is required.",
+      });
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | CHECK DUPLICATE REFERENCE
+    |--------------------------------------------------------------------------
+    */
+
+    const duplicate =
+      await checkDuplicateWalletReferenceModel(
+        payment_method,
+        mpesa_code,
+        bank_reference
+      );
 
     if (duplicate) {
       return res.status(400).json({
-        message: "Payment reference already exists.",
+        success: false,
+        message: "This payment reference has already been used.",
       });
     }
 
-    const deposit = await WalletDeposit.createWalletDeposit(
+    /*
+    |--------------------------------------------------------------------------
+    | CREATE DEPOSIT
+    |--------------------------------------------------------------------------
+    */
+
+    const deposit = await createWalletDepositModel(
       user_id,
-      amount,
+      Number(amount),
       payment_method,
-      mpesa_code,
-      bank_reference,
-      notes,
-      "admin",
+      mpesa_code || null,
+      bank_reference || null,
+      "admin"
     );
 
-    await WalletDeposit.verifyWalletDeposit(deposit.id, req.user.id);
+    /*
+    |--------------------------------------------------------------------------
+    | AUTO VERIFY ADMIN DEPOSIT
+    |--------------------------------------------------------------------------
+    */
 
-    res.status(201).json({
-      success: true,
-      message: "Wallet funded successfully.",
-    });
-  } catch (error) {
-    console.log(error);
+    const verifiedDeposit =
+      await verifyWalletDepositModel(
+        deposit.id,
+        req.user.id
+      );
 
-    res.status(500).json({
-      message: error.message,
-    });
-  }
-};
-const verifyWalletDeposit = async (req, res) => {
-  try {
-    const deposit = await WalletDeposit.verifyWalletDeposit(
-      req.params.id,
-      req.user.id,
-    );
-
-    if (!deposit) {
-      return res.status(404).json({
-        message: "Deposit not found",
-      });
-    }
+    /*
+    |--------------------------------------------------------------------------
+    | NOTIFY MEMBER
+    |--------------------------------------------------------------------------
+    */
 
     await Notification.createNotification({
-      user_id: deposit.user_id,
-      title: "Wallet Deposit Verified",
-      message: `Your wallet deposit of KES ${Number(
-        deposit.amount,
-      ).toLocaleString()} has been verified.`,
+      user_id: user_id,
+      title: "Wallet Funded",
+      message: `Your wallet has been funded with KES ${Number(
+        amount
+      ).toLocaleString()} by the administrator.`,
       type: "wallet",
       reference_id: deposit.id,
     });
 
-    res.json({
+    return res.status(201).json({
       success: true,
-      message: "Deposit verified successfully.",
+      message: "Wallet funded successfully.",
+      deposit: verifiedDeposit,
+    });
+  } catch (error) {
+    console.error("ADMIN WALLET DEPOSIT ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to fund wallet.",
+    });
+  }
+};
+
+/*
+|--------------------------------------------------------------------------
+| GET ALL WALLET DEPOSITS
+|--------------------------------------------------------------------------
+*/
+
+const getAllWalletDeposits = async (req, res) => {
+  try {
+    const deposits = await getAllWalletDepositsModel();
+
+    return res.status(200).json({
+      success: true,
+      deposits,
+    });
+  } catch (error) {
+    console.error("GET ALL WALLET DEPOSITS ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch wallet deposits.",
+    });
+  }
+};
+
+/*
+|--------------------------------------------------------------------------
+| GET MY WALLET DEPOSITS
+|--------------------------------------------------------------------------
+*/
+
+const getMyWalletDeposits = async (req, res) => {
+  try {
+    const deposits =
+      await getMyWalletDepositsModel(req.user.id);
+
+    return res.status(200).json({
+      success: true,
+      deposits,
+    });
+  } catch (error) {
+    console.error("GET MY WALLET DEPOSITS ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch wallet deposits.",
+    });
+  }
+};
+
+/*
+|--------------------------------------------------------------------------
+| GET SINGLE WALLET DEPOSIT
+|--------------------------------------------------------------------------
+*/
+
+const getWalletDeposit = async (req, res) => {
+  try {
+    const deposit =
+      await getWalletDepositModel(req.params.id);
+
+    if (!deposit) {
+      return res.status(404).json({
+        success: false,
+        message: "Wallet deposit not found.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
       deposit,
     });
   } catch (error) {
-    console.log(error);
+    console.error("GET WALLET DEPOSIT ERROR:", error);
 
-    res.status(500).json({
-      message: error.message,
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch wallet deposit.",
     });
   }
 };
-const rejectWalletDeposit = async (req, res) => {
+
+/*
+|--------------------------------------------------------------------------
+| VERIFY WALLET DEPOSIT
+|--------------------------------------------------------------------------
+|
+| Only a verified deposit can later be allocated.
+|
+|--------------------------------------------------------------------------
+*/
+
+const verifyWalletDeposit = async (req, res) => {
   try {
-    const deposit = await WalletDeposit.rejectWalletDeposit(
-      req.params.id,
-      req.user.id,
-    );
+    const deposit =
+      await getWalletDepositModel(req.params.id);
 
     if (!deposit) {
       return res.status(404).json({
-        message: "Deposit not found",
+        success: false,
+        message: "Wallet deposit not found.",
       });
     }
 
+    if (deposit.status === "verified") {
+      return res.status(400).json({
+        success: false,
+        message: "Wallet deposit is already verified.",
+      });
+    }
+
+    if (deposit.status === "rejected") {
+      return res.status(400).json({
+        success: false,
+        message:
+          "A rejected wallet deposit cannot be verified.",
+      });
+    }
+
+    const verifiedDeposit =
+      await verifyWalletDepositModel(
+        deposit.id,
+        req.user.id
+      );
+
+    /*
+    |--------------------------------------------------------------------------
+    | NOTIFY MEMBER
+    |--------------------------------------------------------------------------
+    */
+
     await Notification.createNotification({
-      user_id: deposit.user_id,
-      title: "Wallet Deposit Rejected",
+      user_id: verifiedDeposit.user_id,
+      title: "Wallet Deposit Verified",
       message: `Your wallet deposit of KES ${Number(
-        deposit.amount,
-      ).toLocaleString()} was rejected.`,
+        verifiedDeposit.amount
+      ).toLocaleString()} has been verified.`,
       type: "wallet",
-      reference_id: deposit.id,
+      reference_id: verifiedDeposit.id,
     });
 
-    res.json({
+    return res.status(200).json({
       success: true,
-      message: "Deposit rejected.",
+      message: "Wallet deposit verified successfully.",
+      deposit: verifiedDeposit,
     });
   } catch (error) {
-    console.log(error);
+    console.error("VERIFY WALLET DEPOSIT ERROR:", error);
 
-    res.status(500).json({
-      message: error.message,
+    return res.status(500).json({
+      success: false,
+      message: "Failed to verify wallet deposit.",
+    });
+  }
+};
+
+/*
+|--------------------------------------------------------------------------
+| REJECT WALLET DEPOSIT
+|--------------------------------------------------------------------------
+*/
+
+const rejectWalletDeposit = async (req, res) => {
+  try {
+    const deposit =
+      await getWalletDepositModel(req.params.id);
+
+    if (!deposit) {
+      return res.status(404).json({
+        success: false,
+        message: "Wallet deposit not found.",
+      });
+    }
+
+    if (deposit.status === "verified") {
+      return res.status(400).json({
+        success: false,
+        message:
+          "A verified wallet deposit cannot be rejected.",
+      });
+    }
+
+    if (deposit.status === "rejected") {
+      return res.status(400).json({
+        success: false,
+        message: "Wallet deposit is already rejected.",
+      });
+    }
+
+    const rejectedDeposit =
+      await rejectWalletDepositModel(
+        deposit.id,
+        req.body.notes || null
+      );
+
+    /*
+    |--------------------------------------------------------------------------
+    | NOTIFY MEMBER
+    |--------------------------------------------------------------------------
+    */
+
+    await Notification.createNotification({
+      user_id: rejectedDeposit.user_id,
+      title: "Wallet Deposit Rejected",
+      message: `Your wallet deposit of KES ${Number(
+        rejectedDeposit.amount
+      ).toLocaleString()} was rejected.`,
+      type: "wallet",
+      reference_id: rejectedDeposit.id,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Wallet deposit rejected.",
+      deposit: rejectedDeposit,
+    });
+  } catch (error) {
+    console.error("REJECT WALLET DEPOSIT ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to reject wallet deposit.",
     });
   }
 };
 
 module.exports = {
   createMyWalletDeposit,
-  createWalletDeposit,
   adminWalletDeposit,
+  getAllWalletDeposits,
+  getMyWalletDeposits,
+  getWalletDeposit,
   verifyWalletDeposit,
   rejectWalletDeposit,
 };
+

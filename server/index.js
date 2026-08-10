@@ -21,6 +21,10 @@ const communicationRoutes = require("./routes/communicationRoutes");
 const announcementRoutes = require("./routes/announcementRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
+const walletDepositRoutes = require("./routes/walletDepositRoutes");
+
+
+
 
 const app = express();
 
@@ -110,6 +114,7 @@ app.use("/api/communications", communicationRoutes);
 app.use("/api/announcements", announcementRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/wallet-deposits",walletDepositRoutes);
 
 app.get("/", (req, res) => {
   res.json({

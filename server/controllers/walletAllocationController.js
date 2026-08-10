@@ -15,30 +15,6 @@ const {
 |--------------------------------------------------------------------------
 | CREATE WALLET ALLOCATIONS
 |--------------------------------------------------------------------------
-|
-| Example request:
-|
-| {
-|   "wallet_deposit_id": 10,
-|   "allocation_mode": "manual",
-|   "allocations": [
-|     {
-|       "type": "contribution",
-|       "amount": 500
-|     },
-|     {
-|       "type": "saving",
-|       "amount": 300
-|     },
-|     {
-|       "type": "loan_repayment",
-|       "amount": 2000,
-|       "loan_id": 15
-|     }
-|   ]
-| }
-|
-|--------------------------------------------------------------------------
 */
 
 const createWalletAllocation = async (req, res) => {
@@ -52,6 +28,23 @@ const createWalletAllocation = async (req, res) => {
       allocations,
       allocation_mode = "manual",
     } = req.body;
+
+    /*
+    |--------------------------------------------------------------------------
+    | CURRENT USER
+    |--------------------------------------------------------------------------
+    */
+
+    const allocatedBy = req.user?.id;
+
+    if (!allocatedBy) {
+      await client.query("ROLLBACK");
+
+      return res.status(401).json({
+        success: false,
+        message: "Authenticated user not found.",
+      });
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -100,11 +93,11 @@ const createWalletAllocation = async (req, res) => {
 
     /*
     |--------------------------------------------------------------------------
-    | GET WALLET DEPOSIT
+    | GET WALLET
     |--------------------------------------------------------------------------
     */
 
- const deposit = await getWalletDepositModel(wallet_deposit_id);
+    const deposit = await getWalletDepositModel(wallet_deposit_id);
 
     if (!deposit) {
       await client.query("ROLLBACK");
@@ -117,7 +110,7 @@ const createWalletAllocation = async (req, res) => {
 
     /*
     |--------------------------------------------------------------------------
-    | ONLY VERIFIED DEPOSITS CAN BE ALLOCATED
+    | ONLY VERIFIED WALLET CAN BE USED
     |--------------------------------------------------------------------------
     */
 
@@ -133,17 +126,23 @@ const createWalletAllocation = async (req, res) => {
 
     /*
     |--------------------------------------------------------------------------
-    | VALIDATE EACH ALLOCATION
+    | VALID ALLOCATION TYPES
     |--------------------------------------------------------------------------
     */
 
     const allowedTypes = [
       "contribution",
       "saving",
-      "loan_repayment",
+      "loan_payment",
     ];
 
     let totalAllocation = 0;
+
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDATE EACH ALLOCATION
+    |--------------------------------------------------------------------------
+    */
 
     for (const item of allocations) {
       const type = item.type;
@@ -177,19 +176,19 @@ const createWalletAllocation = async (req, res) => {
       }
 
       /*
-      | Loan repayment requires loan ID
+      | Loan payment requires reference
+      |
+      | For now this should be the loan payment transaction ID
+      | once the payment is actually created.
       */
 
-      if (
-        type === "loan_repayment" &&
-        !item.loan_id
-      ) {
+      if (type === "loan_payment" && !item.reference_id) {
         await client.query("ROLLBACK");
 
         return res.status(400).json({
           success: false,
           message:
-            "Loan ID is required for loan repayment allocation.",
+            "Reference ID is required for loan payment allocation.",
         });
       }
 
@@ -202,8 +201,9 @@ const createWalletAllocation = async (req, res) => {
     |--------------------------------------------------------------------------
     */
 
-    const remainingBalance =
-      Number(deposit.remaining_balance || 0);
+    const remainingBalance = Number(
+      deposit.remaining_balance || 0
+    );
 
     if (totalAllocation > remainingBalance) {
       await client.query("ROLLBACK");
@@ -230,7 +230,8 @@ const createWalletAllocation = async (req, res) => {
           wallet_deposit_id,
           item.type,
           Number(item.amount),
-          item.loan_id || null,
+          allocatedBy,
+          item.reference_id || null,
           allocation_mode
         );
 
@@ -239,7 +240,7 @@ const createWalletAllocation = async (req, res) => {
 
     /*
     |--------------------------------------------------------------------------
-    | CALCULATE NEW WALLET BALANCE
+    | CALCULATE NEW BALANCE
     |--------------------------------------------------------------------------
     */
 
@@ -248,15 +249,16 @@ const createWalletAllocation = async (req, res) => {
 
     /*
     |--------------------------------------------------------------------------
-    | UPDATE WALLET DEPOSIT
+    | UPDATE WALLET BALANCE
     |--------------------------------------------------------------------------
     */
 
-const updatedWallet =
-  await updateRemainingBalanceModel(
-    wallet_deposit_id,
-    newBalance
-  );
+    const updatedWallet =
+      await updateRemainingBalanceModel(
+        wallet_deposit_id,
+        newBalance
+      );
+
     /*
     |--------------------------------------------------------------------------
     | COMMIT
@@ -274,7 +276,8 @@ const updatedWallet =
     return res.status(201).json({
       success: true,
 
-      message: "Wallet allocation completed successfully.",
+      message:
+        "Wallet allocation completed successfully.",
 
       wallet: updatedWallet,
 
@@ -289,13 +292,6 @@ const updatedWallet =
     });
 
   } catch (error) {
-
-    /*
-    |--------------------------------------------------------------------------
-    | ROLLBACK
-    |--------------------------------------------------------------------------
-    */
-
     await client.query("ROLLBACK");
 
     console.error(
@@ -311,7 +307,6 @@ const updatedWallet =
     });
 
   } finally {
-
     client.release();
   }
 };
@@ -334,7 +329,9 @@ const getWalletAllocations = async (req, res) => {
     }
 
     const allocations =
-      await getAllocationsByDepositModel(depositId);
+      await getAllocationsByDepositModel(
+        depositId
+      );
 
     return res.status(200).json({
       success: true,
@@ -342,7 +339,6 @@ const getWalletAllocations = async (req, res) => {
     });
 
   } catch (error) {
-
     console.error(
       "GET WALLET ALLOCATIONS ERROR:",
       error
