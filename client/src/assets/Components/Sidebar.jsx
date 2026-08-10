@@ -51,6 +51,11 @@ const Sidebar = ({ role = "admin" }) => {
       path: "/dashboard/loan-repayments",
     },
     {
+      name: "Wallet Deposits",
+      icon: <FaMoneyBillWave />,
+      path: "/dashboard/wallet-deposits",
+    },
+    {
       name: "Savings",
       icon: <MdSavings />,
       path: "/dashboard/savings",
@@ -107,6 +112,11 @@ const Sidebar = ({ role = "admin" }) => {
       name: "Payments",
       icon: <FaMoneyBillWave />,
       path: "/user-dashboard/payments",
+    },
+    {
+      name: "Wallet Deposits",
+      icon: <FaMoneyBillWave />,
+      path: "/user-dashboard/wallet-deposits",
     },
     {
       name: "Statements",

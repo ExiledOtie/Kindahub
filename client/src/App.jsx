@@ -24,6 +24,7 @@ import GroupChats from "./assets/Pages/Communication/GroupChats";
 import PrivateMessages from "./assets/Pages/Communication/PrivateMessages";
 import Announcements from "./assets/Pages/Announcements/Announcements";
 import Notifications from "./assets/Pages/Notification/Notifications";
+import Wallet from "./assets/Pages/Wallet";
 import "./assets/Pages/Notification/Styles/notifications.css";
 
 import UserContributions from "./assets/Pages/Users/UserContributions";
@@ -34,6 +35,7 @@ import Statements from "./assets/Pages/Users/Statements";
 import UserGroupChats from "./assets/Pages/Users/Communication/UserGroupChats";
 import UserPrivateMessages from "./assets/Pages/Users/Communication/UserPrivateMessages";
 import UserNotifications from "./assets/Pages/Users/UserNotifications";
+import UserWallet from "./assets/Pages/Users/UserWalletDeposits";
 
 
 
@@ -62,6 +64,7 @@ const App = () => {
             <Route path="profile" element={<ProfileTab />} />
             <Route path="loan-repayments" element={<LoanRepayments />} />
             <Route path="savings" element={<Savings />} />
+            <Route path="wallet-deposits" element={<Wallet />} /> 
             <Route path="reports" element={<Reports />} />
             <Route path="announcements" element={<Announcements />} />
             <Route path="notifications" element={<Notifications />} />
@@ -103,6 +106,7 @@ const App = () => {
               path="/user-dashboard/communication/private"
               element={<UserPrivateMessages />} />
             <Route path="notifications" element={<UserNotifications />} />
+            <Route path="wallet-deposits" element={<UserWallet />} />
           </Route>
         </Routes>
       </AuthProvider>
