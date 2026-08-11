@@ -1,14 +1,14 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import axios from "../Utils/axios";
+import axios from "../../Utils/axios";
 import { ClipLoader } from "react-spinners";
 
-import SummaryTab from "./MemberTabs/SummaryTab";
-import ProfileTab from "./MemberTabs/ProfileTab";
-import ContributionsTab from "./MemberTabs/ContributionsTab";
-import SavingsTab from "./MemberTabs/SavingsTab";
-import LoanTab from "./MemberTabs/LoanTab";
-import LogsTab from "./MemberTabs/LogsTab";
+import SummaryTab from "../MemberTabs/SummaryTab";
+import ProfileTab from "../MemberTabs/ProfileTab";
+import ContributionsTab from "../MemberTabs/ContributionsTab";
+import SavingsTab from "../MemberTabs/SavingsTab";
+import LoanTab from "../MemberTabs/LoanTab";
+import LogsTab from "../MemberTabs/LogsTab";
 
 const MemberProfile = () => {
   const { id } = useParams();
@@ -93,11 +93,10 @@ const MemberProfile = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`py-3 text-xs border-b-2 whitespace-nowrap ${
-                activeTab === tab.id
+              className={`py-3 text-xs border-b-2 whitespace-nowrap ${activeTab === tab.id
                   ? "border-green-600 text-green-600"
                   : "border-transparent text-gray-500"
-              }`}
+                }`}
             >
               {tab.label}
             </button>

@@ -6,7 +6,7 @@ import { GiPayMoney, GiTakeMyMoney } from "react-icons/gi";
 import { SiAdblock } from "react-icons/si";
 import { IoCheckmarkDoneCircleSharp } from "react-icons/io5";
 
-import axios from "../Utils/axios";
+import axios from "../../Utils/axios";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -344,13 +344,12 @@ const Contributions = () => {
                   </td>
                   <td className="px-2 py-2">
                     <span
-                      className={`px-2 py-1 rounded-full text-[10px] font-medium ${
-                        c.status === "completed"
+                      className={`px-2 py-1 rounded-full text-[10px] font-medium ${c.status === "completed"
                           ? "bg-green-100 text-green-700"
                           : c.status === "pending"
                             ? "bg-yellow-100 text-yellow-700"
                             : "bg-red-100 text-red-700"
-                      }`}
+                        }`}
                     >
                       {c.status === "completed"
                         ? "Approved"

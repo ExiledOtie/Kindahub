@@ -11,7 +11,7 @@ import {
 import { ClipLoader } from "react-spinners";
 import Swal from "sweetalert2";
 
-import axios from "../Utils/axios";
+import axios from "../../Utils/axios";
 
 const Wallet = () => {
   const [loading, setLoading] = useState(true);
@@ -104,9 +104,8 @@ const Wallet = () => {
       title: "Verify Deposit?",
       text: `Verify KES ${Number(
         deposit.amount || 0
-      ).toLocaleString()} wallet deposit from ${
-        deposit.fullname || "member"
-      }?`,
+      ).toLocaleString()} wallet deposit from ${deposit.fullname || "member"
+        }?`,
       showCancelButton: true,
       confirmButtonText: "Yes, Verify",
       cancelButtonText: "Cancel",
@@ -158,9 +157,8 @@ const Wallet = () => {
       title: "Reject Deposit?",
       text: `Reject KES ${Number(
         deposit.amount || 0
-      ).toLocaleString()} wallet deposit from ${
-        deposit.fullname || "member"
-      }?`,
+      ).toLocaleString()} wallet deposit from ${deposit.fullname || "member"
+        }?`,
       input: "textarea",
       inputPlaceholder: "Optional rejection reason...",
       showCancelButton: true,
@@ -681,10 +679,10 @@ const Wallet = () => {
                     <td className="px-3 py-2 text-gray-600">
 
                       {deposit.payment_method ===
-                      "mpesa"
+                        "mpesa"
                         ? deposit.mpesa_code || "-"
                         : deposit.bank_reference ||
-                          "-"}
+                        "-"}
 
                     </td>
 
@@ -696,7 +694,7 @@ const Wallet = () => {
                         KES{" "}
                         {Number(
                           deposit.remaining_balance ||
-                            0
+                          0
                         ).toLocaleString()}
                       </span>
 
@@ -749,52 +747,52 @@ const Wallet = () => {
 
                         {deposit.status ===
                           "pending" && (
-                          <button
-                            onClick={() =>
-                              handleVerify(
-                                deposit
-                              )
-                            }
-                            disabled={
-                              processingId ===
-                              deposit.id
-                            }
-                            className="p-1.5 rounded-md hover:bg-green-100 text-green-600"
-                            title="Verify"
-                          >
-                            {processingId ===
-                            deposit.id ? (
-                              <ClipLoader
-                                size={12}
-                              />
-                            ) : (
-                              <CheckCircle
-                                size={13}
-                              />
-                            )}
-                          </button>
-                        )}
+                            <button
+                              onClick={() =>
+                                handleVerify(
+                                  deposit
+                                )
+                              }
+                              disabled={
+                                processingId ===
+                                deposit.id
+                              }
+                              className="p-1.5 rounded-md hover:bg-green-100 text-green-600"
+                              title="Verify"
+                            >
+                              {processingId ===
+                                deposit.id ? (
+                                <ClipLoader
+                                  size={12}
+                                />
+                              ) : (
+                                <CheckCircle
+                                  size={13}
+                                />
+                              )}
+                            </button>
+                          )}
 
                         {/* REJECT */}
 
                         {deposit.status ===
                           "pending" && (
-                          <button
-                            onClick={() =>
-                              handleReject(
-                                deposit
-                              )
-                            }
-                            disabled={
-                              processingId ===
-                              deposit.id
-                            }
-                            className="p-1.5 rounded-md hover:bg-red-100 text-red-600"
-                            title="Reject"
-                          >
-                            <XCircle size={13} />
-                          </button>
-                        )}
+                            <button
+                              onClick={() =>
+                                handleReject(
+                                  deposit
+                                )
+                              }
+                              disabled={
+                                processingId ===
+                                deposit.id
+                              }
+                              className="p-1.5 rounded-md hover:bg-red-100 text-red-600"
+                              title="Reject"
+                            >
+                              <XCircle size={13} />
+                            </button>
+                          )}
 
                         {/* ALLOCATE */}
 
@@ -802,7 +800,7 @@ const Wallet = () => {
                           "verified" &&
                           Number(
                             deposit.remaining_balance ||
-                              0
+                            0
                           ) > 0 && (
                             <button
                               onClick={() => {
@@ -933,7 +931,7 @@ const Wallet = () => {
                     KES{" "}
                     {Number(
                       selectedDeposit.amount ||
-                        0
+                      0
                     ).toLocaleString()}
                   </p>
                 </div>
@@ -947,7 +945,7 @@ const Wallet = () => {
                     KES{" "}
                     {Number(
                       selectedDeposit.remaining_balance ||
-                        0
+                      0
                     ).toLocaleString()}
                   </p>
                 </div>
@@ -1025,36 +1023,36 @@ const Wallet = () => {
 
               {selectedDeposit.status ===
                 "pending" && (
-                <>
-                  <button
-                    onClick={() =>
-                      handleReject(
-                        selectedDeposit
-                      )
-                    }
-                    className="px-3 py-1.5 rounded-lg text-[10px] border border-red-200 text-red-600 hover:bg-red-50"
-                  >
-                    Reject
-                  </button>
+                  <>
+                    <button
+                      onClick={() =>
+                        handleReject(
+                          selectedDeposit
+                        )
+                      }
+                      className="px-3 py-1.5 rounded-lg text-[10px] border border-red-200 text-red-600 hover:bg-red-50"
+                    >
+                      Reject
+                    </button>
 
-                  <button
-                    onClick={() =>
-                      handleVerify(
-                        selectedDeposit
-                      )
-                    }
-                    className="px-3 py-1.5 rounded-lg text-[10px] bg-green-600 text-white hover:bg-green-700"
-                  >
-                    Verify Deposit
-                  </button>
-                </>
-              )}
+                    <button
+                      onClick={() =>
+                        handleVerify(
+                          selectedDeposit
+                        )
+                      }
+                      className="px-3 py-1.5 rounded-lg text-[10px] bg-green-600 text-white hover:bg-green-700"
+                    >
+                      Verify Deposit
+                    </button>
+                  </>
+                )}
 
               {selectedDeposit.status ===
                 "verified" &&
                 Number(
                   selectedDeposit.remaining_balance ||
-                    0
+                  0
                 ) > 0 && (
                   <button
                     onClick={() => {

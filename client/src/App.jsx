@@ -11,20 +11,20 @@ import DashboardLayout from "./assets/Layout/DashboardLayout";
 import Dashboard from "./assets/Application/Dashboard";
 import UserDashboard from "./assets/Application/UserDashboard";
 
-import Members from "./assets/Pages/Members";
-import Contributions from "./assets/Pages/Contributions";
-import Loans from "./assets/Pages/Loans";
-import MemberProfile from "./assets/Pages/MemberProfile";
+import Members from "./assets/Pages/Admin/Members";
+import Contributions from "./assets/Pages/Admin/Contributions";
+import Loans from "./assets/Pages/Admin/Loans";
+import MemberProfile from "./assets/Pages/Admin/MemberProfile";
 import ProfileTab from "./assets/Pages/MemberTabs/ProfileTab";
-import LoanRepaymentDetails from "./assets/Pages/LoanRepaymentDetails";
-import Savings from "./assets/Pages/Savings";
-import LoanRepayments from "./assets/Pages/LoanRepayments";
-import Reports from "./assets/Pages/Reports";
+import LoanRepaymentDetails from "./assets/Pages/Admin/LoanRepaymentDetails";
+import Savings from "./assets/Pages/Admin/Savings";
+import LoanRepayments from "./assets/Pages/Admin/LoanRepayments";
+import Reports from "./assets/Pages/Admin/Reports";
 import GroupChats from "./assets/Pages/Communication/GroupChats";
 import PrivateMessages from "./assets/Pages/Communication/PrivateMessages";
 import Announcements from "./assets/Pages/Announcements/Announcements";
 import Notifications from "./assets/Pages/Notification/Notifications";
-import Wallet from "./assets/Pages/Wallet";
+import Wallet from "./assets/Pages/Admin/Wallet";
 import "./assets/Pages/Notification/Styles/notifications.css";
 
 import UserContributions from "./assets/Pages/Users/UserContributions";
@@ -64,7 +64,7 @@ const App = () => {
             <Route path="profile" element={<ProfileTab />} />
             <Route path="loan-repayments" element={<LoanRepayments />} />
             <Route path="savings" element={<Savings />} />
-            <Route path="wallet-deposits" element={<Wallet />} /> 
+            <Route path="wallet-deposits" element={<Wallet />} />
             <Route path="reports" element={<Reports />} />
             <Route path="announcements" element={<Announcements />} />
             <Route path="notifications" element={<Notifications />} />

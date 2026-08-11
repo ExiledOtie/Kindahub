@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { FaClipboard } from "react-icons/fa";
-import axios from "../Utils/axios";
+import axios from "../../Utils/axios";
 import Swal from "sweetalert2";
 import { ClipLoader } from "react-spinners";
 import { saveAs } from "file-saver";
@@ -138,9 +138,8 @@ const Reports = () => {
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-3 py-2 rounded-lg border ${
-              activeTab === tab ? "bg-green-600 text-white" : "bg-white"
-            }`}
+            className={`px-3 py-2 rounded-lg border ${activeTab === tab ? "bg-green-600 text-white" : "bg-white"
+              }`}
           >
             {tab}
           </button>

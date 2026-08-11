@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-import axios from "../Utils/axios";
+import axios from "../../Utils/axios";
 import Swal from "sweetalert2";
 import { ClipLoader } from "react-spinners";
 import { useNavigate } from "react-router-dom";
 
-import LoanStats from "./LoanComponents/LoanStats";
-import LoanFilters from "./LoanComponents/LoanFilters";
-import LoanTable from "./LoanComponents/LoanTable";
-import LoanPagination from "./LoanComponents/LoanPagination";
-import LoanDetailsModal from "./LoanComponents/LoanDetailsModal";
+import LoanStats from "../LoanComponents/LoanStats";
+import LoanFilters from "../LoanComponents/LoanFilters";
+import LoanTable from "../LoanComponents/LoanTable";
+import LoanPagination from "../LoanComponents/LoanPagination";
+import LoanDetailsModal from "../LoanComponents/LoanDetailsModal";
 
 const ITEMS_PER_PAGE = 8;
 

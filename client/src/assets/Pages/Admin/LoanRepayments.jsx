@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import axios from "../Utils/axios";
+import axios from "../../Utils/axios";
 import Swal from "sweetalert2";
 import { ClipLoader } from "react-spinners";
 
@@ -197,7 +197,7 @@ const LoanRepayments = () => {
 
       {/* ================= TABLE ================= */}
 
-       {/* ================= TABLE ================= */}
+      {/* ================= TABLE ================= */}
 
       <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
@@ -252,8 +252,8 @@ const LoanRepayments = () => {
                     <td className="px-2 py-1.5 whitespace-nowrap text-gray-600">
                       {payment.created_at
                         ? new Date(payment.created_at).toLocaleDateString(
-                            "en-GB"
-                          )
+                          "en-GB"
+                        )
                         : "-"}
                     </td>
 

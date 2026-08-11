@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import axios from "../Utils/axios";
+import axios from "../../Utils/axios";
 import Swal from "sweetalert2";
 import { ClipLoader } from "react-spinners";
 
@@ -304,13 +304,12 @@ const Savings = () => {
                   <td className="px-2 py-2">
                     <span
                       className={`px-2 py-1 rounded-full text-[9px]
-                      ${
-                        saving.status === "completed"
+                      ${saving.status === "completed"
                           ? "bg-green-100 text-green-700"
                           : saving.status === "rejected"
                             ? "bg-red-100 text-red-700"
                             : "bg-yellow-100 text-yellow-700"
-                      }`}
+                        }`}
                     >
                       {saving.status}
                     </span>
