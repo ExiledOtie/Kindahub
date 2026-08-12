@@ -3,12 +3,12 @@ import { useEffect, useState } from "react";
 import axios from "../../Utils/axios";
 import { ClipLoader } from "react-spinners";
 
-import SummaryTab from "../MemberTabs/SummaryTab";
-import ProfileTab from "../MemberTabs/ProfileTab";
-import ContributionsTab from "../MemberTabs/ContributionsTab";
-import SavingsTab from "../MemberTabs/SavingsTab";
-import LoanTab from "../MemberTabs/LoanTab";
-import LogsTab from "../MemberTabs/LogsTab";
+import SummaryTab from "../Admin/MemberTabs/SummaryTab";
+import ProfileTab from "../Admin/MemberTabs/ProfileTab";
+import ContributionsTab from "../Admin/MemberTabs/ContributionsTab";
+import SavingsTab from "../Admin/MemberTabs/SavingsTab";
+import LoanTab from "../Admin/MemberTabs/LoanTab";
+import LogsTab from "../Admin/MemberTabs/LogsTab";
 
 const MemberProfile = () => {
   const { id } = useParams();
