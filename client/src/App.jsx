@@ -11,43 +11,69 @@ import DashboardLayout from "./assets/Layout/DashboardLayout";
 import Dashboard from "./assets/Application/Dashboard";
 import UserDashboard from "./assets/Application/UserDashboard";
 
+// ==========================================
+// ADMIN PAGES
+// ==========================================
+
 import Members from "./assets/Pages/Admin/Members";
 import Contributions from "./assets/Pages/Admin/Contributions";
 import Loans from "./assets/Pages/Admin/Loans";
 import MemberProfile from "./assets/Pages/Admin/MemberProfile";
-import ProfileTab from "./assets/Pages/MemberTabs/ProfileTab";
+import ProfileTab from "./assets/Pages/Admin/MemberTabs/ProfileTab";
 import LoanRepaymentDetails from "./assets/Pages/Admin/LoanRepaymentDetails";
 import Savings from "./assets/Pages/Admin/Savings";
 import LoanRepayments from "./assets/Pages/Admin/LoanRepayments";
 import Reports from "./assets/Pages/Admin/Reports";
+import Wallet from "./assets/Pages/Admin/Wallet";
+
+// ==========================================
+// SHARED / COMMUNICATION
+// ==========================================
+
 import GroupChats from "./assets/Pages/Communication/GroupChats";
 import PrivateMessages from "./assets/Pages/Communication/PrivateMessages";
+
 import Announcements from "./assets/Pages/Announcements/Announcements";
 import Notifications from "./assets/Pages/Notification/Notifications";
-import Wallet from "./assets/Pages/Admin/Wallet";
+
 import "./assets/Pages/Notification/Styles/notifications.css";
+
+// ==========================================
+// USER PAGES
+// ==========================================
 
 import UserContributions from "./assets/Pages/Users/UserContributions";
 import UserSavings from "./assets/Pages/Users/UserSavings";
 import UserLoans from "./assets/Pages/Users/UserLoans";
 import UserPayments from "./assets/Pages/Users/userPayments";
 import Statements from "./assets/Pages/Users/Statements";
+
 import UserGroupChats from "./assets/Pages/Users/Communication/UserGroupChats";
 import UserPrivateMessages from "./assets/Pages/Users/Communication/UserPrivateMessages";
+
 import UserNotifications from "./assets/Pages/Users/UserNotifications";
-import UserWallet from "./assets/Pages/Users/UserWalletDeposits";
 
-
+// IMPORTANT:
+// Your screenshot shows UserWallet.jsx
+import UserWallet from "./assets/Pages/Users/UserWallet";
 
 const App = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          {/* LOGIN */}
+
+          {/* ==========================================
+              LOGIN
+          ========================================== */}
+
           <Route path="/" element={<Login />} />
 
-          {/* ADMIN ROUTES */}
+
+          {/* ==========================================
+              ADMIN ROUTES
+          ========================================== */}
+
           <Route
             path="/dashboard"
             element={
@@ -56,34 +82,88 @@ const App = () => {
               </ProtectedRoute>
             }
           >
+
             <Route index element={<Dashboard />} />
-            <Route path="members" element={<Members />} />
-            <Route path="contributions" element={<Contributions />} />
-            <Route path="loans" element={<Loans />} />
-            <Route path="members/:id" element={<MemberProfile />} />
-            <Route path="profile" element={<ProfileTab />} />
-            <Route path="loan-repayments" element={<LoanRepayments />} />
-            <Route path="savings" element={<Savings />} />
-            <Route path="wallet-deposits" element={<Wallet />} />
-            <Route path="reports" element={<Reports />} />
-            <Route path="announcements" element={<Announcements />} />
-            <Route path="notifications" element={<Notifications />} />
+
             <Route
-              path="/dashboard/communication/groups"
-              element={<GroupChats />}
+              path="members"
+              element={<Members />}
             />
+
             <Route
-              path="/dashboard/communication/private"
-              element={<PrivateMessages />}
+              path="contributions"
+              element={<Contributions />}
             />
-            {/* ✅ FIXED: loanId param route */}
+
+            <Route
+              path="loans"
+              element={<Loans />}
+            />
+
+            <Route
+              path="members/:id"
+              element={<MemberProfile />}
+            />
+
+            <Route
+              path="profile"
+              element={<ProfileTab />}
+            />
+
+            <Route
+              path="loan-repayments"
+              element={<LoanRepayments />}
+            />
+
             <Route
               path="loan-repayments/:loanId"
               element={<LoanRepaymentDetails />}
             />
+
+            <Route
+              path="savings"
+              element={<Savings />}
+            />
+
+            <Route
+              path="wallet-deposits"
+              element={<Wallet />}
+            />
+
+            <Route
+              path="reports"
+              element={<Reports />}
+            />
+
+            <Route
+              path="announcements"
+              element={<Announcements />}
+            />
+
+            <Route
+              path="notifications"
+              element={<Notifications />}
+            />
+
+            {/* ADMIN COMMUNICATION */}
+
+            <Route
+              path="communication/groups"
+              element={<GroupChats />}
+            />
+
+            <Route
+              path="communication/private"
+              element={<PrivateMessages />}
+            />
+
           </Route>
 
-          {/* USER ROUTES */}
+
+          {/* ==========================================
+              USER ROUTES
+          ========================================== */}
+
           <Route
             path="/user-dashboard"
             element={
@@ -92,22 +172,63 @@ const App = () => {
               </ProtectedRoute>
             }
           >
-            <Route index element={<UserDashboard />} />
-            <Route path="contributions" element={<UserContributions />} />
-            <Route path="savings" element={<UserSavings />} />
-            <Route path="loans" element={<UserLoans />} />
-            <Route path="payments" element={<UserPayments />} />
-            <Route path="statements" element={<Statements />} />
+
             <Route
-              path="/user-dashboard/communication/groups"
+              index
+              element={<UserDashboard />}
+            />
+
+            <Route
+              path="contributions"
+              element={<UserContributions />}
+            />
+
+            <Route
+              path="savings"
+              element={<UserSavings />}
+            />
+
+            <Route
+              path="loans"
+              element={<UserLoans />}
+            />
+
+            <Route
+              path="payments"
+              element={<UserPayments />}
+            />
+
+            <Route
+              path="statements"
+              element={<Statements />}
+            />
+
+            {/* USER COMMUNICATION */}
+
+            <Route
+              path="communication/groups"
               element={<UserGroupChats />}
             />
+
             <Route
-              path="/user-dashboard/communication/private"
-              element={<UserPrivateMessages />} />
-            <Route path="notifications" element={<UserNotifications />} />
-            <Route path="wallet-deposits" element={<UserWallet />} />
+              path="communication/private"
+              element={<UserPrivateMessages />}
+            />
+
+            <Route
+              path="notifications"
+              element={<UserNotifications />}
+            />
+
+            {/* USER WALLET */}
+
+            <Route
+              path="wallet-deposits"
+              element={<UserWallet />}
+            />
+
           </Route>
+
         </Routes>
       </AuthProvider>
     </BrowserRouter>
