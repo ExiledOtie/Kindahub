@@ -27,18 +27,6 @@ import Reports from "./assets/Pages/Admin/Reports";
 import Wallet from "./assets/Pages/Admin/Wallet";
 
 // ==========================================
-// SHARED / COMMUNICATION
-// ==========================================
-
-import GroupChats from "./assets/Pages/Communication/GroupChats";
-import PrivateMessages from "./assets/Pages/Communication/PrivateMessages";
-
-import Announcements from "./assets/Pages/Announcements/Announcements";
-import Notifications from "./assets/Pages/Notification/Notifications";
-
-import "./assets/Pages/Notification/Styles/notifications.css";
-
-// ==========================================
 // USER PAGES
 // ==========================================
 
@@ -53,10 +41,8 @@ import UserPrivateMessages from "./assets/Pages/Users/Communication/UserPrivateM
 
 import UserNotifications from "./assets/Pages/Users/UserNotifications";
 
-// IMPORTANT:
-// Your screenshot shows UserWallet.jsx
+// IMPORTANT
 import UserWallet from "./assets/Pages/Users/UserWallet";
-import UserWalletDeposits from "./assets/Pages/Users/UserWalletDeposits";
 
 const App = () => {
   return (
