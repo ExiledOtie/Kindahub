@@ -26,6 +26,20 @@ import LoanRepayments from "./assets/Pages/Admin/LoanRepayments";
 import Reports from "./assets/Pages/Admin/Reports";
 import Wallet from "./assets/Pages/Admin/Wallet";
 
+
+
+// ==========================================
+// SHARED / COMMUNICATION
+// ==========================================
+
+import GroupChats from "./assets/Pages/Communication/GroupChats";
+import PrivateMessages from "./assets/Pages/Communication/PrivateMessages";
+
+import Announcements from "./assets/Pages/Announcements/Announcements";
+import Notifications from "./assets/Pages/Notification/Notifications";
+
+import "./assets/Pages/Notification/Styles/notifications.css";
+
 // ==========================================
 // USER PAGES
 // ==========================================
