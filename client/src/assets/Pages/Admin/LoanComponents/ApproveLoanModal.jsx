@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
-import axios from "../../Utils/axios";
+import axios from "../../../Utils/axios";
 
 const ApproveLoanModal = ({ open, loan, onClose, onSuccess }) => {
   const [interestRate, setInterestRate] = useState("");
