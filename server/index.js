@@ -22,7 +22,7 @@ const announcementRoutes = require("./routes/announcementRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const walletDepositRoutes = require("./routes/walletDepositRoutes");
-
+const walletAllocationRoutes = require("./routes/walletAllocationRoutes");
 
 
 
@@ -115,6 +115,7 @@ app.use("/api/announcements", announcementRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/wallet-deposits",walletDepositRoutes);
+app.use("/api/wallet-allocations", walletAllocationRoutes);
 
 app.get("/", (req, res) => {
   res.json({
@@ -124,7 +125,6 @@ app.get("/", (req, res) => {
 });
 
 /*
-|--------------------------------------------------------------------------
 | Socket Events
 |--------------------------------------------------------------------------
 */

@@ -16,11 +16,7 @@ const {
 |
 */
 
-router.post(
-  "/",
-  authMiddleware,
-  createWalletAllocation
-);
+router.post("/", authMiddleware, createWalletAllocation);
 
 /*
 |--------------------------------------------------------------------------
@@ -31,10 +27,6 @@ router.post(
 |
 */
 
-router.get(
-  "/deposit/:depositId",
-  authMiddleware,
-  getWalletAllocations
-);
+router.get("/deposit/:depositId", authMiddleware, getWalletAllocations);
 
 module.exports = router;
