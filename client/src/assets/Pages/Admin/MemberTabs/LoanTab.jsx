@@ -3,7 +3,7 @@ import { ClipLoader } from "react-spinners";
 import { FaMoneyBillWave, FaPlus } from "react-icons/fa";
 import Swal from "sweetalert2";
 
-import axios from "../../Utils/axios";
+import axios from "../../../Utils/axios";
 import LoanModal from "../Modals/LoanModal";
 
 const LoanTab = ({ memberId }) => {

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Swal from "sweetalert2";
-import axios from "../../Utils/axios";
+import axios from "../../../Utils/axios";
 
 const LoanModal = ({ open, onClose, memberId, onSuccess }) => {
   const [loading, setLoading] = useState(false);

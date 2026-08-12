@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Swal from "sweetalert2";
 import { X } from "lucide-react";
-import axios from "../../Utils/axios";
+import axios from "../../../Utils/axios";
 
 const MemberModal = ({ open, onClose, groups = [], onSuccess }) => {
   const [creating, setCreating] = useState(false);

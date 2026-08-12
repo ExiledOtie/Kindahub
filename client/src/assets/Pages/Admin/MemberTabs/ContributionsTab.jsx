@@ -3,7 +3,7 @@ import { Plus } from "lucide-react";
 import { ClipLoader } from "react-spinners";
 import Swal from "sweetalert2";
 
-import axios from "../../Utils/axios";
+import axios from "../../../Utils/axios";
 import ContributionModal from "../Modals/ContributionModal";
 
 const ContributionsTab = ({ memberId }) => {

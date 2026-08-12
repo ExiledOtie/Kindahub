@@ -2,7 +2,7 @@ import { useState } from "react";
 import Swal from "sweetalert2";
 import { ClipLoader } from "react-spinners";
 
-import axios from "../../Utils/axios";
+import axios from "../../../Utils/axios";
 
 const ContributionModal = ({ open, onClose, memberId, onSuccess }) => {
   const [loading, setLoading] = useState(false);

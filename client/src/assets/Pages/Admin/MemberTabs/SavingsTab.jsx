@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import axios from "../../Utils/axios";
+import axios from "../../../Utils/axios";
 import Swal from "sweetalert2";
 import { ClipLoader } from "react-spinners";
 import { Plus } from "lucide-react";
