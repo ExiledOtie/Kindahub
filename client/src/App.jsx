@@ -55,7 +55,7 @@ import UserNotifications from "./assets/Pages/Users/UserNotifications";
 
 // IMPORTANT:
 // Your screenshot shows UserWallet.jsx
-import UserWallet from "./assets/Pages/Users/UserWallet";
+import UserWallet from "./assets/Pages/Users/UserWalletDeposits";
 
 const App = () => {
   return (
