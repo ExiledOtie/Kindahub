@@ -209,16 +209,11 @@ const App = () => {
             />
 
             {/* USER WALLET */}
-
             <Route
-              path="wallet"
+              path="wallet-deposits"
               element={<UserWallet />}
             />
 
-            <Route
-              path="wallet-deposits"
-              element={<UserWalletDeposits />}
-            />
           </Route>
 
         </Routes>
