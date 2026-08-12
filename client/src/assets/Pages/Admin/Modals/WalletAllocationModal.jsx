@@ -3,7 +3,7 @@ import { X, Plus, Trash2 } from "lucide-react";
 import { ClipLoader } from "react-spinners";
 import Swal from "sweetalert2";
 
-import axios from "../../Utils/axios";
+import axios from "../../../Utils/axios";
 
 const WalletAllocationModal = ({
   deposit,
