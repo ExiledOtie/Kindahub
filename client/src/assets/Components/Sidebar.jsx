@@ -114,10 +114,16 @@ const Sidebar = ({ role = "admin" }) => {
       path: "/user-dashboard/payments",
     },
     {
+      name: "Wallet",
+      icon: <FaUniversity />,
+      path: "/user-dashboard/wallet",
+    },
+    {
       name: "Wallet Deposits",
       icon: <FaMoneyBillWave />,
       path: "/user-dashboard/wallet-deposits",
     },
+
     {
       name: "Statements",
       icon: <FaFileAlt />,

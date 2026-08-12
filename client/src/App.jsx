@@ -55,7 +55,8 @@ import UserNotifications from "./assets/Pages/Users/UserNotifications";
 
 // IMPORTANT:
 // Your screenshot shows UserWallet.jsx
-import UserWallet from "./assets/Pages/Users/UserWalletDeposits";
+import UserWallet from "./assets/Pages/Users/UserWallet";
+import UserWalletDeposits from "./assets/Pages/Users/UserWalletDeposits";
 
 const App = () => {
   return (
@@ -161,7 +162,7 @@ const App = () => {
 
 
           {/* ==========================================
-              USER ROUTES
+            USER ROUTES
           ========================================== */}
 
           <Route
@@ -172,7 +173,6 @@ const App = () => {
               </ProtectedRoute>
             }
           >
-
             <Route
               index
               element={<UserDashboard />}
@@ -215,6 +215,8 @@ const App = () => {
               element={<UserPrivateMessages />}
             />
 
+            {/* USER NOTIFICATIONS */}
+
             <Route
               path="notifications"
               element={<UserNotifications />}
@@ -223,10 +225,14 @@ const App = () => {
             {/* USER WALLET */}
 
             <Route
-              path="wallet-deposits"
+              path="wallet"
               element={<UserWallet />}
             />
 
+            <Route
+              path="wallet-deposits"
+              element={<UserWalletDeposits />}
+            />
           </Route>
 
         </Routes>
