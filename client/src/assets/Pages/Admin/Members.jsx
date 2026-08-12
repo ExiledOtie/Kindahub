@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
 
 import axios from "../../Utils/axios";
-import MemberModal from "../Modals/MemberModal";
+import MemberModal from "../Admin/Modals/MemberModal";
 
 const Members = () => {
   const [loading, setLoading] = useState(true);
