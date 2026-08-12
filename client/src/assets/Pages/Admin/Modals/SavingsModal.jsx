@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "../../Utils/axios";
+import axios from "../../../Utils/axios";
 import Swal from "sweetalert2";
 
 const SavingsModal = ({ open, onClose, userId, onSuccess }) => {

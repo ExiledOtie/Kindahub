@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "../../Utils/axios";
+import axios from "../../../Utils/axios";
 import { ClipLoader } from "react-spinners";
 
 import {
