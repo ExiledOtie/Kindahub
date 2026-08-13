@@ -219,6 +219,10 @@ const WalletAllocationModal = ({ deposit, onClose, onSuccess }) => {
         })),
       };
 
+      console.log("WALLET DEPOSIT SELECTED:", deposit);
+      console.log("WALLET DEPOSIT ID SENT:", deposit.id);
+      console.log("ALLOCATION PAYLOAD:", payload);
+
       /*
       |--------------------------------------------------------------------------
       | SEND TO BACKEND
