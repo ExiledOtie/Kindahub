@@ -122,26 +122,26 @@ const createWalletAllocation = async (req, res) => {
 
     const depositResult = await client.query(
       `
-      SELECT
-        wd.*,
+  SELECT
+    wd.*,
 
-        u.fullname,
-        u.username,
+    u.fullname,
+    u.username,
 
-        g.name AS group_name
+    g.name AS group_name
 
-      FROM wallet_deposits wd
+  FROM wallet_deposits wd
 
-      INNER JOIN users u
-        ON u.id = wd.user_id
+  INNER JOIN users u
+    ON u.id = wd.user_id
 
-      INNER JOIN groups g
-        ON g.id = wd.group_id
+  LEFT JOIN groups g
+    ON g.id = wd.group_id
 
-      WHERE wd.id = $1
+  WHERE wd.id = $1
 
-      FOR UPDATE OF wd
-      `,
+  FOR UPDATE OF wd
+  `,
       [wallet_deposit_id],
     );
 
