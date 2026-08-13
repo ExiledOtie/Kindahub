@@ -10,17 +10,24 @@ const calculateLoanPayment = require("../utils/calculateLoanPayment");
 |
 | This controller:
 |
-| 1. Validates the wallet deposit
-| 2. Confirms it is verified
-| 3. Checks available balance
-| 4. Creates the actual:
+| 1. Validates the authenticated user
+| 2. Validates the wallet deposit
+| 3. Confirms the wallet deposit is verified
+| 4. Checks available wallet balance
+| 5. Validates every allocation
+| 6. Validates group membership for:
+|      - contributions
+|      - savings
+| 7. Validates loan ownership for:
+|      - loan payments
+| 8. Creates the actual:
 |      - contribution
 |      - saving
 |      - loan payment
-| 5. Gets the ID of the newly created transaction
-| 6. Creates wallet_allocations using that ID as reference_id
-| 7. Updates wallet remaining balance
-| 8. Commits everything as ONE transaction
+| 9. Gets the ID of the newly created transaction
+| 10. Creates wallet_allocations using that ID as reference_id
+| 11. Updates wallet remaining balance
+| 12. Commits everything as ONE transaction
 |
 |--------------------------------------------------------------------------
 */
@@ -56,7 +63,7 @@ const createWalletAllocation = async (req, res) => {
 
     /*
     |--------------------------------------------------------------------------
-    | VALIDATE WALLET DEPOSIT
+    | VALIDATE WALLET DEPOSIT ID
     |--------------------------------------------------------------------------
     */
 
@@ -103,6 +110,11 @@ const createWalletAllocation = async (req, res) => {
     |--------------------------------------------------------------------------
     | GET WALLET DEPOSIT
     |--------------------------------------------------------------------------
+    |
+    | FOR UPDATE prevents another allocation process from changing the
+    | same wallet balance at the same time.
+    |
+    |--------------------------------------------------------------------------
     */
 
     const depositResult = await client.query(
@@ -111,6 +123,7 @@ const createWalletAllocation = async (req, res) => {
         wd.*,
         u.fullname,
         u.username
+
       FROM wallet_deposits wd
 
       INNER JOIN users u
@@ -157,9 +170,18 @@ const createWalletAllocation = async (req, res) => {
 
     const remainingBalance = Number(deposit.remaining_balance || 0);
 
+    if (remainingBalance <= 0) {
+      await client.query("ROLLBACK");
+
+      return res.status(400).json({
+        success: false,
+        message: "This wallet deposit has no remaining balance.",
+      });
+    }
+
     /*
     |--------------------------------------------------------------------------
-    | VALIDATE ALLOCATION TYPES
+    | ALLOWED ALLOCATION TYPES
     |--------------------------------------------------------------------------
     */
 
@@ -167,9 +189,31 @@ const createWalletAllocation = async (req, res) => {
 
     let totalAllocation = 0;
 
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDATE ALL ALLOCATIONS BEFORE PROCESSING
+    |--------------------------------------------------------------------------
+    |
+    | This is important.
+    |
+    | We validate everything BEFORE creating any contribution, saving or
+    | loan payment.
+    |
+    | Therefore, if allocation #3 is invalid, allocation #1 and #2 will
+    | not be created either.
+    |
+    |--------------------------------------------------------------------------
+    */
+
     for (const item of allocations) {
       const type = item.type;
       const amount = Number(item.amount || 0);
+
+      /*
+      |--------------------------------------------------------------------------
+      | VALIDATE TYPE
+      |--------------------------------------------------------------------------
+      */
 
       if (!allowedTypes.includes(type)) {
         await client.query("ROLLBACK");
@@ -179,6 +223,12 @@ const createWalletAllocation = async (req, res) => {
           message: `Invalid allocation type: ${type}`,
         });
       }
+
+      /*
+      |--------------------------------------------------------------------------
+      | VALIDATE AMOUNT
+      |--------------------------------------------------------------------------
+      */
 
       if (!Number.isFinite(amount) || amount <= 0) {
         await client.query("ROLLBACK");
@@ -192,48 +242,170 @@ const createWalletAllocation = async (req, res) => {
 
       /*
       |--------------------------------------------------------------------------
-      | CONTRIBUTION REQUIRES GROUP
+      | CONTRIBUTION
+      |--------------------------------------------------------------------------
+      |
+      | Contribution MUST have a group_id.
+      |
       |--------------------------------------------------------------------------
       */
 
-      if (type === "contribution" && !item.group_id) {
-        await client.query("ROLLBACK");
+      if (type === "contribution") {
+        if (!item.group_id) {
+          await client.query("ROLLBACK");
 
-        return res.status(400).json({
-          success: false,
-          message: "Group ID is required for contribution allocation.",
-        });
+          return res.status(400).json({
+            success: false,
+            message: "Group ID is required for contribution allocation.",
+          });
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | VERIFY MEMBER BELONGS TO GROUP
+        |--------------------------------------------------------------------------
+        */
+
+        const groupResult = await client.query(
+          `
+          SELECT 1
+          FROM user_groups
+          WHERE user_id = $1
+            AND group_id = $2
+          LIMIT 1
+          `,
+          [deposit.user_id, item.group_id],
+        );
+
+        if (groupResult.rows.length === 0) {
+          await client.query("ROLLBACK");
+
+          return res.status(400).json({
+            success: false,
+            message:
+              "The wallet owner does not belong to the selected group for this contribution.",
+          });
+        }
       }
 
       /*
       |--------------------------------------------------------------------------
-      | SAVING REQUIRES GROUP
+      | SAVING
+      |--------------------------------------------------------------------------
+      |
+      | Savings now also use group_id.
+      |
+      | More importantly, we verify that the member actually belongs
+      | to that group.
+      |
       |--------------------------------------------------------------------------
       */
 
-      if (type === "saving" && !item.group_id) {
-        await client.query("ROLLBACK");
+      if (type === "saving") {
+        if (!item.group_id) {
+          await client.query("ROLLBACK");
 
-        return res.status(400).json({
-          success: false,
-          message: "Group ID is required for saving allocation.",
-        });
+          return res.status(400).json({
+            success: false,
+            message: "Group ID is required for saving allocation.",
+          });
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | VERIFY MEMBER BELONGS TO GROUP
+        |--------------------------------------------------------------------------
+        */
+
+        const groupResult = await client.query(
+          `
+          SELECT 1
+          FROM user_groups
+          WHERE user_id = $1
+            AND group_id = $2
+          LIMIT 1
+          `,
+          [deposit.user_id, item.group_id],
+        );
+
+        if (groupResult.rows.length === 0) {
+          await client.query("ROLLBACK");
+
+          return res.status(400).json({
+            success: false,
+            message:
+              "The wallet owner does not belong to the selected group for this saving.",
+          });
+        }
       }
 
       /*
       |--------------------------------------------------------------------------
-      | LOAN PAYMENT REQUIRES LOAN ID
+      | LOAN PAYMENT
+      |--------------------------------------------------------------------------
+      |
+      | Loan payment uses loan_id.
+      |
       |--------------------------------------------------------------------------
       */
 
-      if (type === "loan_payment" && !item.loan_id) {
-        await client.query("ROLLBACK");
+      if (type === "loan_payment") {
+        if (!item.loan_id) {
+          await client.query("ROLLBACK");
 
-        return res.status(400).json({
-          success: false,
-          message: "Loan ID is required for loan payment allocation.",
-        });
+          return res.status(400).json({
+            success: false,
+            message: "Loan ID is required for loan payment allocation.",
+          });
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | VERIFY LOAN BELONGS TO WALLET OWNER
+        |--------------------------------------------------------------------------
+        |
+        | A member must NEVER be able to use their wallet money to pay
+        | another member's loan.
+        |
+        |--------------------------------------------------------------------------
+        */
+
+        const loanOwnerResult = await client.query(
+          `
+          SELECT
+            id,
+            user_id,
+            group_id,
+            status,
+            amount,
+            balance,
+            total_payable
+
+          FROM loans
+
+          WHERE id = $1
+            AND user_id = $2
+
+          LIMIT 1
+          `,
+          [item.loan_id, deposit.user_id],
+        );
+
+        if (loanOwnerResult.rows.length === 0) {
+          await client.query("ROLLBACK");
+
+          return res.status(400).json({
+            success: false,
+            message: "The selected loan does not belong to the wallet owner.",
+          });
+        }
       }
+
+      /*
+      |--------------------------------------------------------------------------
+      | TOTAL ALLOCATION
+      |--------------------------------------------------------------------------
+      */
 
       totalAllocation += amount;
     }
@@ -273,39 +445,51 @@ const createWalletAllocation = async (req, res) => {
       |--------------------------------------------------------------------------
       | CONTRIBUTION
       |--------------------------------------------------------------------------
+      |
+      | group_id is stored directly on the contribution.
+      |
+      |--------------------------------------------------------------------------
       */
 
       if (type === "contribution") {
         const contributionResult = await client.query(
           `
-            INSERT INTO contributions
-            (
-              user_id,
-              group_id,
-              amount,
-              payment_method,
-              mpesa_code,
-              bank_reference,
-              created_by,
-              status
-            )
-            VALUES
-            (
-              $1,
-              $2,
-              $3,
-              'wallet',
-              NULL,
-              NULL,
-              $4,
-              'completed'
-            )
-            RETURNING *
-            `,
+          INSERT INTO contributions
+          (
+            user_id,
+            group_id,
+            amount,
+            payment_method,
+            mpesa_code,
+            bank_reference,
+            created_by,
+            status
+          )
+
+          VALUES
+          (
+            $1,
+            $2,
+            $3,
+            'wallet',
+            NULL,
+            NULL,
+            $4,
+            'completed'
+          )
+
+          RETURNING *
+          `,
           [deposit.user_id, item.group_id, amount, allocatedBy],
         );
 
         const contribution = contributionResult.rows[0];
+
+        /*
+        |--------------------------------------------------------------------------
+        | CONTRIBUTION ID BECOMES WALLET ALLOCATION REFERENCE
+        |--------------------------------------------------------------------------
+        */
 
         referenceId = contribution.id;
       }
@@ -314,39 +498,57 @@ const createWalletAllocation = async (req, res) => {
       |--------------------------------------------------------------------------
       | SAVING
       |--------------------------------------------------------------------------
+      |
+      | Savings are now explicitly tied to:
+      |
+      | user_id
+      | group_id
+      | amount
+      |
+      | This is important because a member can belong to multiple groups.
+      |
+      |--------------------------------------------------------------------------
       */
 
       if (type === "saving") {
         const savingResult = await client.query(
           `
-            INSERT INTO savings
-            (
-              user_id,
-              group_id,
-              amount,
-              payment_method,
-              mpesa_code,
-              bank_reference,
-              created_by,
-              status
-            )
-            VALUES
-            (
-              $1,
-              $2,
-              $3,
-              'wallet',
-              NULL,
-              NULL,
-              $4,
-              'completed'
-            )
-            RETURNING *
-            `,
+          INSERT INTO savings
+          (
+            user_id,
+            group_id,
+            amount,
+            payment_method,
+            mpesa_code,
+            bank_reference,
+            created_by,
+            status
+          )
+
+          VALUES
+          (
+            $1,
+            $2,
+            $3,
+            'wallet',
+            NULL,
+            NULL,
+            $4,
+            'completed'
+          )
+
+          RETURNING *
+          `,
           [deposit.user_id, item.group_id, amount, allocatedBy],
         );
 
         const saving = savingResult.rows[0];
+
+        /*
+        |--------------------------------------------------------------------------
+        | SAVING ID BECOMES WALLET ALLOCATION REFERENCE
+        |--------------------------------------------------------------------------
+        */
 
         referenceId = saving.id;
       }
@@ -354,14 +556,6 @@ const createWalletAllocation = async (req, res) => {
       /*
       |--------------------------------------------------------------------------
       | LOAN PAYMENT
-      |--------------------------------------------------------------------------
-      |
-      | IMPORTANT:
-      |
-      | Wallet loan repayments now use the SAME
-      | calculateLoanPayment.js engine used by
-      | normal loan repayments.
-      |
       |--------------------------------------------------------------------------
       */
 
@@ -401,7 +595,7 @@ const createWalletAllocation = async (req, res) => {
 
         /*
         |--------------------------------------------------------------------------
-        | CHECK BALANCE
+        | CHECK LOAN BALANCE
         |--------------------------------------------------------------------------
         */
 
@@ -417,11 +611,6 @@ const createWalletAllocation = async (req, res) => {
         /*
         |--------------------------------------------------------------------------
         | PREVENT WALLET OVERPAYMENT
-        |--------------------------------------------------------------------------
-        |
-        | Unlike normal repayments, wallet allocation cannot
-        | send excess money to the credit wallet.
-        |
         |--------------------------------------------------------------------------
         */
 
@@ -457,6 +646,7 @@ const createWalletAllocation = async (req, res) => {
               bank_reference,
               status
             )
+
             VALUES
             (
               $1,
@@ -469,6 +659,7 @@ const createWalletAllocation = async (req, res) => {
               NULL,
               'completed'
             )
+
             RETURNING *
             `,
           [
@@ -482,6 +673,12 @@ const createWalletAllocation = async (req, res) => {
 
         const loanPayment = loanPaymentResult.rows[0];
 
+        /*
+        |--------------------------------------------------------------------------
+        | LOAN PAYMENT ID BECOMES WALLET ALLOCATION REFERENCE
+        |--------------------------------------------------------------------------
+        */
+
         referenceId = loanPayment.id;
 
         /*
@@ -489,9 +686,7 @@ const createWalletAllocation = async (req, res) => {
         | RECALCULATE LOAN AFTER PAYMENT
         |--------------------------------------------------------------------------
         |
-        | The payment has now been inserted as completed.
-        | Running the calculator again ensures the loan's
-        | stored balance reflects the new payment.
+        | The payment is now completed, so calculate the new loan balance.
         |
         |--------------------------------------------------------------------------
         */
@@ -511,10 +706,13 @@ const createWalletAllocation = async (req, res) => {
         let updatedLoanResult = await client.query(
           `
             UPDATE loans
+
             SET
               total_payable = $2,
               balance = $3
+
             WHERE id = $1
+
             RETURNING *
             `,
           [
@@ -536,12 +734,15 @@ const createWalletAllocation = async (req, res) => {
           updatedLoanResult = await client.query(
             `
               UPDATE loans
+
               SET
                 status = 'repaid',
                 balance = 0,
                 paid_off_at = NOW(),
                 completed_at = NOW()
+
               WHERE id = $1
+
               RETURNING *
               `,
             [item.loan_id],
@@ -549,14 +750,25 @@ const createWalletAllocation = async (req, res) => {
 
           updatedLoan = updatedLoanResult.rows[0];
         }
+      }
 
-        /*
-        |--------------------------------------------------------------------------
-        | REFERENCE ID
-        |--------------------------------------------------------------------------
-        */
+      /*
+      |--------------------------------------------------------------------------
+      | SAFETY CHECK
+      |--------------------------------------------------------------------------
+      |
+      | Every allocation MUST produce a reference ID.
+      |
+      |--------------------------------------------------------------------------
+      */
 
-        referenceId = loanPayment.id;
+      if (!referenceId) {
+        await client.query("ROLLBACK");
+
+        return res.status(500).json({
+          success: false,
+          message: "Failed to create allocation reference.",
+        });
       }
 
       /*
@@ -578,6 +790,7 @@ const createWalletAllocation = async (req, res) => {
             status,
             allocated_at
           )
+
           VALUES
           (
             $1,
@@ -589,6 +802,7 @@ const createWalletAllocation = async (req, res) => {
             'completed',
             NOW()
           )
+
           RETURNING *
           `,
         [
@@ -621,8 +835,12 @@ const createWalletAllocation = async (req, res) => {
     const walletResult = await client.query(
       `
         UPDATE wallet_deposits
-        SET remaining_balance = $2
+
+        SET
+          remaining_balance = $2
+
         WHERE id = $1
+
         RETURNING *
         `,
       [wallet_deposit_id, newBalance],
@@ -642,24 +860,29 @@ const createWalletAllocation = async (req, res) => {
     |--------------------------------------------------------------------------
     | NOTIFY MEMBER
     |--------------------------------------------------------------------------
+    |
+    | Notification happens AFTER COMMIT.
+    |
+    | If notification fails, the financial transaction remains successful.
+    |
+    |--------------------------------------------------------------------------
     */
 
     try {
       await Notification.createNotification({
         user_id: deposit.user_id,
+
         title: "Wallet Allocation Completed",
+
         message:
           `KES ${totalAllocation.toLocaleString()} ` +
           `from your wallet has been allocated successfully.`,
+
         type: "wallet",
+
         reference_id: wallet_deposit_id,
       });
     } catch (notificationError) {
-      /*
-      | Notification failure should NOT undo
-      | a successful financial transaction.
-      */
-
       console.error("WALLET ALLOCATION NOTIFICATION ERROR:", notificationError);
     }
 
@@ -695,7 +918,11 @@ const createWalletAllocation = async (req, res) => {
     |--------------------------------------------------------------------------
     */
 
-    await client.query("ROLLBACK");
+    try {
+      await client.query("ROLLBACK");
+    } catch (rollbackError) {
+      console.error("WALLET ALLOCATION ROLLBACK ERROR:", rollbackError);
+    }
 
     console.error("CREATE WALLET ALLOCATION ERROR:", error);
 
@@ -718,12 +945,24 @@ const getWalletAllocations = async (req, res) => {
   try {
     const { depositId } = req.params;
 
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDATE DEPOSIT ID
+    |--------------------------------------------------------------------------
+    */
+
     if (!depositId) {
       return res.status(400).json({
         success: false,
         message: "Deposit ID is required.",
       });
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | GET ALLOCATIONS
+    |--------------------------------------------------------------------------
+    */
 
     const result = await pool.query(
       `
