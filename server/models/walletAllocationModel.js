@@ -1,4 +1,3 @@
-
 const pool = require("../config/db");
 
 /*
@@ -12,7 +11,8 @@ const pool = require("../config/db");
 |   loan_payment
 |
 | referenceId:
-|   ID of the actual contribution, saving or loan payment.
+|   ID of the actual contribution,
+|   saving or loan payment.
 |
 | allocatedBy:
 |   User/admin who performed the allocation.
@@ -20,6 +20,18 @@ const pool = require("../config/db");
 | allocationMode:
 |   manual
 |   automatic
+|
+| IMPORTANT:
+|
+| The model does NOT accept user_id or group_id.
+|
+| Those are determined by:
+|
+|     wallet_deposit_id
+|          ↓
+|     wallet_deposits
+|          ↓
+|     user_id + group_id
 |
 |--------------------------------------------------------------------------
 */
@@ -30,7 +42,7 @@ const createWalletAllocationModel = async (
   amount,
   allocatedBy,
   referenceId = null,
-  allocationMode = "manual"
+  allocationMode = "manual",
 ) => {
   const result = await pool.query(
     `
@@ -42,9 +54,22 @@ const createWalletAllocationModel = async (
       amount,
       allocated_by,
       allocation_mode,
+      status,
       allocated_at
     )
-    VALUES ($1, $2, $3, $4, $5, $6, NOW())
+
+    VALUES
+    (
+      $1,
+      $2,
+      $3,
+      $4,
+      $5,
+      $6,
+      'completed',
+      NOW()
+    )
+
     RETURNING *
     `,
     [
@@ -54,7 +79,7 @@ const createWalletAllocationModel = async (
       amount,
       allocatedBy,
       allocationMode,
-    ]
+    ],
   );
 
   return result.rows[0];
@@ -73,29 +98,44 @@ const getAllocationsByDepositModel = async (walletDepositId) => {
       wa.*,
 
       wd.user_id,
+      wd.group_id,
+
       wd.amount AS deposit_amount,
       wd.remaining_balance,
+
       wd.payment_method,
       wd.mpesa_code,
       wd.bank_reference,
       wd.status AS deposit_status,
+      wd.created_at AS deposit_date,
 
-      u.fullname AS allocated_by_name,
-      u.username AS allocated_by_username
+      member.fullname AS member_name,
+      member.username AS member_username,
+
+      g.name AS group_name,
+
+      allocator.fullname AS allocated_by_name,
+      allocator.username AS allocated_by_username
 
     FROM wallet_allocations wa
 
     INNER JOIN wallet_deposits wd
       ON wd.id = wa.wallet_deposit_id
 
-    LEFT JOIN users u
-      ON u.id = wa.allocated_by
+    LEFT JOIN users member
+      ON member.id = wd.user_id
+
+    LEFT JOIN groups g
+      ON g.id = wd.group_id
+
+    LEFT JOIN users allocator
+      ON allocator.id = wa.allocated_by
 
     WHERE wa.wallet_deposit_id = $1
 
     ORDER BY wa.allocated_at ASC
     `,
-    [walletDepositId]
+    [walletDepositId],
   );
 
   return result.rows;
@@ -114,26 +154,42 @@ const getWalletAllocationByIdModel = async (allocationId) => {
       wa.*,
 
       wd.user_id,
+      wd.group_id,
+
       wd.amount AS deposit_amount,
       wd.remaining_balance,
+
       wd.payment_method,
       wd.mpesa_code,
       wd.bank_reference,
+      wd.status AS deposit_status,
+      wd.created_at AS deposit_date,
 
-      u.fullname AS allocated_by_name,
-      u.username AS allocated_by_username
+      member.fullname AS member_name,
+      member.username AS member_username,
+
+      g.name AS group_name,
+
+      allocator.fullname AS allocated_by_name,
+      allocator.username AS allocated_by_username
 
     FROM wallet_allocations wa
 
     INNER JOIN wallet_deposits wd
       ON wd.id = wa.wallet_deposit_id
 
-    LEFT JOIN users u
-      ON u.id = wa.allocated_by
+    LEFT JOIN users member
+      ON member.id = wd.user_id
+
+    LEFT JOIN groups g
+      ON g.id = wd.group_id
+
+    LEFT JOIN users allocator
+      ON allocator.id = wa.allocated_by
 
     WHERE wa.id = $1
     `,
-    [allocationId]
+    [allocationId],
   );
 
   return result.rows[0];
@@ -151,23 +207,32 @@ const getUserWalletAllocationsModel = async (userId) => {
     SELECT
       wa.*,
 
+      wd.user_id,
+      wd.group_id,
+
       wd.amount AS deposit_amount,
       wd.remaining_balance,
+
       wd.payment_method,
       wd.mpesa_code,
       wd.bank_reference,
-      wd.created_at AS deposit_date
+      wd.created_at AS deposit_date,
+
+      g.name AS group_name
 
     FROM wallet_allocations wa
 
     INNER JOIN wallet_deposits wd
       ON wd.id = wa.wallet_deposit_id
 
+    LEFT JOIN groups g
+      ON g.id = wd.group_id
+
     WHERE wd.user_id = $1
 
     ORDER BY wa.allocated_at DESC
     `,
-    [userId]
+    [userId],
   );
 
   return result.rows;
@@ -214,7 +279,7 @@ const getWalletAllocationTotalsModel = async (walletDepositId) => {
 
     WHERE wallet_deposit_id = $1
     `,
-    [walletDepositId]
+    [walletDepositId],
   );
 
   return result.rows[0];
@@ -226,7 +291,8 @@ const getWalletAllocationTotalsModel = async (walletDepositId) => {
 |--------------------------------------------------------------------------
 |
 | IMPORTANT:
-| Normally we should NOT delete an allocation once it has already
+|
+| Normally allocations should NOT be deleted once they have
 | created a contribution, saving or loan payment.
 |
 | Keep this for controlled/admin operations only.
@@ -238,10 +304,12 @@ const deleteWalletAllocationModel = async (allocationId) => {
   const result = await pool.query(
     `
     DELETE FROM wallet_allocations
+
     WHERE id = $1
+
     RETURNING *
     `,
-    [allocationId]
+    [allocationId],
   );
 
   return result.rows[0];
@@ -255,4 +323,3 @@ module.exports = {
   getWalletAllocationTotalsModel,
   deleteWalletAllocationModel,
 };
-
