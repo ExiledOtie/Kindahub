@@ -19,6 +19,7 @@ const LoanRepaymentDetails = () => {
   const [amount, setAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("mpesa");
   const [mpesaCode, setMpesaCode] = useState("");
+  const [bankReference, setBankReference] = useState("");
 
   const [balance, setBalance] = useState({
     totalPayable: 0,
@@ -75,6 +76,10 @@ const LoanRepaymentDetails = () => {
       return Swal.fire("Error", "Enter MPesa transaction code", "error");
     }
 
+    if (paymentMethod === "bank" && !bankReference.trim()) {
+      return Swal.fire("Error", "Enter bank reference", "error");
+    }
+
     try {
       setSaving(true);
 
@@ -82,7 +87,10 @@ const LoanRepaymentDetails = () => {
         loan_id: loanId,
         amount,
         payment_method: paymentMethod,
-        mpesa_code: paymentMethod === "mpesa" ? mpesaCode : null,
+        mpesa_code:
+          paymentMethod === "mpesa" ? mpesaCode.trim().toUpperCase() : null,
+        bank_reference:
+          paymentMethod === "bank" ? bankReference.trim().toUpperCase() : null,
       });
 
       Swal.fire("Success", "Payment recorded", "success");
@@ -90,6 +98,7 @@ const LoanRepaymentDetails = () => {
       setShowModal(false);
       setAmount("");
       setMpesaCode("");
+      setBankReference("");
       setPaymentMethod("mpesa");
 
       loadData();
@@ -307,6 +316,7 @@ const LoanRepaymentDetails = () => {
               className="w-full border rounded-lg px-3 py-2"
             >
               <option value="mpesa">M-Pesa</option>
+              <option value="bank">Bank</option>
               <option value="cash">Cash</option>
             </select>
 
@@ -316,7 +326,17 @@ const LoanRepaymentDetails = () => {
                 value={mpesaCode}
                 onChange={(e) => setMpesaCode(e.target.value)}
                 className="w-full border rounded-lg px-3 py-2"
-                placeholder="MPesa Code"
+                placeholder="M-Pesa Transaction Code"
+              />
+            )}
+
+            {paymentMethod === "bank" && (
+              <input
+                type="text"
+                value={bankReference}
+                onChange={(e) => setBankReference(e.target.value)}
+                className="w-full border rounded-lg px-3 py-2"
+                placeholder="Bank Reference"
               />
             )}
 

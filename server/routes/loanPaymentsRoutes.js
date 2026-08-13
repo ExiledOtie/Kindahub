@@ -13,7 +13,7 @@ const router = require("express").Router();
 
 /*
 |--------------------------------------------------------------------------
-| MEMBER SUBMIT LOAN REPAYMENT (PENDING APPROVAL)
+| MEMBER SUBMIT LOAN REPAYMENT
 |--------------------------------------------------------------------------
 */
 
@@ -29,7 +29,7 @@ router.get("/my", authMiddleware, getMyLoanPayments);
 
 /*
 |--------------------------------------------------------------------------
-| ADMIN CREATE PAYMENT (AUTO APPROVED)
+| ADMIN CREATE PAYMENT
 |--------------------------------------------------------------------------
 */
 
@@ -45,18 +45,20 @@ router.get("/", authMiddleware, getAllLoanPayments);
 
 /*
 |--------------------------------------------------------------------------
+| LOAN BALANCE
+|--------------------------------------------------------------------------
+| IMPORTANT: Must come BEFORE /:loanId
+|--------------------------------------------------------------------------
+*/
+
+router.get("/:loanId/balance", authMiddleware, getLoanBalance);
+
+/*
+|--------------------------------------------------------------------------
 | SINGLE LOAN PAYMENTS
 |--------------------------------------------------------------------------
 */
 
 router.get("/:loanId", authMiddleware, getLoanPayments);
-
-/*
-|--------------------------------------------------------------------------
-| LOAN BALANCE
-|--------------------------------------------------------------------------
-*/
-
-router.get("/:loanId/balance", authMiddleware, getLoanBalance);
 
 module.exports = router;

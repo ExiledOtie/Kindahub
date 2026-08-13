@@ -12,6 +12,7 @@ const {
 
 const Notification = require("../models/notificationModel");
 const { creditWalletModel } = require("../models/memberCreditModel");
+const validatePaymentReference = require("../utils/validatePaymentReference");
 
 /*
 |--------------------------------------------------------------------------

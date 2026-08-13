@@ -15,7 +15,7 @@ const createLoanPaymentModel = async (
   paymentMethod,
   mpesaCode,
   bankReference,
-  status = "completed"
+  status = "completed",
 ) => {
   const result = await pool.query(
     `
@@ -44,7 +44,7 @@ const createLoanPaymentModel = async (
       mpesaCode,
       bankReference,
       status,
-    ]
+    ],
   );
 
   return result.rows[0];
@@ -64,7 +64,7 @@ const getLoanPaymentsModel = async (loanId) => {
     WHERE loan_id = $1
     ORDER BY created_at DESC
     `,
-    [loanId]
+    [loanId],
   );
 
   return result.rows;
@@ -82,8 +82,9 @@ const getTotalPaidModel = async (loanId) => {
     SELECT COALESCE(SUM(amount),0) AS total_paid
     FROM loan_payments
     WHERE loan_id = $1
+      AND status = 'completed'
     `,
-    [loanId]
+    [loanId],
   );
 
   return result.rows[0];
@@ -132,22 +133,19 @@ const getPaymentBreakdownModel = async (loanId) => {
   const result = await pool.query(
     `
     SELECT
-      COALESCE(SUM(principal_paid),0) AS principal_paid,
-
-      COALESCE(SUM(interest_paid),0) AS interest_paid
-
+      COALESCE(SUM(principal_paid), 0) AS principal_paid,
+      COALESCE(SUM(interest_paid), 0) AS interest_paid
     FROM loan_payments
-
     WHERE loan_id = $1
+      AND status = 'completed'
     `,
-    [loanId]
+    [loanId],
   );
 
   return result.rows[0];
 };
-const getMyLoanPaymentsModel = async (
-  userId
-) => {
+
+const getMyLoanPaymentsModel = async (userId) => {
   const result = await pool.query(
     `
     SELECT
@@ -163,16 +161,12 @@ const getMyLoanPaymentsModel = async (
 
     ORDER BY lp.created_at DESC
     `,
-    [userId]
+    [userId],
   );
 
   return result.rows;
 };
-const updateLoanBalanceModel = async (
-  loanId,
-  totalPayable,
-  balance
-) => {
+const updateLoanBalanceModel = async (loanId, totalPayable, balance) => {
   const result = await pool.query(
     `
     UPDATE loans
@@ -182,7 +176,7 @@ const updateLoanBalanceModel = async (
     WHERE id = $1
     RETURNING *
     `,
-    [loanId, totalPayable, balance]
+    [loanId, totalPayable, balance],
   );
 
   return result.rows[0];
