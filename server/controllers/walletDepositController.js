@@ -473,7 +473,7 @@ const adminWalletDeposit = async (req, res) => {
 
 /*
 |--------------------------------------------------------------------------
-| GET ALL WALLET DEPOSITS
+| GET ALL WALLET DEPOSITS method
 |--------------------------------------------------------------------------
 */
 
