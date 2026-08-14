@@ -7,14 +7,17 @@ import axios from "../../../Utils/axios";
 import LoanModal from "../Modals/LoanModal";
 
 const LoanTab = ({ memberId }) => {
-  const [loading, setLoading] =
-    useState(true);
+  const [loading, setLoading] = useState(true);
 
-  const [loans, setLoans] =
-    useState([]);
+  const [loans, setLoans] = useState([]);
 
-  const [showModal, setShowModal] =
-    useState(false);
+  const [showModal, setShowModal] = useState(false);
+
+  /*
+  |--------------------------------------------------------------------------
+  | FETCH LOANS
+  |--------------------------------------------------------------------------
+  */
 
   useEffect(() => {
     if (memberId) {
@@ -22,244 +25,201 @@ const LoanTab = ({ memberId }) => {
     }
   }, [memberId]);
 
-  const fetchLoans =
-    async () => {
-      try {
-        setLoading(true);
+  const fetchLoans = async () => {
+    try {
+      setLoading(true);
 
-        const res =
-          await axios.get(
-            `/loans/user/${memberId}`
-          );
+      const res = await axios.get(`/loans/user/${memberId}`);
 
-        setLoans(
-          res.data || []
-        );
+      setLoans(res.data || []);
+    } catch (error) {
+      console.log(error);
 
-      } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to load loans",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        console.log(error);
+  /*
+  |--------------------------------------------------------------------------
+  | FORMAT CURRENCY
+  |--------------------------------------------------------------------------
+  */
 
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text:
-            "Failed to load loans",
-        });
+  const formatCurrency = (amount) => {
+    return Number(amount || 0).toLocaleString();
+  };
 
-      } finally {
+  /*
+  |--------------------------------------------------------------------------
+  | FORMAT DATE
+  |--------------------------------------------------------------------------
+  */
 
-        setLoading(false);
+  const formatDate = (date) => {
+    return new Date(date).toLocaleDateString("en-KE", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
 
-      }
-    };
+  /*
+  |--------------------------------------------------------------------------
+  | GET REFERENCE
+  |--------------------------------------------------------------------------
+  */
 
-  const formatCurrency =
-    (amount) => {
-      return Number(
-        amount || 0
-      ).toLocaleString();
-    };
+  const getReference = (loan) => {
+    return loan.mpesa_code || loan.bank_reference || "—";
+  };
 
-  const formatDate =
-    (date) => {
-      return new Date(
-        date
-      ).toLocaleDateString(
-        "en-KE",
-        {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-        }
-      );
-    };
+  /*
+  |--------------------------------------------------------------------------
+  | LOADING
+  |--------------------------------------------------------------------------
+  */
 
   if (loading) {
     return (
       <div className="flex justify-center items-center h-[50vh]">
-        <ClipLoader
-          size={35}
-          color="#16a34a"
-        />
+        <ClipLoader size={30} color="#16a34a" />
       </div>
     );
   }
 
-  return (
-    <div className="space-y-4">
+  /*
+  |--------------------------------------------------------------------------
+  | RENDER
+  |--------------------------------------------------------------------------
+  */
 
+  return (
+    <div className="space-y-3">
       {/* HEADER */}
 
-      <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-
+      <div className="bg-white border border-gray-200 rounded-xl p-3 shadow-sm">
         <div className="flex items-center justify-between">
-
-          <div className="flex items-center gap-3">
-
-            <div className="h-10 w-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
+          <div className="flex items-center gap-2.5">
+            <div className="h-8 w-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-[11px]">
               <FaMoneyBillWave />
             </div>
 
             <div>
-              <h2 className="text-sm font-semibold text-gray-800">
-                Loans
-              </h2>
+              <h2 className="text-[11px] font-semibold text-gray-800">Loans</h2>
 
-              <p className="text-[11px] text-gray-400">
+              <p className="text-[9px] text-gray-400">
                 View and manage member loan applications
               </p>
             </div>
-
           </div>
 
           <button
-            onClick={() =>
-              setShowModal(true)
-            }
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white text-[11px] hover:bg-green-700 transition-all duration-200"
+            onClick={() => setShowModal(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-600 text-white text-[9px] hover:bg-green-700 transition-all duration-200"
           >
-            <FaPlus />
+            <FaPlus size={10} />
             Request Loan
           </button>
-
         </div>
-
       </div>
 
       {/* TABLE */}
 
       <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-
         <div className="overflow-x-auto">
-
-          <table className="w-full text-xs">
-
+          <table className="w-full text-[9px]">
             <thead className="bg-gray-50 border-b">
-
               <tr>
+                <th className="px-3 py-2 text-left font-semibold">#</th>
 
-                <th className="px-4 py-3 text-left">
-                  #
-                </th>
+                <th className="px-3 py-2 text-left font-semibold">Date</th>
 
-                <th className="px-4 py-3 text-left">
-                  Date
-                </th>
+                <th className="px-3 py-2 text-left font-semibold">Amount</th>
 
-                <th className="px-4 py-3 text-left">
-                  Amount
-                </th>
+                <th className="px-3 py-2 text-left font-semibold">Interest</th>
 
-                <th className="px-4 py-3 text-left">
-                  Interest
-                </th>
+                <th className="px-3 py-2 text-left font-semibold">Duration</th>
 
-                <th className="px-4 py-3 text-left">
-                  Duration
-                </th>
+                <th className="px-3 py-2 text-left font-semibold">Purpose</th>
 
-                <th className="px-4 py-3 text-left">
-                  Purpose
-                </th>
+                <th className="px-3 py-2 text-left font-semibold">Reference</th>
 
-                <th className="px-4 py-3 text-left">
-                  Status
-                </th>
-
+                <th className="px-3 py-2 text-left font-semibold">Status</th>
               </tr>
-
             </thead>
 
             <tbody>
-
               {loans.length > 0 ? (
+                loans.map((loan, index) => (
+                  <tr key={loan.id} className="border-b hover:bg-gray-50">
+                    {/* NUMBER */}
 
-                loans.map(
-                  (
-                    loan,
-                    index
-                  ) => (
-                    <tr
-                      key={loan.id}
-                      className="border-b hover:bg-gray-50"
-                    >
-                      <td className="px-4 py-3">
-                        {index + 1}
-                      </td>
+                    <td className="px-3 py-2">{index + 1}</td>
 
-                      <td className="px-4 py-3">
-                        {formatDate(
-                          loan.created_at
-                        )}
-                      </td>
+                    {/* DATE */}
 
-                      <td className="px-4 py-3 font-medium">
-                        KES{" "}
-                        {formatCurrency(
-                          loan.amount
-                        )}
-                      </td>
+                    <td className="px-3 py-2">{formatDate(loan.created_at)}</td>
 
-                      <td className="px-4 py-3">
-                        {
-                          loan.interest_rate
-                        }%
-                      </td>
+                    {/* AMOUNT */}
 
-                      <td className="px-4 py-3">
-                        {
-                          loan.duration_months
-                        } Months
-                      </td>
+                    <td className="px-3 py-2 font-medium">
+                      KES {formatCurrency(loan.amount)}
+                    </td>
 
-                      <td className="px-4 py-3">
-                        {
-                          loan.purpose
-                        }
-                      </td>
+                    {/* INTEREST */}
 
-                      <td className="px-4 py-3">
-                        <span
-                          className={`px-2 py-1 rounded-full text-[10px] font-medium ${
-                            loan.status ===
-                            "approved"
-                              ? "bg-green-100 text-green-700"
-                              : loan.status ===
-                                "rejected"
+                    <td className="px-3 py-2">{loan.interest_rate}%</td>
+
+                    {/* DURATION */}
+
+                    <td className="px-3 py-2">{loan.duration_months} Months</td>
+
+                    {/* PURPOSE */}
+
+                    <td className="px-3 py-2">{loan.purpose || "—"}</td>
+
+                    {/* REFERENCE */}
+
+                    <td className="px-3 py-2 font-mono text-[8px] text-gray-600">
+                      {getReference(loan)}
+                    </td>
+
+                    {/* STATUS */}
+
+                    <td className="px-3 py-2">
+                      <span
+                        className={`px-1.5 py-0.5 rounded-full text-[8px] font-medium ${
+                          loan.status === "approved"
+                            ? "bg-green-100 text-green-700"
+                            : loan.status === "rejected"
                               ? "bg-red-100 text-red-700"
                               : "bg-yellow-100 text-yellow-700"
-                          }`}
-                        >
-                          {
-                            loan.status
-                          }
-                        </span>
-                      </td>
-
-                    </tr>
-                  )
-                )
-
+                        }`}
+                      >
+                        {loan.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
               ) : (
-
                 <tr>
                   <td
-                    colSpan="7"
-                    className="text-center py-10 text-gray-500"
+                    colSpan="8"
+                    className="text-center py-8 text-[9px] text-gray-500"
                   >
                     No loan records found
                   </td>
                 </tr>
-
               )}
-
             </tbody>
-
           </table>
-
         </div>
-
       </div>
 
       {/* MODAL */}
@@ -267,14 +227,9 @@ const LoanTab = ({ memberId }) => {
       <LoanModal
         open={showModal}
         memberId={memberId}
-        onClose={() =>
-          setShowModal(false)
-        }
-        onSuccess={
-          fetchLoans
-        }
+        onClose={() => setShowModal(false)}
+        onSuccess={fetchLoans}
       />
-
     </div>
   );
 };
