@@ -35,9 +35,9 @@ const UserLoans = () => {
       setLoans(res.data || []);
 
       /*
-      |----------------------------------------------------------------------
+      |--------------------------------------------------------------------------
       | RESET TO FIRST PAGE
-      |----------------------------------------------------------------------
+      |--------------------------------------------------------------------------
       */
 
       setPage(1);
@@ -54,6 +54,12 @@ const UserLoans = () => {
     }
   };
 
+  /*
+  |--------------------------------------------------------------------------
+  | INITIAL LOAD
+  |--------------------------------------------------------------------------
+  */
+
   useEffect(() => {
     fetchLoans();
   }, []);
@@ -63,7 +69,7 @@ const UserLoans = () => {
   | APPROVED LOANS
   |--------------------------------------------------------------------------
   |
-  | Only approved loans are considered for financial metrics.
+  | Only approved loans are used for financial metrics.
   |
   */
 
@@ -110,7 +116,7 @@ const UserLoans = () => {
   | TOTAL BORROWED
   |--------------------------------------------------------------------------
   |
-  | Only approved loans contribute to the total.
+  | Total amount originally borrowed from approved loans.
   |
   */
 
@@ -120,6 +126,34 @@ const UserLoans = () => {
       0,
     );
   }, [approvedLoans]);
+
+  /*
+  |--------------------------------------------------------------------------
+  | CURRENT LOAN BALANCE
+  |--------------------------------------------------------------------------
+  |
+  | Shows the outstanding balance of the current
+  | approved loan.
+  |
+  | We prefer:
+  |
+  |     loan.balance
+  |
+  | and fall back to:
+  |
+  |     loan.total_payable
+  |
+  | if balance is unavailable.
+  |
+  */
+
+  const loanBalance = useMemo(() => {
+    if (!activeLoan) {
+      return 0;
+    }
+
+    return Number(activeLoan.balance ?? activeLoan.total_payable ?? 0);
+  }, [activeLoan]);
 
   /*
   |--------------------------------------------------------------------------
@@ -212,15 +246,13 @@ const UserLoans = () => {
           </h3>
         </div>
 
-        {/* ACTIVE LOAN */}
+        {/* LOAN BALANCE */}
 
         <div className="bg-white border rounded-xl p-3">
-          <p className="text-[9px] text-gray-500">Active Loan</p>
+          <p className="text-[9px] text-gray-500">Loan Balance</p>
 
           <h3 className="text-base font-bold text-orange-600 mt-1">
-            {activeLoan
-              ? `KES ${Number(activeLoan.amount || 0).toLocaleString()}`
-              : "None"}
+            {activeLoan ? `KES ${loanBalance.toLocaleString()}` : "KES 0"}
           </h3>
         </div>
       </div>
@@ -355,6 +387,7 @@ const UserLoans = () => {
           loan={activeLoan}
           onSuccess={() => {
             fetchLoans();
+
             setShowRepaymentModal(false);
           }}
         />
