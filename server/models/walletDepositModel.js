@@ -1,4 +1,3 @@
-
 const pool = require("../config/db");
 
 /*
@@ -9,17 +8,19 @@ const pool = require("../config/db");
 
 const createWalletDepositModel = async (
   userId,
+  groupId,
   amount,
   paymentMethod,
   mpesaCode,
   bankReference,
-  depositSource = "member"
+  depositSource = "member",
 ) => {
   const result = await pool.query(
     `
     INSERT INTO wallet_deposits
     (
       user_id,
+      group_id,
       amount,
       remaining_balance,
       payment_method,
@@ -27,17 +28,28 @@ const createWalletDepositModel = async (
       bank_reference,
       deposit_source
     )
-    VALUES ($1, $2, $2, $3, $4, $5, $6)
+    VALUES
+    (
+      $1,
+      $2,
+      $3,
+      $3,
+      $4,
+      $5,
+      $6,
+      $7
+    )
     RETURNING *
     `,
     [
       userId,
+      groupId,
       amount,
       paymentMethod,
       mpesaCode,
       bankReference,
       depositSource,
-    ]
+    ],
   );
 
   return result.rows[0];
@@ -67,7 +79,7 @@ const getAllWalletDepositsModel = async () => {
       ON verifier.id = wd.verified_by
 
     ORDER BY wd.created_at DESC
-    `
+    `,
   );
 
   return result.rows;
@@ -87,7 +99,7 @@ const getMyWalletDepositsModel = async (userId) => {
     WHERE user_id = $1
     ORDER BY created_at DESC
     `,
-    [userId]
+    [userId],
   );
 
   return result.rows;
@@ -106,7 +118,7 @@ const getWalletDepositModel = async (id) => {
     FROM wallet_deposits
     WHERE id = $1
     `,
-    [id]
+    [id],
   );
 
   return result.rows[0];
@@ -123,18 +135,23 @@ const getWalletDepositDetailsModel = async (depositId) => {
     `
     SELECT
       wd.*,
-      ug.group_id
+
+      u.fullname,
+      u.username,
+
+      g.name AS group_name
 
     FROM wallet_deposits wd
 
-    LEFT JOIN user_groups ug
-      ON ug.user_id = wd.user_id
+    INNER JOIN users u
+      ON u.id = wd.user_id
+
+    LEFT JOIN groups g
+      ON g.id = wd.group_id
 
     WHERE wd.id = $1
-
-    LIMIT 1
     `,
-    [depositId]
+    [depositId],
   );
 
   return result.rows[0];
@@ -146,10 +163,7 @@ const getWalletDepositDetailsModel = async (depositId) => {
 |--------------------------------------------------------------------------
 */
 
-const verifyWalletDepositModel = async (
-  id,
-  verifiedBy
-) => {
+const verifyWalletDepositModel = async (id, verifiedBy) => {
   const result = await pool.query(
     `
     UPDATE wallet_deposits
@@ -163,7 +177,7 @@ const verifyWalletDepositModel = async (
 
     RETURNING *
     `,
-    [id, verifiedBy]
+    [id, verifiedBy],
   );
 
   return result.rows[0];
@@ -175,10 +189,7 @@ const verifyWalletDepositModel = async (
 |--------------------------------------------------------------------------
 */
 
-const rejectWalletDepositModel = async (
-  id,
-  notes = null
-) => {
+const rejectWalletDepositModel = async (id, notes = null) => {
   const result = await pool.query(
     `
     UPDATE wallet_deposits
@@ -191,7 +202,7 @@ const rejectWalletDepositModel = async (
 
     RETURNING *
     `,
-    [id, notes]
+    [id, notes],
   );
 
   return result.rows[0];
@@ -213,10 +224,7 @@ const rejectWalletDepositModel = async (
 |--------------------------------------------------------------------------
 */
 
-const updateRemainingBalanceModel = async (
-  id,
-  remainingBalance
-) => {
+const updateRemainingBalanceModel = async (id, remainingBalance) => {
   const result = await pool.query(
     `
     UPDATE wallet_deposits
@@ -228,7 +236,7 @@ const updateRemainingBalanceModel = async (
 
     RETURNING *
     `,
-    [id, remainingBalance]
+    [id, remainingBalance],
   );
 
   return result.rows[0];
@@ -243,33 +251,27 @@ const updateRemainingBalanceModel = async (
 const checkDuplicateWalletReferenceModel = async (
   paymentMethod,
   mpesaCode,
-  bankReference
+  bankReference,
 ) => {
   let result;
 
-  if (
-    paymentMethod === "mpesa" &&
-    mpesaCode
-  ) {
+  if (paymentMethod === "mpesa" && mpesaCode) {
     result = await pool.query(
       `
       SELECT id
       FROM wallet_deposits
       WHERE mpesa_code = $1
       `,
-      [mpesaCode]
+      [mpesaCode],
     );
-  } else if (
-    paymentMethod === "bank" &&
-    bankReference
-  ) {
+  } else if (paymentMethod === "bank" && bankReference) {
     result = await pool.query(
       `
       SELECT id
       FROM wallet_deposits
       WHERE bank_reference = $1
       `,
-      [bankReference]
+      [bankReference],
     );
   } else {
     return false;
@@ -289,4 +291,3 @@ module.exports = {
   updateRemainingBalanceModel,
   checkDuplicateWalletReferenceModel,
 };
-
