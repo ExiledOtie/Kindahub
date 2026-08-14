@@ -19,8 +19,13 @@ const calculateLoanPayment = require("../utils/calculateLoanPayment");
 |
 |     user_id
 |     group_id
+|     loan_id
 |
-| The system gets both directly from wallet_deposits.
+| For loan payments, the system automatically finds the member's
+| outstanding loan using:
+|
+|     walletOwnerId
+|     walletGroupId
 |
 | Supported allocations:
 |
@@ -122,26 +127,26 @@ const createWalletAllocation = async (req, res) => {
 
     const depositResult = await client.query(
       `
-  SELECT
-    wd.*,
+      SELECT
+        wd.*,
 
-    u.fullname,
-    u.username,
+        u.fullname,
+        u.username,
 
-    g.name AS group_name
+        g.name AS group_name
 
-  FROM wallet_deposits wd
+      FROM wallet_deposits wd
 
-  INNER JOIN users u
-    ON u.id = wd.user_id
+      INNER JOIN users u
+        ON u.id = wd.user_id
 
-  LEFT JOIN groups g
-    ON g.id = wd.group_id
+      LEFT JOIN groups g
+        ON g.id = wd.group_id
 
-  WHERE wd.id = $1
+      WHERE wd.id = $1
 
-  FOR UPDATE OF wd
-  `,
+      FOR UPDATE OF wd
+      `,
       [wallet_deposit_id],
     );
 
@@ -176,10 +181,6 @@ const createWalletAllocation = async (req, res) => {
     |--------------------------------------------------------------------------
     | SAFETY CHECK
     |--------------------------------------------------------------------------
-    |
-    | A wallet must have both an owner and a group.
-    |
-    |--------------------------------------------------------------------------
     */
 
     if (!walletOwnerId) {
@@ -204,10 +205,6 @@ const createWalletAllocation = async (req, res) => {
     /*
     |--------------------------------------------------------------------------
     | VERIFY USER BELONGS TO GROUP
-    |--------------------------------------------------------------------------
-    |
-    | This prevents an invalid user/group combination.
-    |
     |--------------------------------------------------------------------------
     */
 
@@ -322,28 +319,19 @@ const createWalletAllocation = async (req, res) => {
       |--------------------------------------------------------------------------
       | LOAN PAYMENT
       |--------------------------------------------------------------------------
+      |
+      | IMPORTANT:
+      |
+      | The frontend no longer needs to send loan_id.
+      |
+      | We automatically find the wallet owner's outstanding loan
+      | belonging to the wallet group.
+      |
+      |--------------------------------------------------------------------------
       */
 
       if (type === "loan_payment") {
-        if (!item.loan_id) {
-          await client.query("ROLLBACK");
-
-          return res.status(400).json({
-            success: false,
-            message: "Loan ID is required for loan payment allocation.",
-          });
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | VERIFY LOAN BELONGS TO:
-        |
-        |     wallet user
-        |     wallet group
-        |--------------------------------------------------------------------------
-        */
-
-        const loanOwnerResult = await client.query(
+        const outstandingLoanResult = await client.query(
           `
           SELECT
             id,
@@ -352,28 +340,71 @@ const createWalletAllocation = async (req, res) => {
             status,
             amount,
             balance,
-            total_payable
+            total_payable,
+            created_at,
+            approved_at
 
           FROM loans
 
-          WHERE id = $1
-            AND user_id = $2
-            AND group_id = $3
+          WHERE user_id = $1
+            AND group_id = $2
+
+            AND LOWER(COALESCE(status, '')) NOT IN
+              ('paid', 'repaid', 'rejected', 'cancelled')
+
+            AND COALESCE(balance, 0) > 0
+
+          ORDER BY
+            CASE
+              WHEN LOWER(COALESCE(status, '')) = 'approved'
+              THEN 0
+              ELSE 1
+            END,
+            COALESCE(approved_at, created_at) ASC,
+            id ASC
 
           LIMIT 1
+
+          FOR UPDATE
           `,
-          [item.loan_id, walletOwnerId, walletGroupId],
+          [walletOwnerId, walletGroupId],
         );
 
-        if (loanOwnerResult.rows.length === 0) {
+        /*
+        |--------------------------------------------------------------------------
+        | NO OUTSTANDING LOAN
+        |--------------------------------------------------------------------------
+        */
+
+        if (outstandingLoanResult.rows.length === 0) {
           await client.query("ROLLBACK");
 
           return res.status(400).json({
             success: false,
             message:
-              "The selected loan does not belong to the wallet member and wallet group.",
+              "This member does not have an outstanding loan in the wallet group.",
           });
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | STORE THE AUTOMATICALLY SELECTED LOAN ID
+        |--------------------------------------------------------------------------
+        |
+        | We attach it to the current allocation object.
+        |
+        | This means the rest of the controller can use:
+        |
+        |     item.resolved_loan_id
+        |
+        | without requiring the frontend to send a loan ID.
+        |
+        |--------------------------------------------------------------------------
+        */
+
+        item.resolved_loan_id = outstandingLoanResult.rows[0].id;
+
+        item.resolved_loan = outstandingLoanResult.rows[0];
       }
 
       /*
@@ -421,12 +452,8 @@ const createWalletAllocation = async (req, res) => {
       | CONTRIBUTION
       |--------------------------------------------------------------------------
       |
-      | IMPORTANT:
-      |
       | user_id  = walletOwnerId
       | group_id = walletGroupId
-      |
-      | Nothing comes from the frontend.
       |
       |--------------------------------------------------------------------------
       */
@@ -471,11 +498,6 @@ const createWalletAllocation = async (req, res) => {
       /*
       |--------------------------------------------------------------------------
       | SAVING
-      |--------------------------------------------------------------------------
-      |
-      | user_id  = walletOwnerId
-      | group_id = walletGroupId
-      |
       |--------------------------------------------------------------------------
       */
 
@@ -525,15 +547,28 @@ const createWalletAllocation = async (req, res) => {
       if (type === "loan_payment") {
         /*
         |--------------------------------------------------------------------------
+        | GET AUTOMATICALLY SELECTED LOAN
+        |--------------------------------------------------------------------------
+        */
+
+        const loanId = item.resolved_loan_id;
+
+        if (!loanId) {
+          await client.query("ROLLBACK");
+
+          return res.status(400).json({
+            success: false,
+            message: "No outstanding loan could be identified for this member.",
+          });
+        }
+
+        /*
+        |--------------------------------------------------------------------------
         | CALCULATE LOAN PAYMENT
         |--------------------------------------------------------------------------
         */
 
-        const calculation = await calculateLoanPayment(
-          client,
-          item.loan_id,
-          amount,
-        );
+        const calculation = await calculateLoanPayment(client, loanId, amount);
 
         const loan = calculation.loan;
 
@@ -626,7 +661,7 @@ const createWalletAllocation = async (req, res) => {
           RETURNING *
           `,
           [
-            item.loan_id,
+            loanId,
             calculation.amountApplied,
             calculation.principalPaid,
             calculation.interestPaid,
@@ -646,7 +681,7 @@ const createWalletAllocation = async (req, res) => {
 
         const updatedCalculation = await calculateLoanPayment(
           client,
-          item.loan_id,
+          loanId,
           0,
         );
 
@@ -669,7 +704,7 @@ const createWalletAllocation = async (req, res) => {
           RETURNING *
           `,
           [
-            item.loan_id,
+            loanId,
             updatedCalculation.totalPayable,
             updatedCalculation.currentBalance,
           ],
@@ -698,7 +733,7 @@ const createWalletAllocation = async (req, res) => {
 
             RETURNING *
             `,
-            [item.loan_id],
+            [loanId],
           );
 
           updatedLoan = updatedLoanResult.rows[0];
